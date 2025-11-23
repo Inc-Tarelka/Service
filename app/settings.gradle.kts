@@ -33,4 +33,4 @@ plugins {
 }
 
 include(":composeApp")
-include(":navigation")
+include(":core:navigation")

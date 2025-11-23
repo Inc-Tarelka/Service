@@ -25,6 +25,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            export(project(":core:navigation"))
         }
     }
     
@@ -59,10 +60,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
             
-            implementation(project(":navigation"))
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            api(project(":core:navigation"))
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

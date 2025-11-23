@@ -28,7 +28,7 @@ fun NavigationScaffold() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val selected = AppNavGraph.routes.firstOrNull { route ->
+    val selected: AppNavGraph? = AppNavGraph.routes.firstOrNull { route ->
         currentDestination?.hierarchy?.any { it.hasRoute(route::class) } == true
     }
 

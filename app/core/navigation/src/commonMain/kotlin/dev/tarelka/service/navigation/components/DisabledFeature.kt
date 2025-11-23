@@ -13,7 +13,7 @@ fun DisabledFeature(modifier: Modifier) {
             .fillMaxSize()
             .then(modifier),
     ) {
-        Text("Yet Another Screen")
+        Text("Yet Another Screen by lkey")
     }
 }
 

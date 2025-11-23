@@ -22,7 +22,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun AppBar(
+fun AppBar(
     routes: List<AppNavGraph>,
     selected: AppNavGraph?,
     onRouteClick: (AppNavGraph) -> Unit,
@@ -76,7 +76,7 @@ internal fun AppBar(
 
 @Preview
 @Composable
-internal fun AppBarPreview() {
+fun AppBarPreview() {
     AppBar(
         routes = AppNavGraph.routes,
         selected = AppNavGraph.Profile,
