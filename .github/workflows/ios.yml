@@ -27,20 +27,20 @@ jobs:
         xcode-version: latest-stable
         
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: chmod +x app/gradlew
       
     - name: Build iOS Framework
-      run: ./gradlew :composeApp:assembleXCFramework --stacktrace
+      run: cd app && ./gradlew :composeApp:assembleXCFramework --stacktrace
       
     - name: Install CocoaPods
       run: |
-        cd iosApp
+        cd app/iosApp
         pod install --repo-update
       continue-on-error: true
         
     - name: Build iOS App
       run: |
-        cd iosApp
+        cd app/iosApp
         xcodebuild -workspace iosApp.xcworkspace \
           -scheme iosApp \
           -configuration Debug \
@@ -52,7 +52,7 @@ jobs:
         
     - name: Archive iOS App
       run: |
-        cd iosApp
+        cd app/iosApp
         xcodebuild -workspace iosApp.xcworkspace \
           -scheme iosApp \
           -configuration Release \
@@ -62,7 +62,7 @@ jobs:
         
     - name: Export IPA
       run: |
-        cd iosApp
+        cd app/iosApp
         xcodebuild -exportArchive \
           -archivePath build/iosApp.xcarchive \
           -exportPath build \
@@ -73,7 +73,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ios-build
-        path: iosApp/build/
+        path: app/iosApp/build/
         retention-days: 30
       continue-on-error: true
 

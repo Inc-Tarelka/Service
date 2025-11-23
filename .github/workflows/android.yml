@@ -22,30 +22,30 @@ jobs:
         cache: 'gradle'
         
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: chmod +x app/gradlew
       
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --stacktrace
+      run: cd app && ./gradlew assembleDebug --stacktrace
       
     - name: Build Release APK
-      run: ./gradlew assembleRelease --stacktrace
+      run: cd app && ./gradlew assembleRelease --stacktrace
       
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
+        path: app/composeApp/build/outputs/apk/debug/composeApp-debug.apk
         retention-days: 30
         
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk
+        path: app/composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk
         retention-days: 30
         
     - name: Run tests
-      run: ./gradlew testDebugUnitTest --stacktrace
+      run: cd app && ./gradlew testDebugUnitTest --stacktrace
       continue-on-error: true
 
   deploy:
