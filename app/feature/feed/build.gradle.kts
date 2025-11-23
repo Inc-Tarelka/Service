@@ -21,7 +21,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "Navigation"
+            baseName = "Feed"
             isStatic = true
         }
     }
@@ -47,20 +47,29 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-
-            implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
             
-            // Feature modules
-            implementation(project(":feature:feed"))
+            // Coil
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+            
+            // Modules
+            implementation(project(":core:network"))
+            implementation(project(":core:theme"))
+        }
+        
+        jvmMain.dependencies {
+            implementation(libs.kotlinx.coroutinesSwing)
         }
     }
 }
 
 android {
-    namespace = "dev.tarelka.service.navigation"
+    namespace = "dev.tarelka.service.feed"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

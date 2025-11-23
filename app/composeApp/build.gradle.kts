@@ -27,6 +27,8 @@ kotlin {
             isStatic = true
             export(project(":core:navigation"))
             export(project(":core:theme"))
+            export(project(":core:network"))
+            export(project(":feature:feed"))
         }
     }
     
@@ -61,8 +63,14 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
             
+            // Coil
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+            
             api(project(":core:navigation"))
             api(project(":core:theme"))
+            api(project(":core:network"))
+            api(project(":feature:feed"))
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

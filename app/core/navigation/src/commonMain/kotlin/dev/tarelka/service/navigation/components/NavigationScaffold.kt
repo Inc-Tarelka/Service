@@ -55,7 +55,7 @@ fun NavigationScaffold() {
                     selected = selected,
                     onRouteClick = {
                         scope.launch {
-                            val result = snackbarHostState.showSnackbar(
+                            snackbarHostState.showSnackbar(
                                 message = "Not Implemented",
                                 actionLabel = "Hide",
                                 duration = SnackbarDuration.Short

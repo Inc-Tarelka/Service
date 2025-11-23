@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dev.tarelka.service.feed.presentation.FeedScreen
 import dev.tarelka.service.navigation.utils.Feature
 
 @Composable
@@ -22,13 +23,9 @@ fun NavigationGraph(
     ) {
 
         composable<AppNavGraph.Feed> {
-            Feature(
-                enabled = false,
-                modifier = Modifier
-                    .padding(innerPadding)
-            ) {
-                Text("Лента")
-            }
+            FeedScreen(
+                modifier = Modifier.padding(innerPadding)
+            )
         }
 
         composable<AppNavGraph.Search> {

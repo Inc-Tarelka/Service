@@ -35,3 +35,5 @@ plugins {
 include(":composeApp")
 include(":core:navigation")
 include(":core:theme")
+include(":core:network")
+include(":feature:feed")
