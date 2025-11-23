@@ -32,3 +32,4 @@ internal sealed interface AppNavGraph {
         val routes = listOf(Feed, Search, Notifications, Profile)
     }
 }
+
