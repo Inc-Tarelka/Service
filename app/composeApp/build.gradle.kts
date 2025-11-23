@@ -26,6 +26,7 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             export(project(":core:navigation"))
+            export(project(":core:theme"))
         }
     }
     
@@ -61,6 +62,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             
             api(project(":core:navigation"))
+            api(project(":core:theme"))
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
