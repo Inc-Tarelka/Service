@@ -75,6 +75,17 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.ktor.client.okhttp)
+        }
+        
+        jsMain.dependencies {
+            implementation(libs.ktor.client.js)
+        }
+        
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
         }
     }
 }

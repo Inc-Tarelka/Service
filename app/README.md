@@ -41,7 +41,8 @@ in your IDE’s toolbar or run it directly from the terminal:
 ### Build and Run Web Application
 
 To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
+in your IDE's toolbar or run it directly from the terminal (composeApp/build/dist/js/productionExecutable/):
+
 - for the Wasm target (faster, modern browsers):
   - on macOS/Linux
     ```shell

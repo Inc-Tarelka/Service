@@ -57,6 +57,9 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             
+            // Ktor (for Coil network)
+            implementation(libs.ktor.client.core)
+            
             // Modules
             implementation(project(":core:network"))
             implementation(project(":core:theme"))
@@ -64,6 +67,17 @@ kotlin {
         
         jvmMain.dependencies {
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.ktor.client.okhttp)
+        }
+        
+        jsMain.dependencies {
+            implementation(libs.ktor.client.js)
+        }
+        
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
         }
     }
 }
