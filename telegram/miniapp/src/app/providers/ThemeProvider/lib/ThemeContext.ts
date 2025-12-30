@@ -1,5 +1,5 @@
-import type { MantineTheme } from '@mantine/core'
-import { createContext } from 'react'
+import type { MantineTheme } from '@mantine/core';
+import { createContext } from 'react';
 
 export enum Theme {
   LIGHT = 'app_light_theme',
@@ -7,9 +7,9 @@ export enum Theme {
 }
 
 export interface ThemeContextProps {
-  theme?: Theme
-  setTheme?: (theme: Theme) => void
-  mantineTheme?: MantineTheme
+  theme?: Theme;
+  setTheme?: (theme: Theme) => void;
+  mantineTheme?: MantineTheme;
 }
 
-export const ThemeContext = createContext<ThemeContextProps>({})
+export const ThemeContext = createContext<ThemeContextProps>({});

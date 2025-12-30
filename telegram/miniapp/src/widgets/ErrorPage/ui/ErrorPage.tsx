@@ -1,20 +1,20 @@
-import { Button, Flex, Text } from '@mantine/core'
-import { RoutePath } from 'shared/config/routeConfig/routeConfig'
-import classNames from 'shared/library/ClassNames/classNames'
-import s from './ErrorPage.module.scss'
+import { Button, Flex, Text } from '@mantine/core';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import classNames from 'shared/library/ClassNames/classNames';
+import s from './ErrorPage.module.scss';
 
 interface ErrorPageProps {
-  className?: string
+  className?: string;
 }
 
 export const ErrorPage = ({ className }: ErrorPageProps) => {
   const reloadPage = () => {
-    location.reload()
-  }
+    location.reload();
+  };
 
   const goToMainPage = () => {
-    window.location.href = RoutePath.main
-  }
+    window.location.href = RoutePath.main;
+  };
 
   return (
     <div className={classNames(s.PageError, {}, [className])}>
@@ -36,7 +36,7 @@ export const ErrorPage = ({ className }: ErrorPageProps) => {
         </Flex>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ErrorPage
+export default ErrorPage;

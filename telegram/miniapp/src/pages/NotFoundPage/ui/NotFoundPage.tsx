@@ -1,10 +1,10 @@
-import { Button, Title } from '@mantine/core'
-import { useNavigate } from 'react-router-dom'
-import { RoutePath } from 'shared/config/routeConfig/routeConfig'
-import s from './NotFoundPage.module.scss'
+import { Button, Title } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import s from './NotFoundPage.module.scss';
 
 export const NotFoundPage = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <div className={s.NotFoundPage}>
       <div className={s.content}>
@@ -24,5 +24,5 @@ export const NotFoundPage = () => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "serv": "cloudflared tunnel --url http://localhost:5173",
     "servg": "ngrok http http://localhost:5173",
-    "prepare": "husky"
+    "prepare": "cd ../.. && husky telegram/miniapp/.husky"
   },
   "dependencies": {
     "@mantine/core": "^8.3.10",

@@ -25,7 +25,6 @@ const Tab = (props: TabProps) => {
 };
 
 export const TabBar = () => {
-
   return (
     <div className={s.container}>
       <nav className={s.tabbar}>

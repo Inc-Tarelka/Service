@@ -1,14 +1,14 @@
-import { useContext } from 'react'
-import { Theme, ThemeContext } from './ThemeContext'
+import { useContext } from 'react';
+import { Theme, ThemeContext } from './ThemeContext';
 
 interface UseThemeResult {
-  theme: Theme
+  theme: Theme;
 }
 
 export function useTheme(): UseThemeResult {
-  const { theme } = useContext(ThemeContext)
+  const { theme } = useContext(ThemeContext);
 
   return {
     theme: theme || Theme.DARK,
-  }
+  };
 }

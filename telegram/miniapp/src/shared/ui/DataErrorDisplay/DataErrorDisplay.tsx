@@ -1,11 +1,11 @@
-import { Accordion, Button, Card, Text } from '@mantine/core'
-import { observer } from 'mobx-react-lite'
-import s from './DataErrorDisplay.module.scss'
+import { Accordion, Button, Card, Text } from '@mantine/core';
+import { observer } from 'mobx-react-lite';
+import s from './DataErrorDisplay.module.scss';
 
 interface DataErrorDisplayProps {
-  error: Error | null
-  onRetry: () => void
-  message?: string
+  error: Error | null;
+  onRetry: () => void;
+  message?: string;
 }
 
 export const DataErrorDisplay = observer((props: DataErrorDisplayProps) => {
@@ -13,10 +13,10 @@ export const DataErrorDisplay = observer((props: DataErrorDisplayProps) => {
     error,
     onRetry,
     message = 'Что-то пошло не так при загрузке данных.',
-  } = props
+  } = props;
 
   if (!error) {
-    return null
+    return null;
   }
 
   return (
@@ -28,9 +28,7 @@ export const DataErrorDisplay = observer((props: DataErrorDisplayProps) => {
         <Accordion.Item value="details" className={s.errorDetailsPanel}>
           <Accordion.Control>Подробнее об ошибке</Accordion.Control>
           <Accordion.Panel>
-            <Text c="red">
-              {error?.message || 'Неизвестная ошибка'}
-            </Text>
+            <Text c="red">{error?.message || 'Неизвестная ошибка'}</Text>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
@@ -43,5 +41,5 @@ export const DataErrorDisplay = observer((props: DataErrorDisplayProps) => {
         Обновить
       </Button>
     </Card>
-  )
-})
+  );
+});

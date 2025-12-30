@@ -28,7 +28,6 @@
 
 ## Сущности (entities)
 
-
 ---
 
 ## CI pipeline и pre commit хуки
