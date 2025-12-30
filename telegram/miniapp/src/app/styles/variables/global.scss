@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+    --font-family-main: 'Montserrat', BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    // s
+    --font-size-s: 12px;
+    --font-line-s: 20px;
+    --font-s: var(--font-size-s) / var(--font-line-s) var(--font-family-main);
+
+    // m
+    --font-size-m: 16px;
+    --font-line-m: 24px;
+    --font-m: var(--font-size-m) / var(--font-line-m) var(--font-family-main);
+
+    // l
+    --font-size-l: 24px;
+    --font-line-l: 32px;
+    --font-l: var(--font-size-l) / var(--font-line-l) var(--font-family-main);
+
+    // xl
+    --font-size-xl: 32px;
+    --font-line-xl: 40px;
+    --font-xl: var(--font-size-xl) / var(--font-line-xl) var(--font-family-main);
+
+    // Цвета
+    // --overlay-color: rgba(0 0 0 / 60%);
+    --red-light: #fa4d56;
+    // --red-dark: #B42020;
+    --orange: #ff862e;
+    // --yellow: #ffcc67;
+    // --purple: #8b30ff;
+    // --cyan: #4eb4ff;
+    --green: #22c55e;
+    --white: #fff;
+
+    --gradient-primary: linear-gradient(135deg, #77099E 0%, #500CE1 50%, #77099E 100%);
+
+    --TabBar-size: 60px;
+    --TB-padding: 85px;
+    --header-challenge-height: 60px;
+
+    // tg save area
+    padding-top: env(safe-area-inset-top);
+padding-bottom: env(safe-area-inset-bottom);
+padding-left: env(safe-area-inset-left);
+padding-right: env(safe-area-inset-right);
+
+--sheet-bg-color: #171717;
+
+
+.app_dark_theme .react-modal-sheet-container {
+    background: linear-gradient(to bottom, var(--bg-color) 100%, rgba(255, 255, 255, 0.8) 1%) !important;
+  }
+
+    ::-webkit-scrollbar {
+        width: 1px;
+        background-color: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .app {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  
