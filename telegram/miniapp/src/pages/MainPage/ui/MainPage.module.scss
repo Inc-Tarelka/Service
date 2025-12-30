@@ -2,24 +2,3 @@
     margin-top: 0;
     padding-top: 0;
 }
-
-.greeting {
-    margin-top: 0;
-    padding-top: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 3rem;
-    margin-bottom: 0.5rem;
-
-    &::before {
-        content: "Привет, ";
-        color: var(--text-color);
-    }
-
-    .username {
-        color: var(--accent-color);
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 3rem;
-    }
-}
