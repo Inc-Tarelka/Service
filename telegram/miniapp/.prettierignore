@@ -1,0 +1,15 @@
+# Ignore artifacts:
+build
+coverage
+*.html
+*.scss
+*.css
+node_modules
+.vscode
+.idea
+.git
+.gitignore
+.prettierignore
+.prettierrc
+.prettierrc.json
+.prettierrc.json

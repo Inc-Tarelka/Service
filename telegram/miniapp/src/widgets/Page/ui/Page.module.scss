@@ -1,0 +1,16 @@
+.Page {
+    flex-grow: 1;
+    padding: 0 1rem 0 1rem;
+    overflow-y: auto;
+    width: 100%;
+    height: calc(100dvh - var(--TB-padding));
+    
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}

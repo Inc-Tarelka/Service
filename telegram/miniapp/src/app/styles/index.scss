@@ -1,0 +1,22 @@
+@use "variables/global.scss";
+@use "reset";
+@use "mobile-fixes";
+@use "themes/base.scss";
+
+.app {
+    font-family: var(--font-family-main);
+    font: var(--font-m);
+    font-size: var(--font-size-m);
+    line-height: var(--font-line-m);
+    background: var(--bg-color);
+    color: var(--primary-color);
+    min-height: 100vh;
+    min-height: 100dvh;
+
+}
+
+.content-page {
+    display: flex;
+}
+
+
