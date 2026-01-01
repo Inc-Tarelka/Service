@@ -93,7 +93,7 @@ export const mantineTheme = createTheme({
       },
       styles: {
         root: {
-          backgroundColor: 'var(--primary-input)',
+          backgroundColor: 'var(--primary-stroke)',
         },
       },
     },
@@ -173,7 +173,7 @@ export const mantineTheme = createTheme({
               ? '#000000'
               : 'var(--text-color-secondary)',
           backgroundColor:
-            props.variant === 'outline' ? 'var(--primary-input)' : undefined,
+            props.variant === 'outline' ? 'var(--primary-stroke)' : undefined,
           border:
             props.variant === 'outline'
               ? '1px solid var(--card-bg)'
