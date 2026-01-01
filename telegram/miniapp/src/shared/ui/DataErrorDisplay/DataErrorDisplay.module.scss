@@ -2,11 +2,11 @@
     width: 100%; 
 
     :global(.ant-card-body) {
-      padding: 0px; 
+      align-items: center; 
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 8px;
+      padding: 0;
     }
   }
   
@@ -17,26 +17,28 @@
   }
   
   .errorContent {
-    display: flex;
     align-items: center;
+    display: flex;
     gap: 8px; 
   }
   
-  .errorIcon {
-    font-size: 16px; 
+  .errorIcon { 
     color: var(--red-light);
+    font-size: 16px;
   }
   
   .errorDetailsCollapse {
     width: 100%;
+
     .ant-collapse-header {
-      padding: 0;
       color: var(--text-color);
-    }
-    .ant-collapse-content-box {
       padding: 0;
+    }
+
+    .ant-collapse-content-box {
       max-height: 150px; 
-      overflow-y: auto; 
+      overflow-y: auto;
+      padding: 0; 
       padding-right: 5px; 
     }
   }
@@ -46,6 +48,7 @@
       border-bottom: none;
       padding-left: 0;
     }
+
     .ant-collapse-content {
       border-top: none;
       padding-left: 0;
@@ -53,8 +56,8 @@
   }
   
   .refreshButton {
-    width: 100%;
     font-size: 14px; 
-    padding: 8px 12px; 
+    padding: 8px 12px;
+    width: 100%; 
   }
     

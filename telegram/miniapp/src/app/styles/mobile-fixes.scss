@@ -6,7 +6,7 @@ html,
 body,
 * {
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
     -webkit-touch-callout: none !important;
 }
 
@@ -26,69 +26,23 @@ textarea,
 [class*="Item"],
 div[tabindex],
 span[tabindex] {
+    outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
     tap-highlight-color: transparent !important;
     -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    outline: none !important;
+    user-select: none !important;
     
     &:active,
     &:focus,
     &:hover {
-        -webkit-tap-highlight-color: transparent !important;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-        outline: none !important;
         box-shadow: none !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
     }
 }
 
-// Ant Design компоненты
-[class^="ant-"],
-[class*=" ant-"] {
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-    -webkit-touch-callout: none !important;
-    
-    &:active,
-    &:focus {
-        -webkit-tap-highlight-color: transparent !important;
-        outline: none !important;
-    }
-}
-
-// Специфичные Ant Design компоненты
-.ant-btn,
-.ant-card,
-.ant-card-body,
-.ant-card-head,
-.ant-list-item,
-.ant-menu-item,
-.ant-collapse-item,
-.ant-collapse-header,
-.ant-select-selector,
-.ant-input,
-.ant-checkbox-wrapper,
-.ant-radio-wrapper,
-.ant-switch,
-.ant-slider,
-.ant-drawer,
-.ant-modal,
-.ant-tabs-tab,
-.ant-pagination-item,
-.ant-table-row {
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-    tap-highlight-color: transparent !important;
-    outline: none !important;
-    
-    &:active,
-    &:focus,
-    &:hover {
-        -webkit-tap-highlight-color: transparent !important;
-        outline: none !important;
-    }
-}
 
 // Убираем outline для всех состояний focus
 *:focus,
@@ -100,19 +54,19 @@ span[tabindex] {
 // Убираем долгое нажатие (long press) меню на мобильных
 img,
 a img {
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
     pointer-events: none;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
 }
 
 // Оптимизация для Telegram Mini App
 body {
-    -webkit-user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-touch-callout: none !important;
+    -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
 }
 
 // Убираем 300ms задержку клика на мобильных
@@ -136,7 +90,6 @@ code,
 pre,
 td,
 th {
-    -webkit-user-select: text !important;
     user-select: text !important;
 }
 
@@ -148,7 +101,6 @@ input[type="search"],
 input[type="tel"],
 input[type="url"],
 textarea {
-    -webkit-user-select: text !important;
     user-select: text !important;
 }
 
@@ -161,8 +113,8 @@ a {
     -webkit-tap-highlight-color: transparent !important;
     
     &:focus {
-        outline: none !important;
         box-shadow: none !important;
+        outline: none !important;
     }
 }
 
@@ -175,16 +127,16 @@ a {
 }
 
 // Media query для мобильных устройств
-@media only screen and (max-width: 768px) {
+@media only screen and (width <= 768px) {
     * {
         -webkit-tap-highlight-color: transparent !important;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+        -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
         tap-highlight-color: transparent !important;
     }
 }
 
 // Специальные правила для WebView (Telegram)
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
+@media screen and (min-device-pixel-ratio: 0) {
     * {
         -webkit-tap-highlight-color: transparent !important;
     }

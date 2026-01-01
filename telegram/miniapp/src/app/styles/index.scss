@@ -1,15 +1,15 @@
-@use "variables/global.scss";
+@use "variables/global";
 @use "reset";
 @use "mobile-fixes";
-@use "themes/base.scss";
+@use "themes/base";
 
 .app {
-    font-family: var(--font-family-main);
-    font: var(--font-m);
-    font-size: var(--font-size-m);
-    line-height: var(--font-line-m);
     background: var(--bg-color);
     color: var(--primary-color);
+    font: var(--font-m);
+    font-family: var(--font-family-main);
+    font-size: var(--font-size-m);
+    line-height: var(--font-line-m);
     min-height: 100vh;
     min-height: 100dvh;
 

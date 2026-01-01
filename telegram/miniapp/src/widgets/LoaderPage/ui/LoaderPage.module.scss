@@ -1,60 +1,50 @@
 .loaderPageBg {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-color);
-  z-index: 9999;
-  display: flex;
   align-items: center;
+  background: var(--bg-color);
+  display: flex;
+  height: 100vh;
+  inset: 0;
   justify-content: center;
+  position: fixed;
+  width: 100vw;
+  z-index: 9999;
 }
 
 .loaderWrapper {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
   align-items: center;
+  display: flex;
+  height: 100vh;
   justify-content: center;
+  width: 100vw;
 }
 
 .loaderContent {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 1.5rem;
+  justify-content: center;
 }
 
 .loader {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
   align-items: center;
-  justify-content: center;
   animation: rotate 1s linear infinite;
+  border-radius: 50%;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  position: relative;
+  width: 48px;
 }
 
 .loader::before {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  inset: 0px;
-  border-radius: 50%;
-  border: 5px solid var(--accent-color);
   animation: prixClipFix 2s linear infinite;
-}
-
-.message {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-color);
-  text-align: center;
-  margin: 0;
-  padding: 0 1rem;
-  animation: fadeIn 0.5s ease-in;
+  border: 5px solid var(--accent-color);
+  border-radius: 50%;
+  box-sizing: border-box;
+  content: "";
+  inset: 0;
+  position: absolute;
 }
 
 @keyframes fadeIn {
@@ -62,6 +52,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

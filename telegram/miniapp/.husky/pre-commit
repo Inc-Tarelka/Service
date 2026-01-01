@@ -1,4 +1,5 @@
 cd telegram/miniapp
 npm run format
+npm run stylelint:fix
 git add .
 npm run build
