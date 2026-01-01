@@ -1,3 +1,4 @@
+// shared/config/routeConfig/routeConfig.tsx
 import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
 import { WelcomePage } from 'pages/WelcomePage';
@@ -5,6 +6,7 @@ import { RouteProps } from 'react-router-dom';
 
 export interface MyAppRoutes {
   hideLayout?: boolean;
+  hideNavbar?: boolean;
 }
 
 export enum AppRoutes {
@@ -30,6 +32,7 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
     path: RoutePath.welcome,
     element: <WelcomePage />,
     hideLayout: true,
+    hideNavbar: true,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {
