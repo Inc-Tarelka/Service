@@ -1,22 +1,19 @@
 * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none; 
+    margin: 0;
+    padding: 0; 
     -webkit-tap-highlight-color: transparent;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0);
     tap-highlight-color: transparent;
-    touch-action: manipulation; 
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none; 
 }
 
 *::before,
 *::after {
     -webkit-tap-highlight-color: transparent;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0);
     tap-highlight-color: transparent;
 }
 
@@ -38,9 +35,6 @@ td,
 th,
 input,
 textarea {
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
     user-select: text;
 }
 
@@ -48,12 +42,12 @@ img,
 svg,
 video,
 canvas {
+    pointer-events: auto;
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
     -o-user-drag: none;
-    user-drag: none;
-    pointer-events: auto; 
+    user-drag: none; 
 }
 
 button,
@@ -70,13 +64,12 @@ div[onclick],
 [class*="Button"],
 [class*="item"],
 [class*="Item"] {
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-    tap-highlight-color: transparent !important;
-    outline: none;
-    -webkit-user-drag: none;
-    -webkit-appearance: none;
     appearance: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
+    tap-highlight-color: transparent !important;
+    -webkit-user-drag: none;
 }
 
 button:focus,
@@ -90,8 +83,8 @@ div[onclick]:focus,
 [class*="Card"]:focus,
 [class*="button"]:focus,
 [class*="Button"]:focus {
-    outline: none !important;
     box-shadow: none !important;
+    outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
 }
 
@@ -108,13 +101,14 @@ div[onclick]:active,
 [class*="Button"]:active {
     outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
 }
 
 :focus {
     outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
 }
+
 :focus-visible {
     outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
@@ -122,10 +116,10 @@ div[onclick]:active,
 
 body,
 html {
-    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     -webkit-tap-highlight-color: transparent;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0);
     tap-highlight-color: transparent;
 }
 
@@ -133,8 +127,8 @@ html {
 input[type="submit"],
 input[type="reset"],
 input[type="button"] {
+    appearance: none !important;
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-appearance: none !important;
 }
 
 // Убираем выделение для всех кликабельных элементов
@@ -143,7 +137,7 @@ input[type="button"] {
 [data-toggle],
 [data-dismiss] {
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-tap-highlight-color: rgb(0, 0, 0, 0) !important;
     tap-highlight-color: transparent !important;
 }
 
@@ -155,11 +149,10 @@ div {
 // Убираем любые возможные эффекты нажатия
 * {
     -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
+    user-select: none !important;
 }
 
 // Но разрешаем выделение текста где нужно
 p, span, h1, h2, h3, h4, h5, h6, li, label, a, blockquote, code, pre, td, th {
-    -webkit-user-select: text !important;
     user-select: text !important;
 }

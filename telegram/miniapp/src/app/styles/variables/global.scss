@@ -1,64 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap';
 
 :root {
-    --font-family-main: 'Montserrat', BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    // s
-    --font-size-s: 12px;
-    --font-line-s: 20px;
-    --font-s: var(--font-size-s) / var(--font-line-s) var(--font-family-main);
+    --font-family-main: 'Montserrat', blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue', arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    // m
-    --font-size-m: 16px;
-    --font-line-m: 24px;
-    --font-m: var(--font-size-m) / var(--font-line-m) var(--font-family-main);
+    // H1: Montserrat Bold, 24px
+    --font-size-h1: 24px;
+    --font-weight-h1: 700;
+    --font-h1: var(--font-weight-h1) var(--font-size-h1) var(--font-family-main);
 
-    // l
-    --font-size-l: 24px;
-    --font-line-l: 32px;
-    --font-l: var(--font-size-l) / var(--font-line-l) var(--font-family-main);
+    // H2: Montserrat Semibold, 18px
+    --font-size-h2: 18px;
+    --font-weight-h2: 600;
+    --font-h2: var(--font-weight-h2) var(--font-size-h2) var(--font-family-main);
 
-    // xl
-    --font-size-xl: 32px;
-    --font-line-xl: 40px;
-    --font-xl: var(--font-size-xl) / var(--font-line-xl) var(--font-family-main);
+    // Body: Montserrat Regular, 16px
+    --font-size-body: 16px;
+    --font-weight-body: 400;
+    --font-body: var(--font-weight-body) var(--font-size-body) var(--font-family-main);
+
+    // Caption: Montserrat Light, 14px
+    --font-size-caption: 14px;
+    --font-weight-caption: 300;
+    --font-caption: var(--font-weight-caption) var(--font-size-caption) var(--font-family-main);
 
     // Цвета
-    // --overlay-color: rgba(0 0 0 / 60%);
-    --red-light: #fa4d56;
-    // --red-dark: #B42020;
-    --orange: #ff862e;
-    // --yellow: #ffcc67;
-    // --purple: #8b30ff;
-    // --cyan: #4eb4ff;
-    --green: #22c55e;
-    --white: #fff;
-
-    --gradient-primary: linear-gradient(135deg, #77099E 0%, #500CE1 50%, #77099E 100%);
-
+    --red: #ff5d5d;
+    --green: #abdb9f;
     --TabBar-size: 60px;
-    --TB-padding: 85px;
-    --header-challenge-height: 60px;
+    --TB-padding: 90px;
+    --header-challenge-height: 32px;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 
     // tg save area
-    padding-top: env(safe-area-inset-top);
-padding-bottom: env(safe-area-inset-bottom);
-padding-left: env(safe-area-inset-left);
-padding-right: env(safe-area-inset-right);
 
---sheet-bg-color: #171717;
+    --sheet-bg-color: rgb(27, 27, 27, 1);
 
 
 .app_dark_theme .react-modal-sheet-container {
-    background: linear-gradient(to bottom, var(--bg-color) 100%, rgba(255, 255, 255, 0.8) 1%) !important;
+    background: linear-gradient(to bottom, var(--bg-color) 100%, rgb(255, 255, 255, 0.8) 1%) !important;
   }
 
     ::-webkit-scrollbar {
-        width: 1px;
         background-color: transparent;
+        width: 1px;
     }
 
     ::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: rgb(255, 255, 255, 0.2);
         border-radius: 12px;
     }
 
@@ -70,15 +58,15 @@ padding-right: env(safe-area-inset-right);
 html, body {
     height: 100%;
     overflow: hidden;
-    overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
   }
   
   .app {
     height: 100%;
+    -webkit-overflow-scrolling: touch;
     overflow-y: auto;
     overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
   
