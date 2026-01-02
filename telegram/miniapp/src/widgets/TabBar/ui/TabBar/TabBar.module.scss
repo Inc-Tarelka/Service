@@ -1,5 +1,5 @@
 .container {
-  background: var(--bg-color);
+  background: var(--primary-stroke);
   inset: auto 0 0;
   padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   position: fixed;
@@ -9,28 +9,42 @@
 
 .tabbar {
   backdrop-filter: blur(10px);
-  background-color: var(--bg-color);
-  border-top: 1px solid var(--stroke, rgb(0, 0, 0, 0.1));
+  background-color: var(--primary-stroke);
+  border-top: 1px solid var(--card-bg, rgb(0, 0, 0, 0.1));
   display: flex;
   height: var(--TabBar-size);
   overflow: hidden;
 }
 
 .tab {
-  --icon-primary: currentcolor;
   align-items: center;
-  color: var(--text-color, #333);
+  color: var(--text-color, #999);
   display: flex;
   flex: 1;
   justify-content: center;
-  opacity: 0.4;
   text-decoration: none;
   transition: all 0.2s ease;
 
-  &.active {
-    color: var(--accent-color);
-    opacity: 1;
+  svg {
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+    
+    :global(.fillable) {
+      fill: none;
+      transition: fill 0.2s ease;
+    }
+  }
 
+  &.active {
+    color: var(--tg-theme-accent-text-color, var(--accent-color));
+
+    svg {
+      opacity: 1;
+      
+      :global(.fillable) {
+        fill: currentcolor;
+      }
+    }
   }
 
   .tabContent {

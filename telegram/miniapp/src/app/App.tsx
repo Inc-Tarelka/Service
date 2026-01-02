@@ -1,21 +1,33 @@
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { loadAccessTokenOnce } from 'shared/api/base';
+import { routeConfig } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
+import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
+import { Navbar } from 'widgets/Navbar';
 import { AppRouter } from './providers/router';
 import { useTheme } from './providers/ThemeProvider/lib/useTheme';
-import { RootStoreContext } from './StoreProvider/ui/StoreProvider';
+import { RootStoreContext, useStore } from './StoreProvider/ui/StoreProvider';
 
 const rootStore = new RootStore();
 
 const AppContent = observer(() => {
   const { theme } = useTheme();
-  // @ts-expect-error: Он используется при вмонтировании в компонент App.tsx, поэтому нет типа и аргумента
+  const location = useLocation();
+  // @ts-expect-error: Он используется при вмонтировании в компонент App.tsx
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isAuthenticated } = useAuth();
+  const { shouldShowNavbar } = useViewport();
+  const { viewportStore } = useStore();
+
+  // Определяем текущий роут
+  const currentRoute = Object.values(routeConfig).find(
+    (route) => route.path === location.pathname,
+  );
 
   useEffect(() => {
     WebApp.ready();
@@ -24,10 +36,26 @@ const AppContent = observer(() => {
     WebApp.disableVerticalSwipes();
     WebApp.enableClosingConfirmation();
     WebApp.SettingsButton.show();
-  }, []);
+
+    viewportStore.init();
+
+    return () => {
+      viewportStore.destroy();
+    };
+  }, [viewportStore]);
+
+  const renderNavbar = () => {
+    if (!shouldShowNavbar) return null;
+    if (currentRoute?.hideNavbar) {
+      return <Navbar spacerOnly />;
+    }
+
+    return <Navbar />;
+  };
 
   return (
     <div className={classNames('app', {}, [theme])}>
+      {renderNavbar()}
       <div className="content-page">
         <AppRouter />
       </div>

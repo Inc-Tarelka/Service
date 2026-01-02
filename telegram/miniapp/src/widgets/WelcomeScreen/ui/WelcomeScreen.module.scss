@@ -1,44 +1,25 @@
 .screen {
   align-items: center;
-  background: var(--gradient-primary);
-  color: var(--white);
+  background: var(--bg-color) url('shared/assets/bg/bg.svg') no-repeat center center;
+  background-size: cover;
   display: flex;
-  flex-direction: column;
   height: 100%;
-  overflow-y: hidden;
-  
-  padding-bottom: 1.25rem;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
-.content {
+.logoContainer {
   align-items: center;
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
-.title {
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 1.2;
-  text-align: center;
-  
-  &Marked {
-    font-style: italic;
-  }
-}
-
-.button {
-    box-sizing: border-box;
-    display: block;
-    min-width: 100%;
-    padding: 1.25rem;
-    width: 100%;
-
-    &Go {
-        min-width: 100%;
-        width: 100%;
-    }
+.logo {
+  height: auto;
+  object-fit: contain;
+  width: 120px;
 }

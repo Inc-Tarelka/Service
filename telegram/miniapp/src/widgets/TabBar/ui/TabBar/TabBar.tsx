@@ -5,21 +5,17 @@ import classNames from 'shared/library/ClassNames/classNames';
 import s from './TabBar.module.scss';
 
 export interface TabProps {
-  title: string;
   path: string;
   icon: ReactNode;
 }
 
 const Tab = (props: TabProps) => {
-  const { title, path, icon } = props;
+  const { path, icon } = props;
   const match = useMatch(path);
 
   return (
     <NavLink to={path} className={classNames(s.tab, { [s.active]: !!match })}>
-      <div className={s.tabContent}>
-        {icon}
-        <span className={s.tabLabel}>{title}</span>
-      </div>
+      <div className={s.tabContent}>{icon}</div>
     </NavLink>
   );
 };

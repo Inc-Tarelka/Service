@@ -1,17 +1,17 @@
-import { createTheme, MantineColorsTuple } from '@mantine/core';
+import { createTheme, MantineColorsTuple, MantineTheme } from '@mantine/core';
 
 // Кастомная палитра основного цвета (фиолетовый)
 const primaryColor: MantineColorsTuple = [
-  '#f5f0ff',
-  '#e8dcff',
-  '#d4c4ff',
-  '#bb99ff',
-  '#a77fff',
-  '#8b5cf6',
-  '#7c3aed',
-  '#6d28d9',
-  '#5b21b6',
-  '#4c1d95',
+  '#f0fdf4',
+  '#dcfce7',
+  '#bbf7d0',
+  '#86efac',
+  '#ABDB9F',
+  '#22c55e',
+  '#16a34a',
+  '#15803d',
+  '#166534',
+  '#14532d',
 ];
 
 // Глобальные стили для устранения синего выделения на Android
@@ -31,12 +31,24 @@ if (typeof document !== 'undefined') {
 
 export const mantineTheme = createTheme({
   // Основной цвет
-  primaryColor: 'violet',
-  primaryShade: 3, // #bb99ff
+  primaryColor: 'green',
+  primaryShade: 4, // #abdb9f
 
   // Кастомные цвета
   colors: {
-    violet: primaryColor,
+    green: primaryColor,
+    red: [
+      '#ffeecf', // 0
+      '#ffeecf', // 1
+      '#ff8686', // 2
+      '#ff5d5d', // 3 (Основной Error)
+      '#ff5d5d', // 4
+      '#ff5d5d', // 5
+      '#ff5d5d', // 6
+      '#ff5d5d', // 7
+      '#ff5d5d', // 8
+      '#ff5d5d', // 9
+    ],
   },
 
   // Шрифты
@@ -66,11 +78,12 @@ export const mantineTheme = createTheme({
       defaultProps: {
         radius: 'md',
       },
-      styles: {
+      styles: (_theme: MantineTheme, props: any) => ({
         root: {
           fontWeight: 500,
+          color: props.variant === 'filled' ? 'var(--bg-color)' : undefined,
         },
-      },
+      }),
     },
 
     Card: {
@@ -80,14 +93,15 @@ export const mantineTheme = createTheme({
       },
       styles: {
         root: {
-          backgroundColor: 'var(--mantine-color-dark-7)',
+          backgroundColor: 'var(--primary-stroke)',
         },
       },
     },
 
     Input: {
       defaultProps: {
-        radius: 'md',
+        radius: 'xl',
+        size: 'sm',
       },
     },
 
@@ -146,6 +160,51 @@ export const mantineTheme = createTheme({
       defaultProps: {
         radius: 'md',
       },
+    },
+    Badge: {
+      defaultProps: {
+        radius: 'md',
+      },
+      styles: (_theme: MantineTheme, props: any) => ({
+        root: {
+          fontWeight: 500,
+          color:
+            props.variant === 'filled'
+              ? '#000000'
+              : 'var(--text-color-secondary)',
+          backgroundColor:
+            props.variant === 'outline' ? 'var(--primary-stroke)' : undefined,
+          border:
+            props.variant === 'outline'
+              ? '1px solid var(--card-bg)'
+              : undefined,
+        },
+      }),
+    },
+    Checkbox: {
+      defaultProps: {
+        radius: 'xs',
+        color: 'green',
+      },
+      styles: (_theme: MantineTheme, _props: any) => ({
+        input: {
+          borderColor: 'var(--mantine-color-green-filled)',
+          cursor: 'pointer',
+        },
+        icon: {
+          color: 'var(--bg-color)',
+        },
+        label: {
+          fontWeight: 500,
+          fontSize: 'var(--font-h1)',
+          lineHeight: 1.2,
+          paddingLeft: 12,
+        },
+        description: {
+          marginTop: 0,
+          paddingLeft: 12,
+        },
+      }),
     },
   },
 

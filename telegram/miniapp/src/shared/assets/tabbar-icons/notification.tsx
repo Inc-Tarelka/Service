@@ -1,0 +1,20 @@
+export default function NotificationIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M8.625 17.625C8.625 22.125 15.375 22.125 15.375 17.625M12 2.625C8.29796 2.625 5.625 4.875 5.625 7.875V12.375L2.625 17.625H21.375L18.375 12.375V7.875C18.375 4.875 16.6259 2.625 12 2.625Z"
+        className="fillable"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
