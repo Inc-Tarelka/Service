@@ -30,6 +30,7 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
   },
   [AppRoutes.WELCOME]: {
     path: RoutePath.welcome,
+    hideLayout: true,
     element: <WelcomePage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ

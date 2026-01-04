@@ -8,5 +8,10 @@ export const useViewport = () => {
     viewportHeight: viewportStore.viewportHeight,
     shouldShowNavbar: viewportStore.shouldShowNavbar,
     isFullscreen: viewportStore.isFullscreen,
+    isDesktop: viewportStore.isDesktop,
+    isMobile: viewportStore.isMobile,
+    isTablet: viewportStore.isTabletDevice,
+    isAndroid: viewportStore.isAndroidDevice,
+    isIOS: viewportStore.isIOSDevice,
   };
 };
