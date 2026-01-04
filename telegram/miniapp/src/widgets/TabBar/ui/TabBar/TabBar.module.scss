@@ -36,7 +36,7 @@
   }
 
   &.active {
-    color: var(--tg-theme-accent-text-color, var(--accent-color));
+    color: var(--accent-color);
 
     svg {
       opacity: 1;

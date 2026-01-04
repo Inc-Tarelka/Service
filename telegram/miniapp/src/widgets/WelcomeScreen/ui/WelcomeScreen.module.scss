@@ -1,13 +1,24 @@
 .screen {
   align-items: center;
-  background: var(--bg-color) url('shared/assets/bg/bg.svg') no-repeat center center;
-  background-size: cover;
+  background: var(--bg-color);
   display: flex;
-  height: 100%;
+  inset: 0;
   justify-content: center;
   overflow: hidden;
-  position: relative;
+  position: fixed;
+  transform: translateZ(0);
+  will-change: opacity;
+  z-index: 9999;
+}
+
+.bg {
+  height: 100%;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
   width: 100%;
+  z-index: 0;
 }
 
 .logoContainer {
@@ -15,11 +26,16 @@
   display: flex;
   justify-content: center;
   position: relative;
+  transform: translateZ(0);
+  will-change: transform, opacity;
   z-index: 2;
 }
 
 .logo {
   height: auto;
+  image-rendering: -webkit-optimize-contrast;
+  max-width: 200px;
   object-fit: contain;
-  width: 120px;
+  -webkit-user-drag: none;
+  user-select: none;
 }

@@ -16,7 +16,7 @@ interface UseBackButtonProps {
   onBack?: () => void;
   /**
    * Путь для перехода, если история пуста
-   * @default '/main'
+   * @default '/' (главная страница)
    */
   fallbackPath?: string;
   /**
@@ -30,7 +30,7 @@ interface UseBackButtonProps {
  * Хук для управления кнопкой "назад" в Telegram WebApp
  *
  * @example
- * // Стандартное использование (fallback в /main)
+ * // Стандартное использование (fallback на главную)
  * useBackButton();
  *
  * @example
@@ -38,9 +38,9 @@ interface UseBackButtonProps {
  * useBackButton('/training');
  *
  * @example
- * // Всегда идти в /main, игнорируя историю
+ * // Всегда идти на главную, игнорируя историю
  * useBackButton({
- *   fallbackPath: '/main',
+ *   fallbackPath: '/',
  *   forceNavigate: true
  * });
  *
