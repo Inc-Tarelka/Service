@@ -10,6 +10,14 @@
   right: 0;
   top: 0;
   z-index: 100;
+
+  &.desktop {
+    height: 0; 
+
+    .logo {
+        height: 0; 
+    }
+  }
 }
 
 .logo {
@@ -18,5 +26,9 @@
 }
 
 .spacer {
-  width: 100%;
+    width: 100%;
+
+    &.desktop {
+      height: 80px; 
+    }
 }

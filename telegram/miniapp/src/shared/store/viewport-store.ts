@@ -1,10 +1,29 @@
-import { makeAutoObservable } from 'mobx';
 import WebApp from '@twa-dev/sdk';
+import { makeAutoObservable } from 'mobx';
+import {
+  isAndroid,
+  isDesktop,
+  isIOS,
+  isMobile,
+  isTablet,
+  osName,
+  osVersion,
+} from 'react-device-detect';
 
 export class ViewportStore {
   isExpanded: boolean = false;
   viewportHeight: number = 0;
   isFullscreen: boolean = false;
+  platform: string = 'unknown';
+
+  // Device detection flags
+  readonly isDesktopDevice = isDesktop;
+  readonly isMobileDevice = isMobile;
+  readonly isTabletDevice = isTablet;
+  readonly isAndroidDevice = isAndroid;
+  readonly isIOSDevice = isIOS;
+  readonly osName = osName;
+  readonly osVersion = osVersion;
 
   constructor() {
     makeAutoObservable(this);
@@ -32,10 +51,23 @@ export class ViewportStore {
     this.isExpanded = WebApp.isExpanded;
     this.viewportHeight = WebApp.viewportHeight;
     this.isFullscreen = WebApp.isFullscreen;
+    this.platform = WebApp.platform;
   }
 
   get shouldShowNavbar(): boolean {
+    if (this.isDesktopDevice) {
+      return true;
+    }
+
     return this.isFullscreen;
+  }
+
+  get isDesktop(): boolean {
+    return this.isDesktopDevice;
+  }
+
+  get isMobile(): boolean {
+    return this.isMobileDevice;
   }
 
   destroy() {
