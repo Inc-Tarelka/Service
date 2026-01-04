@@ -1,0 +1,99 @@
+.confirmCodeForm {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  line-height: 1.4;
+}
+
+.titleGroup {
+  margin-bottom: 36px;
+}
+
+.phone {
+  color: var(--green);
+}
+
+.codeInputWrapper {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.codeInput {
+  background: var(--tertiary-bg-color);
+  border: 2px solid var(--card-bg);
+  border-radius: 24px;
+  caret-color: var(--green);
+  color: var(--text-color);
+  font-size: 24px;
+  font-weight: 600;
+  gap: 4px;
+  height: 60px;
+  outline: none;
+  text-align: center;
+  width: 50px;
+
+  &:focus {
+    box-shadow: 0 0 0 2px var(--green);
+  }
+
+  &::placeholder {
+    color: var(--tertiary-text-color);
+  }
+}
+
+.error {
+  color: var(--red);
+  font: var(--font-caption);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.resendWrapper {
+  padding-bottom: 0;
+  text-align: left;
+}
+
+.resendText {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  margin: 0 0 4px;
+}
+
+.resendLink {
+  color: var(--green);
+  cursor: pointer;
+  font: var(--font-caption);
+
+  &:active {
+    opacity: 0.7;
+  }
+
+  &.disabled {
+    color: var(--tertiary-text-color);
+    cursor: not-allowed;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}

@@ -1,0 +1,85 @@
+.loginForm {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  margin: 0 0 24px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  align-items: center;
+  color: var(--text-color);
+  display: flex;
+  font: var(--font-caption);
+  justify-content: space-between;
+}
+
+.forgotLink {
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  font: var(--font-caption);
+  transition: opacity 0.2s;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+
+.passwordWrapper {
+  position: relative;
+}
+
+.eyeButton {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.registerLink {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  text-align: left;
+
+  span {
+    color: var(--green);
+    cursor: pointer;
+    
+    &:active {
+      opacity: 0.7;
+    }
+  }
+}
+

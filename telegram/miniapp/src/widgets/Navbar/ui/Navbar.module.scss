@@ -26,9 +26,10 @@
 }
 
 .spacer {
-    width: 100%;
+  height: var(--Navbar-size); // Match navbar height
+  width: 100%;
 
-    &.desktop {
-      height: 80px; 
-    }
+  &.desktop {
+    height: 80px; 
+  }
 }

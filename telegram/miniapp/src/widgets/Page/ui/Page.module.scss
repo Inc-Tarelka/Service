@@ -1,14 +1,25 @@
 .Page {
-    flex-grow: 1;
-    height: calc(100dvh - var(--TB-padding));
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-    
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
-    padding: 0 1rem;
-    
-    scroll-behavior: smooth;
-    transform: translateZ(0);
-    width: 100%;
+  
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 100dvh;
+  -webkit-overflow-scrolling: touch;
+  overflow: hidden auto;
+  
+  overscroll-behavior: none;
+  overscroll-behavior: none;
+  padding: 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 32px);
+  padding-top: calc(var(--Navbar-size, 130px) + env(safe-area-inset-top));
+  
+  scroll-behavior: smooth;
+  
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+  
+  transform: translateZ(0);
+  width: 100%;
+  will-change: scroll-position;
 }

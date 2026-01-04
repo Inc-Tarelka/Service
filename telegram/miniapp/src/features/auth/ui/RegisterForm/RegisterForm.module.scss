@@ -1,0 +1,96 @@
+.registerForm {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  margin: 0 0 16px;
+}
+
+.typeSelector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.typeButton {
+  background: transparent !important;
+  border: 1px solid var(--text-color) !important;
+  color: var(--text-color) !important;
+  font: var(--font-body) !important;
+  height: 40px !important;
+  transition: all 0.2s !important;
+
+  &.active {
+    background: var(--green) !important;
+    border-color: var(--green) !important;
+    color: var(--bg-color) !important;
+  }
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-caption);
+}
+
+
+
+.termsWrapper {
+  margin-top: 8px;
+}
+
+.termsCheckbox {
+  .mantine-Checkbox-label {
+    color: var(--text-color-secondary) !important;
+    font: var(--font-caption) !important;
+  }
+}
+
+.termsLink {
+  color: var(--green);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.termsError {
+  color: var(--red);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.loginLink {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  text-align: left;
+
+  span {
+    color: var(--green);
+    cursor: pointer;
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+}

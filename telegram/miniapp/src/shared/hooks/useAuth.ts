@@ -22,7 +22,7 @@ export const useAuth = () => {
 
         if (token !== '') {
           if (
-            location.pathname === RoutePath.welcome
+            location.pathname === RoutePath.auth
             // location.pathname === RoutePath.auth
           ) {
             navigate(RoutePath.main);
@@ -30,10 +30,10 @@ export const useAuth = () => {
           setIsAuthenticated(true);
         } else {
           if (
-            location.pathname !== RoutePath.welcome
+            location.pathname !== RoutePath.auth
             // location.pathname !== RoutePath.auth
           ) {
-            navigate(RoutePath.welcome);
+            navigate(RoutePath.auth);
           }
           setIsAuthenticated(false);
         }

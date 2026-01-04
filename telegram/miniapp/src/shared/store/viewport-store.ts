@@ -55,11 +55,7 @@ export class ViewportStore {
   }
 
   get shouldShowNavbar(): boolean {
-    if (this.isDesktopDevice) {
-      return true;
-    }
-
-    return this.isFullscreen;
+    return true;
   }
 
   get isDesktop(): boolean {

@@ -1,0 +1,72 @@
+.profileForm {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  margin: 0 0 16px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-caption);
+}
+
+.optional {
+  color: var(--tertiary-text-color);
+  font: var(--font-caption);
+}
+
+.input {
+  input {
+    background: var(--card-bg) !important;
+    border: none !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.select {
+  input {
+    background: var(--card-bg) !important;
+    border: none !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}

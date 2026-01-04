@@ -41,11 +41,11 @@ export const setAccessToken = (token: string | undefined) => {
     WebApp.CloudStorage &&
     (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
   ) {
-    WebApp.CloudStorage.setItem('access_token', token, (error) => {
-      if (error) {
-        console.error('Error saving token to CloudStorage:', error);
-      }
-    });
+    // WebApp.CloudStorage.setItem('access_token', token, (error) => {
+    //   if (error) {
+    //     console.error('Error saving token to CloudStorage:', error)
+    //   }
+    // })
   }
 };
 
@@ -144,7 +144,7 @@ function createPrivateInstance(): AxiosInstance {
       if (error.response?.status === 400 || error.response?.status === 401) {
         console.log('Clearing token due to auth error');
         clearAccessToken();
-        window.location.href = RoutePath.welcome;
+        window.location.href = RoutePath.auth;
         return Promise.reject(error);
       }
 

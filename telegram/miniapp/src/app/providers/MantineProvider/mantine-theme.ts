@@ -1,4 +1,5 @@
 import { createTheme, MantineColorsTuple, MantineTheme } from '@mantine/core';
+import { PasswordVisibilityToggle } from './PasswordVisibilityToggle';
 
 // Кастомная палитра основного цвета (фиолетовый)
 const primaryColor: MantineColorsTuple = [
@@ -103,6 +104,13 @@ export const mantineTheme = createTheme({
         radius: 'xl',
         size: 'sm',
       },
+      styles: {
+        input: {
+          color: 'var(--text-color)',
+          background: 'var(--tertiary-bg-color)',
+          border: '2px solid var(--card-bg)',
+        },
+      },
     },
 
     TextInput: {
@@ -205,6 +213,18 @@ export const mantineTheme = createTheme({
           paddingLeft: 12,
         },
       }),
+    },
+    PasswordInput: {
+      defaultProps: {
+        visibilityToggleIcon: PasswordVisibilityToggle,
+      },
+      styles: {
+        input: {
+          color: 'var(--text-color)',
+          background: 'var(--tertiary-bg-color)',
+          border: '2px solid var(--card-bg)',
+        },
+      },
     },
   },
 
