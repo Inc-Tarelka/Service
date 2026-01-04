@@ -1,14 +1,5 @@
-import { makeAutoObservable } from 'mobx';
-import WebApp from '@twa-dev/sdk';
 import { WebAppInitData } from '@twa-dev/types';
-
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: typeof WebApp;
-    };
-  }
-}
+import { makeAutoObservable } from 'mobx';
 
 export class WebAppStore {
   initDataUnsafe: WebAppInitData | null = null;
@@ -20,7 +11,7 @@ export class WebAppStore {
   }
 
   setInitData() {
-    const webApp = window.Telegram.WebApp;
+    const webApp = window.Telegram?.WebApp;
     this.initDataUnsafe = webApp?.initDataUnsafe ?? null;
     this.initData = webApp?.initData ?? null;
   }

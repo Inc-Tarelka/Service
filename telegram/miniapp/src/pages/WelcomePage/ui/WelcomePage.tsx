@@ -1,6 +1,6 @@
 import { Page } from 'widgets/Page/ui/Page';
-import { WelcomeScreen } from 'widgets/WelcomeScreen';
 import s from './WelcomePage.module.scss';
+import { WelcomeScreen } from 'widgets/WelcomeScreen';
 
 export const WelcomePage = () => {
   return (

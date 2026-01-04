@@ -9,9 +9,11 @@ import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
 import { Navbar } from 'widgets/Navbar';
+import { AppLoader } from './providers';
 import { AppRouter } from './providers/router';
 import { useTheme } from './providers/ThemeProvider/lib/useTheme';
 import { RootStoreContext, useStore } from './StoreProvider/ui/StoreProvider';
+import { WelcomeScreen } from 'widgets/WelcomeScreen';
 
 const rootStore = new RootStore();
 
@@ -24,15 +26,12 @@ const AppContent = observer(() => {
   const { shouldShowNavbar } = useViewport();
   const { viewportStore } = useStore();
 
-  // Определяем текущий роут
   const currentRoute = Object.values(routeConfig).find(
     (route) => route.path === location.pathname,
   );
 
   useEffect(() => {
-    WebApp.ready();
     loadAccessTokenOnce();
-    WebApp.expand();
     WebApp.disableVerticalSwipes();
     WebApp.enableClosingConfirmation();
     WebApp.SettingsButton.show();
@@ -66,7 +65,9 @@ const AppContent = observer(() => {
 function App() {
   return (
     <RootStoreContext.Provider value={rootStore}>
-      <AppContent />
+      <AppLoader splashScreen={<WelcomeScreen />} minDisplayTime={800}>
+        <AppContent />
+      </AppLoader>
     </RootStoreContext.Provider>
   );
 }
