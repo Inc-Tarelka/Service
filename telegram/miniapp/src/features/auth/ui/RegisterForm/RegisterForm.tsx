@@ -1,10 +1,10 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
 import { AccountType } from '../../model/types';
-import { registerSchema, validateForm } from '../../model/validation';
+import { registerSchema } from '../../model/validation';
 
 import s from './RegisterForm.module.scss';
 
@@ -19,47 +19,38 @@ interface RegisterFormProps {
 
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
-    const [accountType, setAccountType] = useState<AccountType>('specialist');
-    const [login, setLogin] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [agreeToTerms, setAgreeToTerms] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const {
+      values,
+      errors,
+      isSubmitting,
+      handleChange,
+      handleInputChange,
+      handleSubmit,
+      setErrors,
+    } = useFormWithValidation({
+      initialValues: {
+        accountType: 'specialist' as AccountType,
+        login: '',
+        password: '',
+        confirmPassword: '',
+        agreeToTerms: false,
+      },
+      schema: registerSchema,
+      onSubmit: async (values) => {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const handleSubmit = async () => {
-      const validation = validateForm(registerSchema, {
-        accountType,
-        login,
-        password,
-        confirmPassword,
-        agreeToTerms,
-      });
-
-      if (!validation.success) {
-        setErrors(validation.errors);
-        return;
-      }
-
-      setErrors({});
-      setIsLoading(true);
-
-      try {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        onSuccess({
-          accountType,
-          login,
-          password,
-        });
-      } catch (error) {
-        console.error('Register error:', error);
-        setErrors({ login: 'Ошибка регистрации' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+          onSuccess({
+            accountType: values.accountType,
+            login: values.login,
+            password: values.password,
+          });
+        } catch (error) {
+          console.error('Register error:', error);
+          setErrors({ login: 'Ошибка регистрации' });
+        }
+      },
+    });
 
     return (
       <Page className={s.registerForm}>
@@ -68,16 +59,16 @@ export const RegisterForm = observer(
 
           <div className={s.typeSelector}>
             <Button
-              className={`${s.typeButton} ${accountType === 'specialist' ? s.active : ''}`}
-              onClick={() => setAccountType('specialist')}
+              className={`${s.typeButton} ${values.accountType === 'specialist' ? s.active : ''} `}
+              onClick={() => handleChange('accountType', 'specialist')}
               variant="outline"
               radius="xl"
             >
               Специалист
             </Button>
             <Button
-              className={`${s.typeButton} ${accountType === 'company' ? s.active : ''}`}
-              onClick={() => setAccountType('company')}
+              className={`${s.typeButton} ${values.accountType === 'company' ? s.active : ''} `}
+              onClick={() => handleChange('accountType', 'company')}
               variant="outline"
               radius="xl"
             >
@@ -89,11 +80,8 @@ export const RegisterForm = observer(
             <span className={s.label}>Логин</span>
             <TextInput
               classNames={{ input: s.input }}
-              value={login}
-              onChange={(e) => {
-                setLogin(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, login: '' }));
-              }}
+              value={values.login}
+              onChange={handleInputChange('login')}
               placeholder="Введите логин"
               error={errors.login}
               radius="xl"
@@ -105,11 +93,8 @@ export const RegisterForm = observer(
             <span className={s.label}>Пароль</span>
             <PasswordInput
               classNames={{ input: s.input }}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, password: '' }));
-              }}
+              value={values.password}
+              onChange={handleInputChange('password')}
               placeholder="Минимум 8 символов"
               error={errors.password}
               radius="xl"
@@ -121,11 +106,8 @@ export const RegisterForm = observer(
             <span className={s.label}>Повторите пароль</span>
             <PasswordInput
               classNames={{ input: s.input }}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-              }}
+              value={values.confirmPassword}
+              onChange={handleInputChange('confirmPassword')}
               placeholder="Повторите пароль"
               error={errors.confirmPassword}
               radius="xl"
@@ -135,11 +117,10 @@ export const RegisterForm = observer(
 
           <div className={s.termsWrapper}>
             <Checkbox
-              checked={agreeToTerms}
-              onChange={(e) => {
-                setAgreeToTerms(e.currentTarget.checked);
-                setErrors((prev) => ({ ...prev, agreeToTerms: '' }));
-              }}
+              checked={values.agreeToTerms}
+              onChange={(e) =>
+                handleChange('agreeToTerms', e.currentTarget.checked)
+              }
               label={
                 <>
                   Нажимая "Продолжить", вы соглашаетесь c{' '}
@@ -161,7 +142,7 @@ export const RegisterForm = observer(
           <Button
             className={s.submitButton}
             onClick={handleSubmit}
-            loading={isLoading}
+            loading={isSubmitting}
             fullWidth
             radius="xl"
             variant="filled"

@@ -1,14 +1,14 @@
 import { Button, Select, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
 import { authStore } from '../../model/AuthStore';
 import { CITIES, SPECIALIZATIONS } from '../../model/types';
-import { profileSchema, validateForm } from '../../model/validation';
+import { profileSchema } from '../../model/validation';
 
-import s from './ProfileForm.module.scss';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
+import s from './ProfileForm.module.scss';
 
 interface ProfileFormProps {
   onSuccess: (data: {
@@ -21,52 +21,42 @@ interface ProfileFormProps {
 }
 
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [specialization, setSpecialization] = useState<string | null>(
-    'Вариант по умолчанию',
-  );
-  const [city, setCity] = useState<string | null>('Москва');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
   const isCompany = authStore.isCompany;
 
-  const handleSubmit = async () => {
-    const validation = validateForm(profileSchema, {
-      name,
-      lastName: lastName || undefined,
-      nickname,
-      specialization: specialization || '',
-      city: city || '',
-    });
+  const {
+    values,
+    errors,
+    isSubmitting,
+    handleChange,
+    handleInputChange,
+    handleSubmit,
+    setErrors,
+  } = useFormWithValidation({
+    initialValues: {
+      name: '',
+      lastName: '',
+      nickname: '',
+      specialization: 'Вариант по умолчанию',
+      city: 'Москва',
+    },
+    schema: profileSchema,
+    onSubmit: async (values) => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (!validation.success) {
-      setErrors(validation.errors);
-      return;
-    }
-
-    setErrors({});
-    setIsLoading(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      onSuccess({
-        name,
-        lastName,
-        nickname,
-        specialization: specialization || '',
-        city: city || '',
-      });
-    } catch (error) {
-      console.error('Profile error:', error);
-      setErrors({ name: 'Ошибка сохранения профиля' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        onSuccess({
+          name: values.name,
+          lastName: values.lastName || '',
+          nickname: values.nickname,
+          specialization: values.specialization || '',
+          city: values.city || '',
+        });
+      } catch (error) {
+        console.error('Profile error:', error);
+        setErrors({ name: 'Ошибка сохранения профиля' });
+      }
+    },
+  });
 
   return (
     <Page className={s.profileForm}>
@@ -79,11 +69,8 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           </span>
           <TextInput
             classNames={{ input: s.input }}
-            value={name}
-            onChange={(e) => {
-              setName(e.currentTarget.value);
-              setErrors((prev) => ({ ...prev, name: '' }));
-            }}
+            value={values.name}
+            onChange={handleInputChange('name')}
             placeholder={isCompany ? 'Название компании' : 'Ваше имя'}
             error={errors.name}
             radius="xl"
@@ -99,8 +86,8 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
             </div>
             <TextInput
               classNames={{ input: s.input }}
-              value={lastName}
-              onChange={(e) => setLastName(e.currentTarget.value)}
+              value={values.lastName}
+              onChange={handleInputChange('lastName')}
               placeholder="Ваша фамилия"
               radius="xl"
               size="lg"
@@ -112,11 +99,8 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           <span className={s.label}>Никнейм</span>
           <TextInput
             classNames={{ input: s.input }}
-            value={nickname}
-            onChange={(e) => {
-              setNickname(e.currentTarget.value);
-              setErrors((prev) => ({ ...prev, nickname: '' }));
-            }}
+            value={values.nickname}
+            onChange={handleInputChange('nickname')}
             placeholder="@никнейм"
             error={errors.nickname}
             radius="xl"
@@ -128,8 +112,8 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           <span className={s.label}>Специализация</span>
           <Select
             classNames={{ input: s.select }}
-            value={specialization}
-            onChange={setSpecialization}
+            value={values.specialization}
+            onChange={(val) => handleChange('specialization', val)}
             rightSection={<ChevronDownIcon />}
             data={SPECIALIZATIONS}
             error={errors.specialization}
@@ -142,9 +126,9 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           <span className={s.label}>Город</span>
           <Select
             classNames={{ input: s.select }}
-            value={city}
+            value={values.city}
             rightSection={<ChevronDownIcon />}
-            onChange={setCity}
+            onChange={(val) => handleChange('city', val)}
             data={CITIES}
             error={errors.city}
             radius="xl"
@@ -157,7 +141,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         <Button
           className={s.submitButton}
           onClick={handleSubmit}
-          loading={isLoading}
+          loading={isSubmitting}
           fullWidth
           radius="xl"
           size="lg"

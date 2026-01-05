@@ -1,11 +1,11 @@
 import { Button, PasswordInput, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 import { Page } from 'widgets/Page';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { setNewPasswordRequest } from '../../api/authApi';
 import { authStore } from '../../model/AuthStore';
-import { newPasswordSchema, validateForm } from '../../model/validation';
+import { newPasswordSchema } from '../../model/validation';
 
 import s from './NewPasswordForm.module.scss';
 
@@ -15,45 +15,36 @@ interface NewPasswordFormProps {
 
 export const NewPasswordForm = observer(
   ({ onSuccess }: NewPasswordFormProps) => {
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    const handleSubmit = async () => {
-      const validation = validateForm(newPasswordSchema, {
-        password,
-        confirmPassword,
-      });
-
-      if (!validation.success) {
-        setErrors(validation.errors);
-        return;
-      }
-
-      setErrors({});
-      setIsLoading(true);
-
-      try {
-        const response = await setNewPasswordRequest({
-          token: authStore.tempData.resetToken || '',
-          password,
-        });
-
-        if (response.success) {
-          onSuccess(response.token);
-        } else {
-          setErrors({
-            password: response.message || 'Ошибка сохранения пароля',
+    const {
+      values,
+      errors,
+      isSubmitting,
+      handleInputChange,
+      handleSubmit,
+      setErrors,
+    } = useFormWithValidation({
+      initialValues: { password: '', confirmPassword: '' },
+      schema: newPasswordSchema,
+      onSubmit: async (values) => {
+        try {
+          const response = await setNewPasswordRequest({
+            token: authStore.tempData.resetToken || '',
+            password: values.password,
           });
+
+          if (response.success) {
+            onSuccess(response.token);
+          } else {
+            setErrors({
+              password: response.message || 'Ошибка сохранения пароля',
+            });
+          }
+        } catch (error) {
+          console.error('Set password error:', error);
+          setErrors({ password: 'Ошибка сохранения пароля' });
         }
-      } catch (error) {
-        console.error('Set password error:', error);
-        setErrors({ password: 'Ошибка сохранения пароля' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      },
+    });
 
     return (
       <Page className={s.newPasswordForm}>
@@ -68,11 +59,8 @@ export const NewPasswordForm = observer(
             <span className={s.label}>Пароль</span>
             <PasswordInput
               classNames={{ input: s.input }}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, password: '' }));
-              }}
+              value={values.password}
+              onChange={handleInputChange('password')}
               placeholder="Минимум 8 символов"
               error={errors.password}
               radius="xl"
@@ -84,11 +72,8 @@ export const NewPasswordForm = observer(
             <span className={s.label}>Повторите пароль</span>
             <PasswordInput
               classNames={{ input: s.input }}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-              }}
+              value={values.confirmPassword}
+              onChange={handleInputChange('confirmPassword')}
               placeholder="Повторите пароль"
               error={errors.confirmPassword}
               radius="xl"
@@ -101,7 +86,7 @@ export const NewPasswordForm = observer(
           <Button
             className={s.submitButton}
             onClick={handleSubmit}
-            loading={isLoading}
+            loading={isSubmitting}
             fullWidth
             radius="xl"
             size="lg"

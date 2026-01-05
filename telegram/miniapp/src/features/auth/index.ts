@@ -34,7 +34,6 @@ export {
   profileSchema,
   registerSchema,
   resetSchema,
-  validateForm,
 } from './model/validation';
 
 // API

@@ -1,10 +1,10 @@
 import { Button, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 import { Page } from 'widgets/Page';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { resetPasswordRequest } from '../../api/authApi';
-import { resetSchema, validateForm } from '../../model/validation';
+import { resetSchema } from '../../model/validation';
 
 import s from './PasswordResetForm.module.scss';
 
@@ -14,38 +14,33 @@ interface PasswordResetFormProps {
 
 export const PasswordResetForm = observer(
   ({ onSuccess }: PasswordResetFormProps) => {
-    const [login, setLogin] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const {
+      values,
+      errors,
+      isSubmitting,
+      handleInputChange,
+      handleSubmit,
+      setErrors,
+    } = useFormWithValidation({
+      initialValues: { login: '' },
+      schema: resetSchema,
+      onSubmit: async (values) => {
+        try {
+          const response = await resetPasswordRequest({ phone: values.login });
 
-    const handleSubmit = async () => {
-      const validation = validateForm(resetSchema, { login });
-
-      if (!validation.success) {
-        setErrors(validation.errors);
-        return;
-      }
-
-      setErrors({});
-      setIsLoading(true);
-
-      try {
-        const response = await resetPasswordRequest({ phone: login });
-
-        if (response.success) {
-          onSuccess({
-            login,
-            phone: '+79991234567',
-            token: response.token,
-          });
+          if (response.success) {
+            onSuccess({
+              login: values.login,
+              phone: '+79991234567',
+              token: response.token,
+            });
+          }
+        } catch (error) {
+          console.error('Reset error:', error);
+          setErrors({ login: 'Пользователь не найден' });
         }
-      } catch (error) {
-        console.error('Reset error:', error);
-        setErrors({ login: 'Пользователь не найден' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      },
+    });
 
     return (
       <Page className={s.passwordResetForm}>
@@ -56,11 +51,8 @@ export const PasswordResetForm = observer(
             <span className={s.label}>Логин</span>
             <TextInput
               classNames={{ input: s.input }}
-              value={login}
-              onChange={(e) => {
-                setLogin(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, login: '' }));
-              }}
+              value={values.login}
+              onChange={handleInputChange('login')}
               placeholder="Введите логин"
               error={errors.login}
               radius="xl"
@@ -73,7 +65,7 @@ export const PasswordResetForm = observer(
           <Button
             className={s.submitButton}
             onClick={handleSubmit}
-            loading={isLoading}
+            loading={isSubmitting}
             fullWidth
             radius="xl"
             variant="filled"

@@ -2,10 +2,12 @@ import { Button, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
 import { verifyCodeRequest } from '../../api/authApi';
 import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
+import { confirmCodeSchema } from '../../model/validation';
 
 import s from './ConfirmCodeForm.module.scss';
 
@@ -20,11 +22,49 @@ const CODE_LENGTH = 4;
 
 export const ConfirmCodeForm = observer(
   ({ type = 'login', onSuccess, onResend }: ConfirmCodeFormProps) => {
-    const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const {
+      values,
+      errors,
+      isSubmitting,
+      handleChange,
+      handleSubmit,
+      setErrors,
+      setValues,
+    } = useFormWithValidation({
+      initialValues: { code: '' },
+      schema: confirmCodeSchema,
+      onSubmit: async (values) => {
+        try {
+          const response = await verifyCodeRequest({
+            phone: authStore.tempData.phone || '',
+            code: values.code,
+            token:
+              authStore.tempData.verificationToken ||
+              authStore.tempData.resetToken ||
+              '',
+          });
+
+          if (response.success) {
+            onSuccess(response.accessToken);
+          } else {
+            setErrors({
+              code: response.message || 'Неверный код',
+            });
+          }
+        } catch (err) {
+          console.error('Verify error:', err);
+          setErrors({ code: 'Ошибка проверки кода' });
+        }
+      },
+    });
+
     const [resendTimer, setResendTimer] = useState(RESEND_TIMEOUT);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const code = [
+      ...values.code.split(''),
+      ...Array(CODE_LENGTH).fill(''),
+    ].slice(0, CODE_LENGTH);
 
     useEffect(() => {
       if (resendTimer > 0) {
@@ -37,21 +77,22 @@ export const ConfirmCodeForm = observer(
       inputRefs.current[0]?.focus();
     }, []);
 
-    const handleInputChange = useCallback((index: number, value: string) => {
-      const digit = value.replace(/\D/g, '').slice(-1);
+    const handleCodeChange = useCallback(
+      (index: number, value: string) => {
+        const digit = value.replace(/\D/g, '').slice(-1);
 
-      setCode((prev) => {
-        const newCode = [...prev];
+        const newCode = [...code];
         newCode[index] = digit;
-        return newCode;
-      });
+        const newCodeString = newCode.join('');
 
-      setError(null);
+        handleChange('code', newCodeString);
 
-      if (digit && index < CODE_LENGTH - 1) {
-        inputRefs.current[index + 1]?.focus();
-      }
-    }, []);
+        if (digit && index < CODE_LENGTH - 1) {
+          inputRefs.current[index + 1]?.focus();
+        }
+      },
+      [code, handleChange],
+    );
 
     const handleKeyDown = useCallback(
       (index: number, e: React.KeyboardEvent) => {
@@ -71,17 +112,12 @@ export const ConfirmCodeForm = observer(
           .slice(0, CODE_LENGTH);
 
         if (pastedData) {
-          const newCode = [...code];
-          pastedData.split('').forEach((digit, i) => {
-            if (i < CODE_LENGTH) newCode[i] = digit;
-          });
-          setCode(newCode);
-
+          handleChange('code', pastedData);
           const lastFilledIndex = Math.min(pastedData.length, CODE_LENGTH) - 1;
           inputRefs.current[lastFilledIndex]?.focus();
         }
       },
-      [code],
+      [handleChange],
     );
 
     const getTitle = () => {
@@ -100,48 +136,15 @@ export const ConfirmCodeForm = observer(
       );
     };
 
-    const handleSubmit = async () => {
-      const fullCode = code.join('');
-
-      if (fullCode.length !== CODE_LENGTH) {
-        setError('Введите 4-значный код');
-        return;
-      }
-
-      setIsLoading(true);
-
-      try {
-        const response = await verifyCodeRequest({
-          phone: authStore.tempData.phone || '',
-          code: fullCode,
-          token:
-            authStore.tempData.verificationToken ||
-            authStore.tempData.resetToken ||
-            '',
-        });
-
-        if (response.success) {
-          onSuccess(response.accessToken);
-        } else {
-          setError(response.message || 'Неверный код');
-        }
-      } catch (err) {
-        console.error('Verify error:', err);
-        setError('Ошибка проверки кода');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     const handleResend = () => {
       setResendTimer(RESEND_TIMEOUT);
-      setCode(Array(CODE_LENGTH).fill(''));
-      setError(null);
+      setValues({ code: '' });
+      setErrors({});
       inputRefs.current[0]?.focus();
       onResend();
     };
 
-    const isCodeComplete = code.every((digit) => digit !== '');
+    const isCodeComplete = values.code.length === CODE_LENGTH;
 
     return (
       <Page className={s.confirmCodeForm}>
@@ -164,7 +167,7 @@ export const ConfirmCodeForm = observer(
                   inputMode="numeric"
                   className={s.codeInput}
                   value={code[index]}
-                  onChange={(e) => handleInputChange(index, e.target.value)}
+                  onChange={(e) => handleCodeChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   maxLength={1}
                   autoComplete="one-time-code"
@@ -172,7 +175,7 @@ export const ConfirmCodeForm = observer(
               ))}
           </div>
 
-          {error && <p className={s.error}>{error}</p>}
+          {errors.code && <p className={s.error}>{errors.code}</p>}
         </div>
 
         <div className={s.footer}>
@@ -192,7 +195,7 @@ export const ConfirmCodeForm = observer(
           <Button
             className={s.submitButton}
             onClick={handleSubmit}
-            loading={isLoading}
+            loading={isSubmitting}
             disabled={!isCodeComplete}
             fullWidth
             radius="xl"

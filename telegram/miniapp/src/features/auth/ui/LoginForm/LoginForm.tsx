@@ -1,12 +1,12 @@
 import { Button, PasswordInput, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { loginRequest } from '../../api/authApi';
-import { loginSchema, validateForm } from '../../model/validation';
+import { loginSchema } from '../../model/validation';
 
-import s from './LoginForm.module.scss';
 import { Page } from 'widgets/Page';
+import s from './LoginForm.module.scss';
 
 interface LoginFormProps {
   onSuccess: (data: { login: string; phone: string; token: string }) => void;
@@ -16,39 +16,36 @@ interface LoginFormProps {
 
 export const LoginForm = observer(
   ({ onSuccess, onNavigateToRegister, onNavigateToReset }: LoginFormProps) => {
-    const [login, setLogin] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    const handleSubmit = async () => {
-      const validation = validateForm(loginSchema, { login, password });
-
-      if (!validation.success) {
-        setErrors(validation.errors);
-        return;
-      }
-
-      setErrors({});
-      setIsLoading(true);
-
-      try {
-        const response = await loginRequest({ phone: login, password });
-
-        if (response.success) {
-          onSuccess({
-            login,
-            phone: '+79991234567',
-            token: response.token,
+    const {
+      values,
+      errors,
+      isSubmitting,
+      handleInputChange,
+      handleSubmit,
+      setErrors,
+    } = useFormWithValidation({
+      initialValues: { login: '', password: '' },
+      schema: loginSchema,
+      onSubmit: async (values) => {
+        try {
+          const response = await loginRequest({
+            phone: values.login,
+            password: values.password,
           });
+
+          if (response.success) {
+            onSuccess({
+              login: values.login,
+              phone: '+79991234567',
+              token: response.token,
+            });
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          setErrors({ password: 'Неверный логин или пароль' });
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        setErrors({ password: 'Неверный логин или пароль' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      },
+    });
 
     return (
       <Page className={s.loginForm}>
@@ -59,11 +56,8 @@ export const LoginForm = observer(
             <span className={s.label}>Логин</span>
             <TextInput
               classNames={{ input: s.input }}
-              value={login}
-              onChange={(e) => {
-                setLogin(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, login: '' }));
-              }}
+              value={values.login}
+              onChange={handleInputChange('login')}
               placeholder="Введите логин"
               error={errors.login}
               radius="xl"
@@ -80,11 +74,8 @@ export const LoginForm = observer(
             </div>
             <PasswordInput
               classNames={{ input: s.input }}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.currentTarget.value);
-                setErrors((prev) => ({ ...prev, password: '' }));
-              }}
+              value={values.password}
+              onChange={handleInputChange('password')}
               placeholder="Введите пароль"
               error={errors.password}
               radius="xl"
@@ -101,7 +92,7 @@ export const LoginForm = observer(
           <Button
             className={s.submitButton}
             onClick={handleSubmit}
-            loading={isLoading}
+            loading={isSubmitting}
             fullWidth
             radius="xl"
             size="lg"
