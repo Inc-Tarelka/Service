@@ -1,6 +1,5 @@
-import { Activity } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect } from 'react';
+import { Activity, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { AuthStep } from 'features/auth';

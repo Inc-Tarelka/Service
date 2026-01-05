@@ -1,12 +1,36 @@
-// UI Components
-export { ConfirmCodeForm } from './ui/ConfirmCodeForm/ConfirmCodeForm';
-export { LoginForm } from './ui/LoginForm/LoginForm';
-export { NewPasswordForm } from './ui/NewPasswordForm/NewPasswordForm';
-export { PasswordResetForm } from './ui/PasswordResetForm/PasswordResetForm';
-export { ProfileForm } from './ui/ProfileForm/ProfileForm';
-export { RegisterForm } from './ui/RegisterForm/RegisterForm';
+import { lazy } from 'react';
 
-// Model
+export const ConfirmCodeForm = lazy(() =>
+  import('./ui/ConfirmCodeForm/ConfirmCodeForm').then((module) => ({
+    default: module.ConfirmCodeForm,
+  })),
+);
+export const LoginForm = lazy(() =>
+  import('./ui/LoginForm/LoginForm').then((module) => ({
+    default: module.LoginForm,
+  })),
+);
+export const NewPasswordForm = lazy(() =>
+  import('./ui/NewPasswordForm/NewPasswordForm').then((module) => ({
+    default: module.NewPasswordForm,
+  })),
+);
+export const PasswordResetForm = lazy(() =>
+  import('./ui/PasswordResetForm/PasswordResetForm').then((module) => ({
+    default: module.PasswordResetForm,
+  })),
+);
+export const ProfileForm = lazy(() =>
+  import('./ui/ProfileForm/ProfileForm').then((module) => ({
+    default: module.ProfileForm,
+  })),
+);
+export const RegisterForm = lazy(() =>
+  import('./ui/RegisterForm/RegisterForm').then((module) => ({
+    default: module.RegisterForm,
+  })),
+);
+
 export { authStore } from './model/AuthStore';
 export {
   CITIES,
@@ -26,7 +50,6 @@ export type {
   TempAuthData,
 } from './model/types';
 
-// Validation (zod schemas)
 export {
   confirmCodeSchema,
   loginSchema,
@@ -36,7 +59,6 @@ export {
   resetSchema,
 } from './model/validation';
 
-// API
 export {
   loginRequest,
   registerRequest,
