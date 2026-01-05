@@ -25,6 +25,7 @@
     "mobx-utils": "^6.1.1",
     "motion": "^12.23.9",
     "react": "^19.1.0",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^19.1.0",
     "react-modal-sheet": "^5.1.2",
     "react-router-dom": "^7.6.2",

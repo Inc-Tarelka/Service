@@ -17,8 +17,8 @@ export enum AppRoutes {
 }
 
 export const RoutePath: Record<AppRoutes, string> = {
-  [AppRoutes.MAIN]: '/main',
-  [AppRoutes.WELCOME]: '/',
+  [AppRoutes.MAIN]: '/',
+  [AppRoutes.WELCOME]: '/welcome',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: '*',
 };
@@ -30,9 +30,8 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
   },
   [AppRoutes.WELCOME]: {
     path: RoutePath.welcome,
-    element: <WelcomePage />,
     hideLayout: true,
-    hideNavbar: true,
+    element: <WelcomePage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {
