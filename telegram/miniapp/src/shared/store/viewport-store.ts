@@ -66,14 +66,6 @@ export class ViewportStore {
     return this.isMobileDevice;
   }
 
-  get isDesktop(): boolean {
-    return this.isDesktopDevice;
-  }
-
-  get isMobile(): boolean {
-    return this.isMobileDevice;
-  }
-
   destroy() {
     WebApp.offEvent('viewportChanged', this.handleViewportChange);
     WebApp.offEvent('fullscreenChanged', this.handleFullscreenChange);
