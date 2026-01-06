@@ -2,11 +2,11 @@ import { Button, PasswordInput, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { loginRequest } from '../../api/authApi';
 import { loginSchema } from '../../model/validation';
 
 import { Page } from 'widgets/Page';
 import s from './LoginForm.module.scss';
+import { loginRequest } from 'shared/api/service/Auth/api';
 
 interface LoginFormProps {
   onSuccess: (data: { login: string; phone: string; token: string }) => void;

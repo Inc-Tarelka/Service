@@ -3,11 +3,11 @@ import { observer } from 'mobx-react-lite';
 import { Page } from 'widgets/Page';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { setNewPasswordRequest } from '../../api/authApi';
 import { authStore } from '../../model/AuthStore';
 import { newPasswordSchema } from '../../model/validation';
 
 import s from './NewPasswordForm.module.scss';
+import { setNewPasswordRequest } from 'shared/api/service/Auth/api';
 
 interface NewPasswordFormProps {
   onSuccess: (token?: string) => void;

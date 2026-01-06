@@ -60,14 +60,15 @@ a img {
 }
 
 // Оптимизация для Telegram Mini App
-body {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    overscroll-behavior-y: contain;
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-touch-callout: none !important;
-    user-select: none !important;
-}
+// body rules removed locally to avoid conflict with index.scss
+// body {
+//     -webkit-overflow-scrolling: touch;
+//     overscroll-behavior: contain;
+//     overscroll-behavior-y: contain;
+//     -webkit-tap-highlight-color: transparent !important;
+//     -webkit-touch-callout: none !important;
+//     user-select: none !important;
+// }
 
 // Убираем 300ms задержку клика на мобильных
 * {

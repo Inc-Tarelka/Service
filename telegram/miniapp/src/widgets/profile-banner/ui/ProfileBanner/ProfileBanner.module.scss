@@ -1,0 +1,35 @@
+.container {
+  background-color: var(--mantine-color-black);
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px; 
+  padding-bottom: 32px;
+  position: relative;
+  width: 100%;
+}
+
+.cover {
+  background-image: url('https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80');
+  background-position: center;
+  background-size: cover;
+  height: 200px;
+  position: relative;
+  width: 100%;
+}
+
+.cover::after {
+    background: linear-gradient(180deg, rgb(0,0,0,0.3) 0%, rgb(0,0,0,0) 100%);
+    inset: 0;
+    content: '';
+    position: absolute;
+}
+
+.header {
+  position: relative;
+  z-index: 2;
+}
+
+.content {
+  padding: 0 16px;
+  position: relative;
+  z-index: 2;
+}

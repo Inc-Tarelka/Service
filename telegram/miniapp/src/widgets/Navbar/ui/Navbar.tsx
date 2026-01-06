@@ -4,18 +4,16 @@ import classNames from 'shared/library/ClassNames/classNames';
 import s from './Navbar.module.scss';
 
 interface NavbarProps {
-  spacerOnly?: boolean;
+  className?: string;
 }
 
-export const Navbar = ({ spacerOnly = false }: NavbarProps) => {
+export const Navbar = ({ className }: NavbarProps) => {
   const { isDesktop } = useViewport();
 
-  if (spacerOnly) {
-    return <div className={classNames(s.spacer, { [s.desktop]: isDesktop })} />;
-  }
-
   return (
-    <div className={classNames(s.navbar, { [s.desktop]: isDesktop })}>
+    <div
+      className={classNames(s.navbar, { [s.desktop]: isDesktop }, [className])}
+    >
       <img src={LogoSvg} alt="Logo" className={s.logo} />
     </div>
   );

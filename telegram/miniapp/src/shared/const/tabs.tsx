@@ -18,7 +18,7 @@ export const tabs: TabProps[] = [
     icon: <NotificationIcon />,
   },
   {
-    path: RoutePath.main,
+    path: RoutePath.profile,
     icon: <PersonIcon />,
   },
 ];

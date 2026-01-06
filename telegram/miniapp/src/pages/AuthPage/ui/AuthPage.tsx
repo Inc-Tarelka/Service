@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Activity, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import s from './AuthPage.module.scss';
 
 import type { AuthStep } from 'features/auth';
 import {
@@ -16,6 +17,8 @@ import {
 } from 'features/auth';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
+import { useBackButton } from 'shared/hooks/useBackButton';
+import classNames from 'shared/library/ClassNames/classNames';
 
 const STEP_GUARDS: Partial<
   Record<AuthStep, { check: () => boolean; fallback: AuthStep }>
@@ -56,6 +59,13 @@ export const AuthPage = observer(() => {
     ? (rawStep as AuthStep)
     : DEFAULT_STEP;
 
+  const showBackButton = step !== DEFAULT_STEP;
+
+  useBackButton({
+    show: showBackButton,
+    fallbackPath: RoutePath.auth,
+  });
+
   const goToStep = useCallback(
     (nextStep: AuthStep, options?: { replace?: boolean }) => {
       setSearchParams(
@@ -76,7 +86,7 @@ export const AuthPage = observer(() => {
   }, [step, goToStep]);
 
   return (
-    <>
+    <div className={classNames(s.authPage, {}, [])}>
       <Activity mode={step === 'login' ? 'visible' : 'hidden'}>
         <LoginForm
           onSuccess={(data) => {
@@ -95,9 +105,14 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'confirmLogin' ? 'visible' : 'hidden'}>
         <ConfirmCodeForm
           type="login"
-          onSuccess={() => {
+          onSuccess={(token) => {
             authStore.clearTempData();
-            navigate(RoutePath.main, { replace: true });
+            if (token) {
+              setToken(token);
+              navigate(RoutePath.main, { replace: true });
+            } else {
+              goToStep('login', { replace: true });
+            }
           }}
           onResend={() => goToStep('login', { replace: true })}
         />
@@ -170,7 +185,7 @@ export const AuthPage = observer(() => {
           }}
         />
       </Activity>
-    </>
+    </div>
   );
 });
 

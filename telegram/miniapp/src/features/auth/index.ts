@@ -65,4 +65,4 @@ export {
   resetPasswordRequest,
   setNewPasswordRequest,
   verifyCodeRequest,
-} from './api/authApi';
+} from 'shared/api/service/Auth/api';

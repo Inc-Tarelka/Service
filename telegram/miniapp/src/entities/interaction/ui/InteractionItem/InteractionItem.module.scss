@@ -1,0 +1,14 @@
+.card {
+  background-color: var(--card-bg);
+}
+
+.sheetButton {
+  border-radius: 12px;
+  padding: 12px 0;
+  transition: opacity 0.2s;
+  width: 100%;
+
+  &:active {
+    opacity: 0.7;
+  }
+}

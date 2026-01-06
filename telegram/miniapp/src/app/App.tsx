@@ -9,11 +9,11 @@ import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
 import { Navbar } from 'widgets/Navbar';
+import { WelcomeScreen } from 'widgets/WelcomeScreen';
 import { AppLoader } from './providers';
 import { AppRouter } from './providers/router';
 import { useTheme } from './providers/ThemeProvider/lib/useTheme';
 import { RootStoreContext, useStore } from './StoreProvider/ui/StoreProvider';
-import { WelcomeScreen } from 'widgets/WelcomeScreen';
 
 const rootStore = new RootStore();
 
@@ -32,6 +32,7 @@ const AppContent = observer(() => {
 
   useEffect(() => {
     loadAccessTokenOnce();
+    WebApp.CloudStorage.removeItem('access_token');
     WebApp.disableVerticalSwipes();
     WebApp.enableClosingConfirmation();
     WebApp.SettingsButton.show();
@@ -45,9 +46,7 @@ const AppContent = observer(() => {
 
   const renderNavbar = () => {
     if (!shouldShowNavbar) return null;
-    if (currentRoute?.hideNavbar) {
-      return <Navbar spacerOnly />;
-    }
+    if (currentRoute?.hideNavbar) return null;
 
     return <Navbar />;
   };

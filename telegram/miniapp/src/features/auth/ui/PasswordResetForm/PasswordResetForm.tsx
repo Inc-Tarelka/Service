@@ -3,10 +3,10 @@ import { observer } from 'mobx-react-lite';
 import { Page } from 'widgets/Page';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { resetPasswordRequest } from '../../api/authApi';
 import { resetSchema } from '../../model/validation';
 
 import s from './PasswordResetForm.module.scss';
+import { resetPasswordRequest } from 'shared/api/service/Auth/api';
 
 interface PasswordResetFormProps {
   onSuccess: (data: { login: string; phone: string; token: string }) => void;

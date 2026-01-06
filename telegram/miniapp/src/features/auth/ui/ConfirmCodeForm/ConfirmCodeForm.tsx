@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
-import { verifyCodeRequest } from '../../api/authApi';
 import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
 import { confirmCodeSchema } from '../../model/validation';
 
 import s from './ConfirmCodeForm.module.scss';
+import { verifyCodeRequest } from 'shared/api/service/Auth/api';
 
 interface ConfirmCodeFormProps {
   type?: ConfirmCodeType;

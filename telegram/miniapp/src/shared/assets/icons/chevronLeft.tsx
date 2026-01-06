@@ -10,9 +10,9 @@ export default function ChevronLeftIcon() {
       <path
         d="M15 6L9 12L15 18"
         stroke="white"
-        stroke-width="1.7"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

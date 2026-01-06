@@ -3,20 +3,39 @@
 @use "mobile-fixes";
 @use "themes/base";
 
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
 .app {
+    
     background: var(--bg-color);
     color: var(--primary-color);
+    display: flex;
+    flex-direction: column;
     font: var(--font-m);
     font-family: var(--font-family-main);
     font-size: var(--font-size-m);
+    height: 100%;
     line-height: var(--font-line-m);
-    min-height: 100vh;
-    min-height: 100dvh;
-
+    overflow: hidden;
 }
 
 .content-page {
     display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 

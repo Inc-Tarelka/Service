@@ -1,0 +1,16 @@
+.container {
+  width: 100%;
+}
+
+.count {
+  color: var(--mantine-color-white);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.label {
+  color: var(--mantine-color-dimmed);
+  font: var(--font-caption);
+  line-height: 1.2;
+  text-align: center;
+}

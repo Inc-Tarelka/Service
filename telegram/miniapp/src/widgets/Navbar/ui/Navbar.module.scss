@@ -3,7 +3,7 @@
   background-color: var(--bg-color);
   box-shadow: 0 2px 4px rgb(0, 0, 0, 0.1);
   display: flex;
-  height: 130px;
+  height: var(--Navbar-size);
   justify-content: center;
   left: 0;
   position: fixed;
@@ -12,16 +12,13 @@
   z-index: 100;
 
   &.desktop {
-    height: 0; 
-
-    .logo {
-        height: 0; 
-    }
+    display: none;
   }
 }
 
 .logo {
   height: 24px;
+  margin-top: 2.5rem;
   object-fit: contain;
 }
 

@@ -1,0 +1,37 @@
+.container {
+  padding: 16px; 
+}
+
+.title {
+  color: var(--mantine-color-white);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.about {
+  color: var(--mantine-color-gray-5);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tag {
+  background-color: rgb(43, 138, 62, 0.2);
+  border-color: var(--mantine-color-green-8);
+  border-radius: 20px;
+  color: var(--mantine-color-white);
+  font-weight: 400;
+  height: 32px;
+  padding: 0 12px;
+  text-transform: none;
+}
+
+.label {
+    color: var(--mantine-color-dimmed);
+    font: var(--font-caption);
+}
+
+.value {
+    color: var(--mantine-color-white);
+    font-size: 14px;
+    font-weight: 400;
+}
