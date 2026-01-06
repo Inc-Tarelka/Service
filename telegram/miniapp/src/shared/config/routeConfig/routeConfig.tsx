@@ -34,8 +34,8 @@ export const RoutePath: Record<AppRoutes, string> = {
 export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
   [AppRoutes.MAIN]: {
     path: RoutePath.main,
-    element: <MainPage />,
     hideNavbar: true,
+    element: <MainPage />,
   },
   [AppRoutes.WELCOME]: {
     path: RoutePath.welcome,
@@ -49,13 +49,13 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
   },
   [AppRoutes.PROFILE]: {
     path: RoutePath.profile,
-    element: <ProfilePage />,
     hideNavbar: true,
+    element: <ProfilePage />,
   },
   [AppRoutes.USER_PROFILE]: {
     path: RoutePath.user_profile,
-    element: <UserProfilePage />,
     hideNavbar: true,
+    element: <UserProfilePage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {

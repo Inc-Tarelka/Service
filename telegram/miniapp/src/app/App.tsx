@@ -1,7 +1,7 @@
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 import { loadAccessTokenOnce } from 'shared/api/base';
 import { routeConfig } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
@@ -26,13 +26,12 @@ const AppContent = observer(() => {
   const { shouldShowNavbar } = useViewport();
   const { viewportStore } = useStore();
 
-  const currentRoute = Object.values(routeConfig).find(
-    (route) => route.path === location.pathname,
+  const currentRoute = Object.values(routeConfig).find((route) =>
+    route.path ? matchPath(route.path as string, location.pathname) : false,
   );
 
   useEffect(() => {
     loadAccessTokenOnce();
-    WebApp.CloudStorage.removeItem('access_token');
     WebApp.disableVerticalSwipes();
     WebApp.enableClosingConfirmation();
     WebApp.SettingsButton.show();
@@ -46,9 +45,8 @@ const AppContent = observer(() => {
 
   const renderNavbar = () => {
     if (!shouldShowNavbar) return null;
-    if (currentRoute?.hideNavbar) return null;
 
-    return <Navbar />;
+    return <Navbar hideLogo={!!currentRoute?.hideNavbar} />;
   };
 
   return (

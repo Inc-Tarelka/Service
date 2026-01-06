@@ -9,6 +9,7 @@
   
   padding: 16px;
   padding-bottom: calc(var(--TB-padding, 90px) + env(safe-area-inset-bottom));
+  padding-top: max(16px, env(safe-area-inset-top));
   
   scroll-behavior: smooth;
   
@@ -18,10 +19,15 @@
   transform: translateZ(0);
   width: 100%;
   will-change: scroll-position;
+
+  &.withNavbar {
+    padding-top: 0;
+  }
 }
 
 .spacer {
-  background-color: var(--bg-color);
+  background-color: transparent;
   flex-shrink: 0;
-  height: calc(var(--Navbar-size, 60px) + env(safe-area-inset-top));
+  height: var(--total-navbar-height);
+  width: 100%;
 }

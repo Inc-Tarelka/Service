@@ -28,12 +28,13 @@
     --green: #abdb9f;
     --TabBar-size: 60px;
     --Navbar-size: 90px;
+    --navbar-base-height: 90px;
+    --total-navbar-height: calc(var(--navbar-base-height) + env(safe-area-inset-top));
 
     // components
     --primary-stroke: #1C1C1C;
     --TB-padding: 90px;
     --header-challenge-height: 32px;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 
     // tg save area
 
@@ -53,9 +54,5 @@ html, body {
   
   .app {
     height: 100%;
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
   }
   

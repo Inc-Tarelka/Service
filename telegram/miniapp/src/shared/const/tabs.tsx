@@ -10,11 +10,11 @@ export const tabs: TabProps[] = [
     icon: <SearchIcon />,
   },
   {
-    path: RoutePath.main,
+    path: RoutePath.auth,
     icon: <PlusIcon />,
   },
   {
-    path: RoutePath.main,
+    path: RoutePath.user_profile,
     icon: <NotificationIcon />,
   },
   {

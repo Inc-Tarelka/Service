@@ -18,7 +18,7 @@ export const ProfilePage = () => {
   const user = MOCK_USER;
 
   return (
-    <Page withNavbar={true}>
+    <Page>
       <ProfileBanner user={user} isOwnProfile={true} />
 
       <Box px="md" mt="md">

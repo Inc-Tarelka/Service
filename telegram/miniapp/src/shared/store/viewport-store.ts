@@ -55,7 +55,7 @@ export class ViewportStore {
   }
 
   get shouldShowNavbar(): boolean {
-    return true;
+    return !this.isDesktop;
   }
 
   get isDesktop(): boolean {
