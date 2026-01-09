@@ -4,8 +4,8 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  -webkit-overflow-scrolling: touch;
   overflow: hidden auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
   
   padding-bottom: calc(var(--TB-padding, 90px) + env(safe-area-inset-bottom));

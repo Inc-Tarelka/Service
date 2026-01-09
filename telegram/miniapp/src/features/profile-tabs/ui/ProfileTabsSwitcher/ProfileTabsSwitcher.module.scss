@@ -3,12 +3,6 @@
 }
 
 .tabsWrapper {
-  mask-image: linear-gradient(
-    to right,
-    black 0%,
-    black 85%,
-    transparent 100%
-  );
   mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
   -ms-overflow-style: none;
   overflow-x: auto;

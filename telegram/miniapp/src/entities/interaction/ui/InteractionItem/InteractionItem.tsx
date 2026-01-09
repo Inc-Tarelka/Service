@@ -1,18 +1,17 @@
 import {
   ActionIcon,
-  Card,
   Drawer,
   Group,
   Stack,
   Text,
   UnstyledButton,
 } from '@mantine/core';
-import { UserAvatar } from 'entities/user';
 import { useState } from 'react';
 import { Interaction } from 'shared/api/service/Interaction/types';
-import EyeCloseIcon from 'shared/assets/icons/EyeClose';
+import EyeOffIcon from 'shared/assets/icons/EyeOff';
 import MoreIcon from 'shared/assets/icons/more';
 import TrashIcon from 'shared/assets/icons/trash';
+import { classNames } from 'shared/library/ClassNames/classNames';
 import classes from './InteractionItem.module.scss';
 
 interface InteractionItemProps {
@@ -28,61 +27,77 @@ export const InteractionItem = ({
 }: InteractionItemProps) => {
   const [isOpen, setOpen] = useState(false);
 
+  const handleMoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(true);
+  };
+
+  const isOffer = interaction.type === 'offer';
+
   return (
     <>
-      <Card padding="md" radius="md" className={classes.card} onClick={onClick}>
-        <Group justify="space-between" align="flex-start" wrap="nowrap">
-          <Stack gap="xs" style={{ flex: 1 }}>
-            <Text size="sm" c="dimmed">
-              {interaction.title}
-            </Text>
-
-            <Text size="sm" fw={500} lineClamp={3}>
-              {interaction.description}
-            </Text>
-
-            {interaction.projectName && (
-              <Group gap="xs" mt={4}>
-                <UserAvatar src={interaction.initiator.avatarUrl} size={24} />
-                <Text size="xs" c="dimmed">
-                  {interaction.projectName}
-                </Text>
-              </Group>
-            )}
-
-            <Group gap="sm" mt="xs">
-              <UserAvatar src={interaction.initiator.avatarUrl} size={32} />
-              <Stack gap={0}>
-                <Text size="sm" fw={500}>
-                  {interaction.initiator.firstName}{' '}
-                  {interaction.initiator.lastName}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  @{interaction.initiator.username}
-                </Text>
-              </Stack>
-            </Group>
-          </Stack>
-
+      <div className={classes.card} onClick={onClick}>
+        <div className={classes.header}>
+          <span className={classes.title}>
+            {isOffer ? 'Отклик на потребность' : 'Запрос на сотрудничество'}
+          </span>
           {canEdit && (
             <ActionIcon
-              variant="subtle"
+              variant="transparent"
               color="gray"
-              onClick={() => setOpen(true)}
+              onClick={handleMoreClick}
             >
               <MoreIcon />
             </ActionIcon>
           )}
-        </Group>
-      </Card>
-      <Drawer opened={isOpen} onClose={() => setOpen(false)} size={135}>
-        <Stack gap="xs">
+        </div>
+
+        <p className={classes.description}>{interaction.description}</p>
+
+        <div className={classes.footer}>
+          <img
+            src={interaction.initiator.avatarUrl}
+            alt="avatar"
+            className={classNames(classes.avatar, {
+              [classes.rounded]: isOffer,
+              [classes.circular]: !isOffer,
+            })}
+          />
+          <div className={classes.info}>
+            <span className={classes.mainText}>
+              {isOffer
+                ? interaction.projectName || 'Без названия'
+                : `${interaction.initiator.firstName} ${interaction.initiator.lastName}`}
+            </span>
+            <span className={classes.subText}>
+              {isOffer
+                ? 'Описание проекта текстовое...'
+                : `@${interaction.initiator.username}`}
+            </span>
+          </div>
+          {isOffer && (
+            <ActionIcon variant="transparent" color="gray">
+              <MoreIcon />
+            </ActionIcon>
+          )}
+        </div>
+      </div>
+
+      <Drawer
+        opened={isOpen}
+        onClose={() => setOpen(false)}
+        position="bottom"
+        size={135}
+        withCloseButton={false}
+        padding={0}
+      >
+        <Stack gap="xl" justify="center">
           <UnstyledButton
             className={classes.sheetButton}
             onClick={() => setOpen(false)}
           >
             <Group gap="md">
-              <EyeCloseIcon />
+              <EyeOffIcon />
               <Text size="md" fw={500} c="white">
                 Скрыть
               </Text>

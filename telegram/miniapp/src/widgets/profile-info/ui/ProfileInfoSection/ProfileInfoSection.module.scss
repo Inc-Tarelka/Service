@@ -5,31 +5,35 @@
 .title {
   color: var(--text-color);
   font: var(--font-h2);
+  margin: 0;
+  margin-bottom: 8px;
 }
 
 .about {
-  color: var(--text-color-secondary);
+  color: var(--text-color);
   font: var(--font-body);
-  line-height: 1.5;
+  line-height: 1.2;
+  margin: 0;
+  margin-bottom: 24px;
 }
 
-.tag {
-  background-color: rgb(43 138 62 / 0.2);
-  border-color: var(--green);
-  border-radius: 20px;
-  color: var(--text-color);
-  font-weight: 400;
-  height: 32px;
-  padding: 0 12px;
-  text-transform: none;
+.grid {
+  display: grid;
+  gap: 16px 12px;
+  grid-template-columns: 150px 1fr;
+  width: 100%;
 }
 
 .label {
+  align-self: flex-start;
   color: var(--text-color-secondary);
   font: var(--font-caption);
+  font-weight: 300;
+  padding-top: 2px;
 }
 
 .value {
   color: var(--text-color);
   font: var(--font-body);
+  text-align: left;
 }

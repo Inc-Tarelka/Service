@@ -8,6 +8,7 @@ interface ProfileTabsSwitcherProps {
   activeTab?: ProfileTab;
   onTabChange?: (tab: ProfileTab) => void;
   children?: ReactNode;
+  allowedTabs?: ProfileTab[];
 }
 
 const TABS: { label: string; value: ProfileTab }[] = [
@@ -20,9 +21,14 @@ export const ProfileTabsSwitcher = ({
   activeTab,
   onTabChange,
   children,
+  allowedTabs,
 }: ProfileTabsSwitcherProps) => {
   const [internalTab, setInternalTab] = useState<ProfileTab>('publications');
   const tab = activeTab || internalTab;
+
+  const filteredTabs = allowedTabs
+    ? TABS.filter((t) => allowedTabs.includes(t.value))
+    : TABS;
 
   const handleTabChange = (newTab: ProfileTab) => {
     setInternalTab(newTab);
@@ -33,7 +39,7 @@ export const ProfileTabsSwitcher = ({
     <Box className={classes.container}>
       <div className={classes.tabsWrapper}>
         <div className={classes.tabsList}>
-          {TABS.map((tabItem) => (
+          {filteredTabs.map((tabItem) => (
             <button
               key={tabItem.value}
               type="button"
