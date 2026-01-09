@@ -91,7 +91,7 @@ export const OfferCollaborationDrawer = ({
           <ActionIcon
             onClick={onClose}
             variant="outline"
-            size={56}
+            size={48}
             radius="40"
             styles={{
               root: {
@@ -112,13 +112,6 @@ export const OfferCollaborationDrawer = ({
             onClick={handleSubmit}
             bg="var(--accent-color)"
             c="var(--bg-color)"
-            styles={{
-              root: {
-                flex: 1,
-                height: '56px',
-                fontWeight: 600,
-              },
-            }}
           >
             Отправить
           </Button>
