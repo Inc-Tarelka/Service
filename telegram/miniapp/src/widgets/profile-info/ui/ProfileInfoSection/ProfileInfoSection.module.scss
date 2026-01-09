@@ -1,24 +1,23 @@
 .container {
-  padding: 16px; 
+  padding: 16px;
 }
 
 .title {
-  color: var(--mantine-color-white);
-  font-size: 18px;
-  font-weight: 700;
+  color: var(--text-color);
+  font: var(--font-h2);
 }
 
 .about {
-  color: var(--mantine-color-gray-5);
-  font-size: 14px;
+  color: var(--text-color-secondary);
+  font: var(--font-body);
   line-height: 1.5;
 }
 
 .tag {
-  background-color: rgb(43, 138, 62, 0.2);
-  border-color: var(--mantine-color-green-8);
+  background-color: rgb(43 138 62 / 0.2);
+  border-color: var(--green);
   border-radius: 20px;
-  color: var(--mantine-color-white);
+  color: var(--text-color);
   font-weight: 400;
   height: 32px;
   padding: 0 12px;
@@ -26,12 +25,11 @@
 }
 
 .label {
-    color: var(--mantine-color-dimmed);
-    font: var(--font-caption);
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
 }
 
 .value {
-    color: var(--mantine-color-white);
-    font-size: 14px;
-    font-weight: 400;
+  color: var(--text-color);
+  font: var(--font-body);
 }

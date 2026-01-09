@@ -1,4 +1,4 @@
-import { Box, SegmentedControl } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { ReactNode, useState } from 'react';
 import classes from './ProfileTabsSwitcher.module.scss';
 
@@ -10,6 +10,12 @@ interface ProfileTabsSwitcherProps {
   children?: ReactNode;
 }
 
+const TABS: { label: string; value: ProfileTab }[] = [
+  { label: 'Публикации', value: 'publications' },
+  { label: 'Информация', value: 'info' },
+  { label: 'Взаимодействия', value: 'interactions' },
+];
+
 export const ProfileTabsSwitcher = ({
   activeTab,
   onTabChange,
@@ -18,30 +24,28 @@ export const ProfileTabsSwitcher = ({
   const [internalTab, setInternalTab] = useState<ProfileTab>('publications');
   const tab = activeTab || internalTab;
 
-  const handleTabChange = (val: string) => {
-    const newTab = val as ProfileTab;
+  const handleTabChange = (newTab: ProfileTab) => {
     setInternalTab(newTab);
     onTabChange?.(newTab);
   };
 
   return (
-    <Box className={`${classes.container} ${classes.stickyHeader}`}>
-      <SegmentedControl
-        fullWidth
-        value={tab}
-        onChange={handleTabChange}
-        data={[
-          { label: 'Публикации', value: 'publications' },
-          { label: 'Информация', value: 'info' },
-          { label: 'Взаимодействия', value: 'interactions' },
-        ]}
-        classNames={{
-          root: classes.control,
-          indicator: classes.indicator,
-          label: classes.label,
-        }}
-      />
-      <Box mt="md">{children}</Box>
+    <Box className={classes.container}>
+      <div className={classes.tabsWrapper}>
+        <div className={classes.tabsList}>
+          {TABS.map((tabItem) => (
+            <button
+              key={tabItem.value}
+              type="button"
+              className={`${classes.tab} ${tab === tabItem.value ? classes.tabActive : ''}`}
+              onClick={() => handleTabChange(tabItem.value)}
+            >
+              {tabItem.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Box className={classes.content}>{children}</Box>
     </Box>
   );
 };

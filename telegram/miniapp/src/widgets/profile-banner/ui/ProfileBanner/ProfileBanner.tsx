@@ -1,11 +1,11 @@
-import { ActionIcon, Box, Group, Stack, Text } from '@mantine/core';
+import { ActionIcon, Box, Group, Stack } from '@mantine/core';
 import { UserAvatar, UserStats } from 'entities/user';
 import { EditProfileButton } from 'features/edit-profile';
 import { useNavigate } from 'react-router-dom';
+import { User } from 'shared/api/service/User/types';
 import ChevronLeftIcon from 'shared/assets/icons/chevronLeft';
 import MoreIcon from 'shared/assets/icons/more';
 import classes from './ProfileBanner.module.scss';
-import { User } from 'shared/api/service/User/types';
 
 interface ProfileBannerProps {
   user: User;
@@ -20,9 +20,7 @@ export const ProfileBanner = ({ user, isOwnProfile }: ProfileBannerProps) => {
       <div className={classes.cover}>
         <Group justify="space-between" p="md" className={classes.header}>
           {isOwnProfile ? (
-            <Text c="white" fw={500}>
-              @{user.username}
-            </Text>
+            <span className={classes.username}>@{user.username}</span>
           ) : (
             <ActionIcon
               variant="transparent"
@@ -53,12 +51,12 @@ export const ProfileBanner = ({ user, isOwnProfile }: ProfileBannerProps) => {
         />
 
         <Stack gap={0} align="center">
-          <Text size="xl" fw={700} c="white">
+          <span className={classes.name}>
             {user.firstName} {user.lastName}
-          </Text>
-          <Text size="sm" c="dimmed">
+          </span>
+          <span className={classes.profession}>
             {user.profession}, {user.city}
-          </Text>
+          </span>
         </Stack>
 
         <Box mt="md" w="100%">

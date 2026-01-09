@@ -5,11 +5,10 @@
   flex-direction: column;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
-  overflow-y: auto;
+  overflow: hidden auto;
+  overscroll-behavior: none;
   
-  padding: 16px;
   padding-bottom: calc(var(--TB-padding, 90px) + env(safe-area-inset-bottom));
-  padding-top: max(16px, env(safe-area-inset-top));
   
   scroll-behavior: smooth;
   
@@ -23,10 +22,14 @@
   &.withNavbar {
     padding-top: 0;
   }
+
+  &.noPaddingBottom {
+    padding-bottom: 0;
+  }
 }
 
 .spacer {
-  background-color: transparent;
+  background-color: var(--bg-color);
   flex-shrink: 0;
   height: var(--total-navbar-height);
   width: 100%;

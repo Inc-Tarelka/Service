@@ -1,4 +1,4 @@
-import { BackgroundImage, Box, Text } from '@mantine/core';
+import { Box, Text } from '@mantine/core';
 import { Publication } from 'shared/api/service/Publication/types';
 import HeartIcon from 'shared/assets/icons/heart';
 import classes from './PublicationItem.module.scss';
@@ -17,10 +17,13 @@ export const PublicationItem = ({
       className={classes.container}
       onClick={() => onClick?.(publication.id)}
     >
-      <BackgroundImage
-        src={publication.imageUrl}
-        radius="lg"
+      <div
         className={classes.image}
+        style={{
+          backgroundImage: `url(${publication.imageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
         <div className={classes.overlay}>
           <div className={classes.likes}>
@@ -31,12 +34,12 @@ export const PublicationItem = ({
           </div>
 
           <div className={classes.content}>
-            <Text size="xs" className={classes.title} truncate>
+            <Text className={classes.title} truncate>
               {publication.title}
             </Text>
           </div>
         </div>
-      </BackgroundImage>
+      </div>
     </Box>
   );
 };
