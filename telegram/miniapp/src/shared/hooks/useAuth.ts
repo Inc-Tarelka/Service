@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { clearAccessToken, setAccessToken } from 'shared/api/base';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
-import { setAccessToken, clearAccessToken } from 'shared/api/base';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -10,35 +10,48 @@ export const useAuth = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (
-      WebApp.CloudStorage &&
-      (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
-    ) {
-      WebApp.CloudStorage.getItem('access_token', (error, token) => {
-        if (error) {
-          console.error('Ошибка получения токена:', error);
-          return;
-        }
+    const checkAuth = async () => {
+      let tokenValue = '';
 
-        if (token !== '') {
-          if (
-            location.pathname === RoutePath.welcome
-            // location.pathname === RoutePath.auth
-          ) {
-            navigate(RoutePath.main);
-          }
-          setIsAuthenticated(true);
-        } else {
-          if (
-            location.pathname !== RoutePath.welcome
-            // location.pathname !== RoutePath.auth
-          ) {
-            navigate(RoutePath.welcome);
-          }
-          setIsAuthenticated(false);
+      // 1. Проверяем CloudStorage
+      if (
+        WebApp.CloudStorage &&
+        (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
+      ) {
+        try {
+          tokenValue = await new Promise((resolve) => {
+            WebApp.CloudStorage.getItem('access_token', (error, token) => {
+              if (error) resolve('');
+              else resolve(token || '');
+            });
+          });
+        } catch (e) {
+          console.error('CloudStorage error:', e);
         }
-      });
-    }
+      }
+
+      // 2. Если в CloudStorage пусто, проверяем localStorage
+      if (!tokenValue) {
+        tokenValue = localStorage.getItem('access_token') || '';
+      }
+
+      if (tokenValue !== '') {
+        if (location.pathname === RoutePath.auth) {
+          navigate(RoutePath.main);
+        }
+        setIsAuthenticated(true);
+      } else {
+        if (
+          location.pathname !== RoutePath.auth &&
+          location.pathname !== RoutePath.welcome
+        ) {
+          navigate(RoutePath.auth);
+        }
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
   }, [navigate, location.pathname]);
 
   return {

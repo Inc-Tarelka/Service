@@ -1,0 +1,54 @@
+.container {
+  padding: 16px;
+}
+
+.tabsWrapper {
+  mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+  -ms-overflow-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabsWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsList {
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+  padding-right: 40px;
+}
+
+.tab {
+  background-color: transparent;
+  border: none;
+  border-radius: 40px;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  font: var(--font-body);
+  height: 40px;
+  padding: 0 20px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background-color: var(--card-bg);
+}
+
+.tabActive {
+  background-color: var(--green);
+  color: var(--bg-color);
+  font-weight: 600;
+}
+
+.tabActive:hover {
+  background-color: var(--green);
+}
+
+.content {
+  padding-top: 16px;
+}

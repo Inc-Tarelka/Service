@@ -14,6 +14,17 @@ export default defineConfig({
       analyzerPort: 3000,
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'mantine-vendor': ['@mantine/core', '@mantine/hooks'],
+          'libs-vendor': ['motion', 'zod', 'axios', 'mobx', 'mobx-react-lite'],
+        },
+      },
+    },
+  },
   server: {
     host: true,
     allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.lhr.life'],

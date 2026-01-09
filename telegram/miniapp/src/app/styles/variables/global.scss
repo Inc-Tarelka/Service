@@ -28,35 +28,21 @@
     --green: #abdb9f;
     --TabBar-size: 60px;
     --Navbar-size: 90px;
+    --navbar-base-height: 90px;
+    --total-navbar-height: calc(var(--navbar-base-height) + env(safe-area-inset-top));
 
     // components
     --primary-stroke: #1C1C1C;
     --TB-padding: 90px;
     --header-challenge-height: 32px;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 
     // tg save area
 
     --sheet-bg-color: rgb(27, 27, 27, 1);
-
-
-.app_dark_theme .react-modal-sheet-container {
-    background: linear-gradient(to bottom, var(--bg-color) 100%, rgb(255, 255, 255, 0.8) 1%) !important;
-  }
-
-    ::-webkit-scrollbar {
-        background-color: transparent;
-        width: 1px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: rgb(255, 255, 255, 0.2);
-        border-radius: 12px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background-color: transparent;
-    }
+    --tertiary-bg-color: #1E1E1E;
+    --bg-color: #010101;
+    --card-bg: #393939;
+    --secondary-card-bg: #5e5e5e;
 }
 
 html, body {
@@ -68,9 +54,5 @@ html, body {
   
   .app {
     height: 100%;
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
   }
   

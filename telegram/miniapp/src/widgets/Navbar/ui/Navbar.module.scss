@@ -3,20 +3,17 @@
   background-color: var(--bg-color);
   box-shadow: 0 2px 4px rgb(0, 0, 0, 0.1);
   display: flex;
-  height: 130px;
+  height: var(--total-navbar-height);
   justify-content: center;
   left: 0;
+  padding-top: env(safe-area-inset-top);
   position: fixed;
   right: 0;
   top: 0;
   z-index: 100;
 
   &.desktop {
-    height: 0; 
-
-    .logo {
-        height: 0; 
-    }
+    display: none;
   }
 }
 
@@ -26,9 +23,12 @@
 }
 
 .spacer {
-    width: 100%;
+  background-color: transparent;
+  flex-shrink: 0;
+  height: var(--total-navbar-height);
+  width: 100%;
 
-    &.desktop {
-      height: 80px; 
-    }
+  &.desktop {
+    display: none;
+  }
 }

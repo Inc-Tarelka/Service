@@ -1,7 +1,7 @@
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 import { loadAccessTokenOnce } from 'shared/api/base';
 import { routeConfig } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
@@ -9,11 +9,11 @@ import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
 import { Navbar } from 'widgets/Navbar';
+import { WelcomeScreen } from 'widgets/WelcomeScreen';
 import { AppLoader } from './providers';
 import { AppRouter } from './providers/router';
 import { useTheme } from './providers/ThemeProvider/lib/useTheme';
 import { RootStoreContext, useStore } from './StoreProvider/ui/StoreProvider';
-import { WelcomeScreen } from 'widgets/WelcomeScreen';
 
 const rootStore = new RootStore();
 
@@ -26,8 +26,8 @@ const AppContent = observer(() => {
   const { shouldShowNavbar } = useViewport();
   const { viewportStore } = useStore();
 
-  const currentRoute = Object.values(routeConfig).find(
-    (route) => route.path === location.pathname,
+  const currentRoute = Object.values(routeConfig).find((route) =>
+    route.path ? matchPath(route.path as string, location.pathname) : false,
   );
 
   useEffect(() => {
@@ -45,11 +45,8 @@ const AppContent = observer(() => {
 
   const renderNavbar = () => {
     if (!shouldShowNavbar) return null;
-    if (currentRoute?.hideNavbar) {
-      return <Navbar spacerOnly />;
-    }
 
-    return <Navbar />;
+    return <Navbar hideLogo={!!currentRoute?.hideNavbar} />;
   };
 
   return (

@@ -1,0 +1,45 @@
+.drawerContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.drawerTitle {
+  color: var(--text-color);
+  font: var(--font-h2);
+  margin: 0;
+  margin-bottom: 8px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.labelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-caption); 
+  font-weight: 300;
+}
+
+.charLimit {
+  color: var(--text-color);
+  font-size: 14px; 
+  font-weight: 300;
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+}

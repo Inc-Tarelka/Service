@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.stat {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.count {
+  color: var(--text-color);
+  font: var(--font-h2);
+  font-weight: 700;
+}
+
+.label {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  line-height: 1.2;
+  text-align: center;
+}

@@ -7,7 +7,7 @@ let isServerDown = false;
 let serverDownTimestamp = 0;
 
 /**
- * Загружает токен из CloudStorage (один раз при старте).
+ * Загружает токен из CloudStorage или localStorage (один раз при старте).
  */
 export const loadAccessTokenOnce = async (): Promise<void> => {
   try {
@@ -24,33 +24,45 @@ export const loadAccessTokenOnce = async (): Promise<void> => {
       });
 
       const token = items?.['access_token'];
-      if (token) {
+      if (token && token !== '') {
         cachedToken = token;
+        return;
       }
     }
+
+    const localToken = localStorage.getItem('access_token');
+    if (localToken) {
+      cachedToken = localToken;
+    }
   } catch (error) {
-    console.error('Error loading token from CloudStorage:', error);
+    console.error('Error loading token:', error);
   }
 };
 
 export const setAccessToken = (token: string | undefined) => {
   cachedToken = token;
 
-  if (
-    token &&
-    WebApp.CloudStorage &&
-    (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
-  ) {
-    WebApp.CloudStorage.setItem('access_token', token, (error) => {
-      if (error) {
-        console.error('Error saving token to CloudStorage:', error);
-      }
-    });
+  if (token) {
+    localStorage.setItem('access_token', token);
+
+    if (
+      WebApp.CloudStorage &&
+      (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
+    ) {
+      WebApp.CloudStorage.setItem('access_token', token, (error) => {
+        if (error) {
+          console.error('Error saving token to CloudStorage:', error);
+        }
+      });
+    }
+  } else {
+    localStorage.removeItem('access_token');
   }
 };
 
 export const clearAccessToken = () => {
   cachedToken = undefined;
+  localStorage.removeItem('access_token');
 
   if (
     WebApp.CloudStorage &&
@@ -88,13 +100,10 @@ export const getServerStatus = () => ({
 function normalizeBaseURL(baseURL: string | undefined): string {
   if (!baseURL) return '';
   const url = baseURL.trim();
-  // Убираем trailing slash если есть
   const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-  // Проверяем, содержит ли URL уже /v1
   if (cleanUrl.endsWith('/v1') || cleanUrl.includes('/v1/')) {
     return cleanUrl;
   }
-  // Добавляем /v1 если его нет
   return `${cleanUrl}/v1`;
 }
 
@@ -144,7 +153,7 @@ function createPrivateInstance(): AxiosInstance {
       if (error.response?.status === 400 || error.response?.status === 401) {
         console.log('Clearing token due to auth error');
         clearAccessToken();
-        window.location.href = RoutePath.welcome;
+        window.location.href = RoutePath.auth;
         return Promise.reject(error);
       }
 

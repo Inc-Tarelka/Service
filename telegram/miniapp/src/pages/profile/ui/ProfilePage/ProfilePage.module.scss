@@ -1,0 +1,12 @@
+.profilePage {
+  background-color: var(--tertiary-bg-color) !important;
+}
+
+.tabsSection {
+  background-color: var(--tertiary-bg-color);
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}

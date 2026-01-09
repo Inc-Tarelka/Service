@@ -1,0 +1,99 @@
+.card {
+  background-color: var(--card-bg);
+  border-radius: 32px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  justify-content: space-between;
+  padding: 20px;
+  position: relative;
+  width: 100%;
+}
+
+.header {
+  align-items: center; 
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px; 
+  width: 100%;
+}
+
+.title {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+  margin: 0;
+}
+
+.description {
+  -webkit-box-orient: vertical;
+  color: var(--text-color);
+  display: -webkit-box;
+  font: var(--font-body);
+  font-weight: 500;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.2;
+  margin: 0;
+  margin-bottom: 4px; 
+  overflow: hidden;
+}
+
+.footer {
+  align-items: center;
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.avatar {
+  flex-shrink: 0;
+  height: 40px;
+  object-fit: cover;
+  width: 40px;
+}
+
+.rounded {
+  border-radius: 8px;
+}
+
+.circular {
+  border-radius: 50%;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mainText {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+  margin: 0;
+}
+
+.subText {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 300;
+  margin: 0;
+}
+
+.sheetButton {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: opacity 0.2s;
+  width: 100%;
+
+  &:active {
+    opacity: 0.7;
+  }
+}

@@ -1,4 +1,5 @@
 import { createTheme, MantineColorsTuple, MantineTheme } from '@mantine/core';
+import { PasswordVisibilityToggle } from './PasswordVisibilityToggle';
 
 // Кастомная палитра основного цвета (фиолетовый)
 const primaryColor: MantineColorsTuple = [
@@ -103,6 +104,13 @@ export const mantineTheme = createTheme({
         radius: 'xl',
         size: 'sm',
       },
+      styles: {
+        input: {
+          color: 'var(--text-color)',
+          background: 'var(--tertiary-bg-color)',
+          border: '2px solid var(--card-bg)',
+        },
+      },
     },
 
     TextInput: {
@@ -126,7 +134,30 @@ export const mantineTheme = createTheme({
 
     Drawer: {
       defaultProps: {
-        radius: 'md',
+        radius: 'xl',
+        position: 'bottom',
+        opened: false,
+        withOverlay: true,
+        overlayProps: {
+          backgroundOpacity: 0.5,
+          blur: 2,
+        },
+        size: 'auto',
+      },
+      styles: {
+        content: {
+          backgroundColor: '#1E1E1E',
+          borderTopLeftRadius: '32px',
+          borderTopRightRadius: '32px',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
+        },
+        header: {
+          display: 'none',
+        },
+        body: {
+          padding: '24px 20px',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+        },
       },
     },
 
@@ -205,6 +236,18 @@ export const mantineTheme = createTheme({
           paddingLeft: 12,
         },
       }),
+    },
+    PasswordInput: {
+      defaultProps: {
+        visibilityToggleIcon: PasswordVisibilityToggle,
+      },
+      styles: {
+        input: {
+          color: 'var(--text-color)',
+          background: 'var(--tertiary-bg-color)',
+          border: '2px solid var(--card-bg)',
+        },
+      },
     },
   },
 
