@@ -3,10 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Page } from 'widgets/Page';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { authStore } from '../../model/AuthStore';
 import { newPasswordSchema } from '../../model/validation';
-
-import { setNewPasswordRequest } from 'shared/api/service/Auth/api';
 import s from './NewPasswordForm.module.scss';
 
 interface NewPasswordFormProps {
@@ -25,12 +22,16 @@ export const NewPasswordForm = observer(
     } = useFormWithValidation({
       initialValues: { password: '', confirmPassword: '' },
       schema: newPasswordSchema,
-      onSubmit: async (values) => {
+      onSubmit: async () => {
         try {
+          const response = { success: true, token: 'mock-token', message: '' };
+          /*
           const response = await setNewPasswordRequest({
             token: authStore.tempData.resetToken || '',
             password: values.password,
           });
+          */
+          console.warn('Set new password API not implemented on backend');
 
           if (response.success) {
             onSuccess(response.token);

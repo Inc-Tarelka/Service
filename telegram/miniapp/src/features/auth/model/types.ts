@@ -1,6 +1,18 @@
-/**
- * Шаги авторизации
- */
+export type {
+  AccountData,
+  LoginRequest,
+  LoginResponse,
+  PhoneVerification,
+  RefreshRequest,
+  RefreshResponse,
+  RegisterRequest,
+  RegisterResponse,
+  SendPhoneVerificationRequest,
+  SendPhoneVerificationResponse,
+  VerifyCodeRequest,
+  VerifyCodeResponse,
+} from 'shared/api/service/Auth/types';
+
 export type AuthStep =
   | 'login' // Вход: логин + пароль
   | 'confirmLogin' // Подтверждение входа (код в Telegram)

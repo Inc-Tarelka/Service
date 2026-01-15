@@ -1,79 +1,75 @@
+import { API_URL } from 'shared/api/api_url';
+import { publicInstance } from 'shared/api/base';
+
 import {
   LoginRequest,
   LoginResponse,
+  RefreshRequest,
+  RefreshResponse,
   RegisterRequest,
   RegisterResponse,
-  ResetPasswordRequest,
-  ResetPasswordResponse,
-  SetNewPasswordRequest,
-  SetNewPasswordResponse,
+  SendPhoneVerificationRequest,
+  SendPhoneVerificationResponse,
   VerifyCodeRequest,
   VerifyCodeResponse,
 } from './types';
 
 // =============================== LOGIN ===============================
 export const loginRequest = async (
-  _data: LoginRequest,
+  data: LoginRequest,
 ): Promise<LoginResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    token: 'mock-verification-token-' + Date.now(),
-  };
-  // Real implementation would be:
-  // const response = await publicInstance.post<LoginResponse>(API_URL.login(), data);
-  // return response.data;
+  const response = await publicInstance.post<LoginResponse>(
+    API_URL.login(),
+    data,
+  );
+  return response.data;
+};
+
+// =============================== LOGOUT ===============================
+export const logoutRequest = async (refreshToken: string): Promise<void> => {
+  await publicInstance.post(API_URL.logout(), { request: { refreshToken } });
+  await publicInstance.post(API_URL.logout(), { refreshToken });
 };
 
 // =============================== REGISTER ===============================
 export const registerRequest = async (
-  _data: RegisterRequest,
+  data: RegisterRequest,
 ): Promise<RegisterResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    token: 'mock-register-token-' + Date.now(),
-  };
-  // const response = await publicInstance.post<RegisterResponse>(API_URL.register(), data);
-  // return response.data;
+  const response = await publicInstance.post<RegisterResponse>(
+    API_URL.telegram_register(),
+    data,
+  );
+  return response.data;
 };
 
-// =============================== VERIFY CODE ===============================
+// =============================== PHONE VERIFICATION ===============================
+export const sendPhoneVerificationRequest = async (
+  data: SendPhoneVerificationRequest,
+): Promise<SendPhoneVerificationResponse> => {
+  const response = await publicInstance.post<SendPhoneVerificationResponse>(
+    API_URL.send_phone(),
+    data,
+  );
+  return response.data;
+};
+
 export const verifyCodeRequest = async (
-  _data: VerifyCodeRequest,
+  data: VerifyCodeRequest,
 ): Promise<VerifyCodeResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    accessToken: 'mock-access-token-' + Date.now(),
-  };
-  // const response = await publicInstance.post<VerifyCodeResponse>(API_URL.verify_code(), data);
-  // return response.data;
+  const response = await publicInstance.post<VerifyCodeResponse>(
+    API_URL.verify_code(),
+    data,
+  );
+  return response.data;
 };
 
-// =============================== RESET PASSWORD ===============================
-export const resetPasswordRequest = async (
-  _data: ResetPasswordRequest,
-): Promise<ResetPasswordResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    token: 'mock-reset-token-' + Date.now(),
-  };
-  // const response = await publicInstance.post<ResetPasswordResponse>(API_URL.reset_password(), data);
-  // return response.data;
-};
-
-// =============================== SET NEW PASSWORD ===============================
-export const setNewPasswordRequest = async (
-  _data: SetNewPasswordRequest,
-): Promise<SetNewPasswordResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    message: 'Пароль успешно изменён',
-    token: 'mock-access-token-' + Date.now(),
-  };
-  // const response = await publicInstance.post<SetNewPasswordResponse>(API_URL.set_new_password(), data);
-  // return response.data;
+// =============================== TOKEN REFRESH ===============================
+export const refreshRequest = async (
+  data: RefreshRequest,
+): Promise<RefreshResponse> => {
+  const response = await publicInstance.post<RefreshResponse>(
+    API_URL.refresh(),
+    data,
+  );
+  return response.data;
 };

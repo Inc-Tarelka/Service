@@ -1,55 +1,69 @@
+import { AccountType as ApiAccountType } from 'shared/api/types';
+
 export interface LoginRequest {
-  phone: string;
+  username: string;
   password: string;
 }
 
 export interface LoginResponse {
-  success: boolean;
-  token: string;
-  message?: string;
+  accessToken: string;
+  refreshToken: string;
+  userId: number;
 }
 
-export interface RegisterRequest {
-  phone: string;
-  password: string;
-  name?: string;
+export interface RefreshRequest {
+  refreshToken: string;
 }
 
-export interface RegisterResponse {
-  success: boolean;
-  token: string;
-  message?: string;
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface SendPhoneVerificationRequest {
+  phoneNumber: string;
+}
+
+export interface SendPhoneVerificationResponse {
+  requestId: string;
 }
 
 export interface VerifyCodeRequest {
-  phone: string;
-  code: string;
-  token: string;
+  verificationCode: string;
+  verificationRequestId: string;
 }
 
 export interface VerifyCodeResponse {
-  success: boolean;
-  accessToken?: string;
-  message?: string;
-}
-
-export interface ResetPasswordRequest {
   phone: string;
+  status: string;
 }
 
-export interface ResetPasswordResponse {
-  success: boolean;
-  token: string;
-  message?: string;
-}
-
-export interface SetNewPasswordRequest {
-  token: string;
+export interface AccountData {
+  type: ApiAccountType;
+  username: string;
   password: string;
+  phone: string;
+  name?: string;
+  surname?: string;
+  companyName?: string;
 }
 
-export interface SetNewPasswordResponse {
-  success: boolean;
-  message?: string;
-  token?: string;
+export interface PhoneVerification {
+  verificationCode: string;
+  verificationRequestId: string;
+}
+
+export interface RegisterRequest {
+  account: AccountData;
+  cityIds: number[];
+  directionIds: number[];
+  initData: string;
+  phoneVerification: PhoneVerification;
+  specializationIds: number[];
+}
+
+export interface RegisterResponse {
+  accessToken: string;
+  refreshToken: string;
+  userId: number;
 }

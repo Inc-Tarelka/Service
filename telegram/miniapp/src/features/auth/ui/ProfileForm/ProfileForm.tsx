@@ -6,20 +6,18 @@ import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
 import { AccountType, CITIES, SPECIALIZATIONS } from '../../model/types';
 import { profileSchema } from '../../model/validation';
+import { authStore as wizardStore } from '../../model/AuthStore'; // Feature-level wizard store
 
 import s from './ProfileForm.module.scss';
+import { useStore } from 'app/StoreProvider';
 
 interface ProfileFormProps {
-  onSuccess: (data: {
-    accountType: AccountType;
-    name: string;
-    lastName: string;
-    specialization: string;
-    city: string;
-  }) => void;
+  onSuccess: (data: any) => void;
 }
 
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
+  const { authStore } = useStore();
+
   const {
     values,
     errors,
@@ -39,15 +37,37 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     schema: profileSchema,
     onSubmit: async (values) => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const wizardData = wizardStore.tempData;
 
-        onSuccess({
-          accountType: values.accountType,
-          name: values.name,
-          lastName: values.lastName || '',
-          specialization: values.specialization || '',
-          city: values.city || '',
+        if (!wizardData.login || !wizardData.password || !wizardData.phone) {
+          console.error('Missing wizard data');
+          return;
+        }
+
+        const type = values.accountType === 'company' ? 'COMPANY' : 'PERSON';
+
+        const success = await authStore.registerAction({
+          account: {
+            type: type as any,
+            username: wizardData.login,
+            password: wizardData.password,
+            phone: wizardData.phone,
+            name: values.name,
+            surname: values.lastName,
+          },
+          cityIds: [1],
+          directionIds: [],
+          specializationIds: [1],
+          initData: 'query_id=...',
+          phoneVerification: {
+            verificationCode: '0000',
+            verificationRequestId: 'req_id',
+          },
         });
+
+        if (success) {
+          onSuccess(values);
+        }
       } catch (error) {
         console.error('Profile error:', error);
         setErrors({ name: 'Ошибка сохранения профиля' });

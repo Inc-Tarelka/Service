@@ -5,7 +5,6 @@ import s from './AuthPage.module.scss';
 
 import type { AuthStep } from 'features/auth';
 import {
-  authStore,
   ConfirmCodeForm,
   DEFAULT_STEP,
   LoginForm,
@@ -14,6 +13,7 @@ import {
   ProfileForm,
   RegisterForm,
   VALID_STEPS,
+  authStore as wizardStore, // Rename feature store to wizardStore
 } from 'features/auth';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
@@ -24,19 +24,19 @@ const STEP_GUARDS: Partial<
   Record<AuthStep, { check: () => boolean; fallback: AuthStep }>
 > = {
   confirmLogin: {
-    check: () => authStore.hasVerificationToken,
+    check: () => wizardStore.hasVerificationToken,
     fallback: 'login',
   },
   registerProfile: {
-    check: () => authStore.hasLogin,
+    check: () => wizardStore.hasLogin,
     fallback: 'register',
   },
   confirmReset: {
-    check: () => authStore.hasLogin,
+    check: () => wizardStore.hasLogin,
     fallback: 'reset',
   },
   newPassword: {
-    check: () => authStore.hasResetToken,
+    check: () => wizardStore.hasResetToken,
     fallback: 'reset',
   },
 };
@@ -89,13 +89,9 @@ export const AuthPage = observer(() => {
     <div className={classNames(s.authPage, {}, [])}>
       <Activity mode={step === 'login' ? 'visible' : 'hidden'}>
         <LoginForm
-          onSuccess={(data) => {
-            authStore.setTempData({
-              login: data.login,
-              phone: data.phone,
-              verificationToken: data.token,
-            });
-            goToStep('confirmLogin');
+          onSuccess={() => {
+            // Login successful (token in storage), navigate to main
+            navigate(RoutePath.main, { replace: true });
           }}
           onNavigateToRegister={() => goToStep('register')}
           onNavigateToReset={() => goToStep('reset')}
@@ -106,7 +102,7 @@ export const AuthPage = observer(() => {
         <ConfirmCodeForm
           type="login"
           onSuccess={(token) => {
-            authStore.clearTempData();
+            wizardStore.clearTempData();
             if (token) {
               setToken(token);
               navigate(RoutePath.main, { replace: true });
@@ -121,7 +117,7 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'register' ? 'visible' : 'hidden'}>
         <RegisterForm
           onSuccess={(data) => {
-            authStore.setTempData({
+            wizardStore.setTempData({
               phone: data.phone,
               login: data.login,
               password: data.password,
@@ -134,15 +130,8 @@ export const AuthPage = observer(() => {
 
       <Activity mode={step === 'registerProfile' ? 'visible' : 'hidden'}>
         <ProfileForm
-          onSuccess={(profileData) => {
-            authStore.setTempData({
-              accountType: profileData.accountType,
-              name: profileData.name,
-              lastName: profileData.lastName,
-              specialization: profileData.specialization,
-              city: profileData.city,
-            });
-            authStore.clearTempData();
+          onSuccess={() => {
+            wizardStore.clearTempData();
             navigate(RoutePath.main, { replace: true });
           }}
         />
@@ -151,7 +140,7 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'reset' ? 'visible' : 'hidden'}>
         <PasswordResetForm
           onSuccess={(data) => {
-            authStore.setTempData({
+            wizardStore.setTempData({
               login: data.login,
               phone: data.phone,
               resetToken: data.token,
@@ -165,7 +154,7 @@ export const AuthPage = observer(() => {
         <ConfirmCodeForm
           type="reset"
           onSuccess={(verifiedToken) => {
-            authStore.setTempData({ resetToken: verifiedToken });
+            wizardStore.setTempData({ resetToken: verifiedToken });
             goToStep('newPassword');
           }}
           onResend={() => goToStep('reset', { replace: true })}
@@ -175,7 +164,7 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'newPassword' ? 'visible' : 'hidden'}>
         <NewPasswordForm
           onSuccess={(token) => {
-            authStore.clearTempData();
+            wizardStore.clearTempData();
             if (token) {
               setToken(token);
               navigate(RoutePath.main, { replace: true });

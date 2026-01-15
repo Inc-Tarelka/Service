@@ -1,21 +1,27 @@
 export const API_URL = {
   // Auth
   login: () => '/auth/login',
-  register: () => '/auth/register',
-  verify_code: () => '/auth/verify',
-  reset_password: () => '/auth/reset-password',
-  set_new_password: () => '/auth/set-new-password',
+  logout: () => '/auth/logout',
+  telegram_register: () => '/auth/telegram/register',
+  verify_code: () => '/auth/phone/verify',
+  send_phone: () => '/auth/phone/send',
+  refresh: () => '/auth/refresh',
+
+  // References
+  cities: () => '/references/cities',
+  directions: () => '/references/directions',
+  specializations: () => '/references/specializations',
 
   // User
-  profile: () => '/user/profile',
-  user: (id: string) => `/user/${id}`,
-  update_profile: () => '/user/update',
+  profile: () => '/users/me', // Swagger says /users/me for current user
+  user: (id: string | number) => `/users/${id}`,
+  // update_profile: () => '/user/update', // Not in Swagger doc.json provided, hiding for now
 
-  // Interaction
+  // Interaction (keeping as placeholder if needed, but not in doc.json provided)
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,
 
-  // Publication
+  // Publication (keeping as placeholder)
   publications: () => '/publications',
   publication: (id: string) => `/publications/${id}`,
 };

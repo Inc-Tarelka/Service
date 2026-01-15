@@ -10,7 +10,7 @@ import { registerSchema } from '../../model/validation';
 import s from './RegisterForm.module.scss';
 
 interface RegisterFormProps {
-  onSuccess: (data: { phone: string; login: string; password: string }) => void;
+  onSuccess: (data: any) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -23,29 +23,22 @@ export const RegisterForm = observer(
       handleChange,
       handleInputChange,
       handleSubmit,
-      setErrors,
+      // setErrors,
     } = useFormWithValidation({
       initialValues: {
         phone: '',
         login: '',
         password: '',
         confirmPassword: '',
-        agreeToTerms: false as any as true, // Trick for zod literal(true) and initial false
+        agreeToTerms: false as any as true,
       },
       schema: registerSchema,
       onSubmit: async (values) => {
-        try {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          onSuccess({
-            phone: values.phone,
-            login: values.login,
-            password: values.password,
-          });
-        } catch (error) {
-          console.error('Register error:', error);
-          setErrors({ login: 'Ошибка регистрации' });
-        }
+        onSuccess({
+          phone: values.phone,
+          login: values.login,
+          password: values.password,
+        });
       },
     });
 

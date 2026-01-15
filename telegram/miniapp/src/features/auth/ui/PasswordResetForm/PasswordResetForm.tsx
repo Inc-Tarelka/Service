@@ -5,7 +5,7 @@ import { Page } from 'widgets/Page';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { resetSchema } from '../../model/validation';
 
-import { resetPasswordRequest } from 'shared/api/service/Auth/api';
+// import { resetPasswordRequest } from 'shared/api/service/Auth/api';
 import s from './PasswordResetForm.module.scss';
 
 interface PasswordResetFormProps {
@@ -26,7 +26,15 @@ export const PasswordResetForm = observer(
       schema: resetSchema,
       onSubmit: async (values) => {
         try {
-          const response = await resetPasswordRequest({ phone: values.login });
+          const response =
+            /*
+      await resetPasswordRequest({
+        phone: values.login, // Временная логика, если бы метод существовал
+      });
+      */
+            // Mock response for now as the API is removed
+            { success: true, token: 'mock_token_123' };
+          console.warn('Reset password API not implemented on backend');
 
           if (response.success) {
             onSuccess({

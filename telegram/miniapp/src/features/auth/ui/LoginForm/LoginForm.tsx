@@ -3,19 +3,19 @@ import { observer } from 'mobx-react-lite';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { loginSchema } from '../../model/validation';
-
-import { loginRequest } from 'shared/api/service/Auth/api';
 import { Page } from 'widgets/Page';
 import s from './LoginForm.module.scss';
+import { useStore } from 'app/StoreProvider';
 
 interface LoginFormProps {
-  onSuccess: (data: { login: string; phone: string; token: string }) => void;
+  onSuccess: () => void;
   onNavigateToRegister: () => void;
   onNavigateToReset: () => void;
 }
 
 export const LoginForm = observer(
   ({ onSuccess, onNavigateToRegister, onNavigateToReset }: LoginFormProps) => {
+    const { authStore } = useStore();
     const {
       values,
       errors,
@@ -27,21 +27,14 @@ export const LoginForm = observer(
       initialValues: { login: '', password: '' },
       schema: loginSchema,
       onSubmit: async (values) => {
-        try {
-          const response = await loginRequest({
-            phone: values.login,
-            password: values.password,
-          });
+        const success = await authStore.loginAction({
+          username: values.login,
+          password: values.password,
+        });
 
-          if (response.success) {
-            onSuccess({
-              login: values.login,
-              phone: '+79991234567',
-              token: response.token,
-            });
-          }
-        } catch (error) {
-          console.error('Login error:', error);
+        if (success) {
+          onSuccess();
+        } else {
           setErrors({ password: 'Неверный логин или пароль' });
         }
       },

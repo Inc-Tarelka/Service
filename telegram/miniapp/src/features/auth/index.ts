@@ -62,7 +62,5 @@ export {
 export {
   loginRequest,
   registerRequest,
-  resetPasswordRequest,
-  setNewPasswordRequest,
   verifyCodeRequest,
 } from 'shared/api/service/Auth/api';

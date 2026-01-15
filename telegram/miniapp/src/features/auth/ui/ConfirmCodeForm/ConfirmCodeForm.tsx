@@ -35,20 +35,20 @@ export const ConfirmCodeForm = observer(
       schema: confirmCodeSchema,
       onSubmit: async (values) => {
         try {
+          const requestId =
+            authStore.tempData.verificationToken ||
+            authStore.tempData.resetToken;
+
           const response = await verifyCodeRequest({
-            phone: authStore.tempData.phone || '',
-            code: values.code,
-            token:
-              authStore.tempData.verificationToken ||
-              authStore.tempData.resetToken ||
-              '',
+            verificationCode: values.code,
+            verificationRequestId: requestId || 'mock-id',
           });
 
-          if (response.success) {
-            onSuccess(response.accessToken);
+          if (response.status === 'success') {
+            onSuccess('mock-token-from-verify');
           } else {
             setErrors({
-              code: response.message || 'Неверный код',
+              code: 'Неверный код',
             });
           }
         } catch (err) {
