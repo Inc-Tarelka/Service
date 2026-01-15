@@ -14,9 +14,7 @@ export const loginSchema = z.object({
 export type LoginSchemaType = z.infer<typeof loginSchema>;
 export const registerSchema = z
   .object({
-    accountType: z.enum(['specialist', 'company'], {
-      message: 'Выберите тип аккаунта',
-    }),
+    phone: z.string().min(1, 'Введите номер телефона'),
     login: z
       .string()
       .min(1, 'Введите логин')
@@ -44,12 +42,11 @@ export const registerSchema = z
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 
 export const profileSchema = z.object({
+  accountType: z.enum(['specialist', 'company'], {
+    message: 'Выберите тип аккаунта',
+  }),
   name: z.string().min(1, 'Введите имя или название организации'),
   lastName: z.string().optional(),
-  nickname: z
-    .string()
-    .min(1, 'Введите никнейм')
-    .min(2, 'Никнейм должен быть не менее 2 символов'),
   specialization: z.string().min(1, 'Выберите специализацию'),
   city: z.string().min(1, 'Выберите город'),
 });

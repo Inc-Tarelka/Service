@@ -16,6 +16,27 @@
   margin: 0 0 16px;
 }
 
+.typeSelector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.typeButton {
+  background: transparent !important;
+  color: var(--text-color) !important;
+  flex: 1;
+  font: var(--font-body) !important;
+  height: 40px !important;
+  transition: all 0.2s !important;
+
+  &.active {
+    background: var(--green) !important;
+    border-color: var(--green) !important;
+    color: var(--bg-color) !important;
+  }
+}
+
 .inputGroup {
   display: flex;
   flex-direction: column;

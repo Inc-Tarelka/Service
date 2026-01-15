@@ -6,8 +6,8 @@ import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { authStore } from '../../model/AuthStore';
 import { newPasswordSchema } from '../../model/validation';
 
-import s from './NewPasswordForm.module.scss';
 import { setNewPasswordRequest } from 'shared/api/service/Auth/api';
+import s from './NewPasswordForm.module.scss';
 
 interface NewPasswordFormProps {
   onSuccess: (token?: string) => void;
@@ -47,7 +47,7 @@ export const NewPasswordForm = observer(
     });
 
     return (
-      <Page className={s.newPasswordForm}>
+      <Page className={s.newPasswordForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Новый пароль</h1>
           <Text className={s.subtitle}>

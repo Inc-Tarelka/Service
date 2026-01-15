@@ -51,7 +51,7 @@ export interface LoginFormData {
 }
 
 export interface RegisterFormData {
-  accountType: AccountType;
+  phone: string;
   login: string;
   password: string;
   confirmPassword: string;
@@ -59,9 +59,9 @@ export interface RegisterFormData {
 }
 
 export interface ProfileFormData {
+  accountType: AccountType;
   name: string;
   lastName: string;
-  nickname: string;
   specialization: string;
   city: string;
 }

@@ -1,28 +1,25 @@
 import { Button, Select, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 
+import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
-import { authStore } from '../../model/AuthStore';
-import { CITIES, SPECIALIZATIONS } from '../../model/types';
+import { AccountType, CITIES, SPECIALIZATIONS } from '../../model/types';
 import { profileSchema } from '../../model/validation';
 
-import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import s from './ProfileForm.module.scss';
 
 interface ProfileFormProps {
   onSuccess: (data: {
+    accountType: AccountType;
     name: string;
     lastName: string;
-    nickname: string;
     specialization: string;
     city: string;
   }) => void;
 }
 
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
-  const isCompany = authStore.isCompany;
-
   const {
     values,
     errors,
@@ -33,9 +30,9 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     setErrors,
   } = useFormWithValidation({
     initialValues: {
+      accountType: 'specialist' as AccountType,
       name: '',
       lastName: '',
-      nickname: '',
       specialization: 'Вариант по умолчанию',
       city: 'Москва',
     },
@@ -45,9 +42,9 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         onSuccess({
+          accountType: values.accountType,
           name: values.name,
           lastName: values.lastName || '',
-          nickname: values.nickname,
           specialization: values.specialization || '',
           city: values.city || '',
         });
@@ -58,14 +55,35 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     },
   });
 
+  const isCompany = values.accountType === 'company';
+
   return (
-    <Page className={s.profileForm}>
+    <Page className={s.profileForm} smallPaddingBottom>
       <div className={s.content}>
         <h1 className={s.title}>Расскажите о себе</h1>
 
+        <div className={s.typeSelector}>
+          <Button
+            className={`${s.typeButton} ${values.accountType === 'specialist' ? s.active : ''} `}
+            onClick={() => handleChange('accountType', 'specialist')}
+            variant="filled"
+            radius="xl"
+          >
+            Специалист
+          </Button>
+          <Button
+            className={`${s.typeButton} ${values.accountType === 'company' ? s.active : ''} `}
+            onClick={() => handleChange('accountType', 'company')}
+            variant="filled"
+            radius="xl"
+          >
+            Компания
+          </Button>
+        </div>
+
         <div className={s.inputGroup}>
           <span className={s.label}>
-            {isCompany ? 'Название организации' : 'Имя/Название организации'}
+            {isCompany ? 'Название организации' : 'Имя (название организации)'}
           </span>
           <TextInput
             classNames={{ input: s.input }}
@@ -82,7 +100,6 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           <div className={s.inputGroup}>
             <div className={s.labelRow}>
               <span className={s.label}>Фамилия</span>
-              <span className={s.optional}>(не обязательно)</span>
             </div>
             <TextInput
               classNames={{ input: s.input }}
@@ -94,19 +111,6 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
             />
           </div>
         )}
-
-        <div className={s.inputGroup}>
-          <span className={s.label}>Никнейм</span>
-          <TextInput
-            classNames={{ input: s.input }}
-            value={values.nickname}
-            onChange={handleInputChange('nickname')}
-            placeholder="@никнейм"
-            error={errors.nickname}
-            radius="xl"
-            size="lg"
-          />
-        </div>
 
         <div className={s.inputGroup}>
           <span className={s.label}>Специализация</span>
@@ -145,7 +149,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           fullWidth
           radius="xl"
           size="lg"
-          color={'var(--accent-color)'}
+          color={'var(--accent-light)'}
           variant="filled"
         >
           Создать аккаунт

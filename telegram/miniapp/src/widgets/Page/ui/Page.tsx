@@ -8,10 +8,11 @@ interface PageProps {
   className?: string;
   children?: ReactNode;
   noPaddingBottom?: boolean;
+  smallPaddingBottom?: boolean;
 }
 
 export const Page = observer((props: PageProps) => {
-  const { className, children, noPaddingBottom } = props;
+  const { className, children, noPaddingBottom, smallPaddingBottom } = props;
   const { isDesktop } = useViewport();
 
   const needsSpacer = !isDesktop;
@@ -24,6 +25,7 @@ export const Page = observer((props: PageProps) => {
           [s.desktop]: isDesktop,
           [s.withNavbar]: needsSpacer,
           [s.noPaddingBottom]: noPaddingBottom,
+          [s.smallPaddingBottom]: smallPaddingBottom,
         },
         [className],
       )}

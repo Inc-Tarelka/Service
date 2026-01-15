@@ -1,19 +1,16 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
+import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
+import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { Page } from 'widgets/Page';
-import { AccountType } from '../../model/types';
 import { registerSchema } from '../../model/validation';
 
 import s from './RegisterForm.module.scss';
 
 interface RegisterFormProps {
-  onSuccess: (data: {
-    accountType: AccountType;
-    login: string;
-    password: string;
-  }) => void;
+  onSuccess: (data: { phone: string; login: string; password: string }) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -29,11 +26,11 @@ export const RegisterForm = observer(
       setErrors,
     } = useFormWithValidation({
       initialValues: {
-        accountType: 'specialist' as AccountType,
+        phone: '',
         login: '',
         password: '',
         confirmPassword: '',
-        agreeToTerms: false,
+        agreeToTerms: false as any as true, // Trick for zod literal(true) and initial false
       },
       schema: registerSchema,
       onSubmit: async (values) => {
@@ -41,7 +38,7 @@ export const RegisterForm = observer(
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           onSuccess({
-            accountType: values.accountType,
+            phone: values.phone,
             login: values.login,
             password: values.password,
           });
@@ -52,28 +49,38 @@ export const RegisterForm = observer(
       },
     });
 
+    const handleRequestPhone = () => {
+      WebApp.requestContact((success: boolean, response: any) => {
+        if (success && response?.responseUnsafe?.contact?.phone_number) {
+          let phoneNumber = response.responseUnsafe.contact.phone_number;
+          if (!phoneNumber.startsWith('+')) {
+            phoneNumber = '+' + phoneNumber;
+          }
+          handleChange('phone', phoneNumber);
+        } else {
+          console.log('Phone request failed or cancelled');
+        }
+      });
+    };
+
     return (
-      <Page className={s.registerForm}>
+      <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
 
-          <div className={s.typeSelector}>
-            <Button
-              className={`${s.typeButton} ${values.accountType === 'specialist' ? s.active : ''} `}
-              onClick={() => handleChange('accountType', 'specialist')}
-              variant="outline"
+          <div className={s.inputGroup}>
+            <span className={s.label}>Телефон</span>
+            <TextInput
+              classNames={{ input: s.input }}
+              value={values.phone}
+              readOnly
+              placeholder="Получить из Telegram"
+              rightSection={<ChevronRightIcon />}
+              onClick={handleRequestPhone}
               radius="xl"
-            >
-              Специалист
-            </Button>
-            <Button
-              className={`${s.typeButton} ${values.accountType === 'company' ? s.active : ''} `}
-              onClick={() => handleChange('accountType', 'company')}
-              variant="outline"
-              radius="xl"
-            >
-              Компания
-            </Button>
+              size="lg"
+              error={errors.phone}
+            />
           </div>
 
           <div className={s.inputGroup}>
@@ -87,6 +94,7 @@ export const RegisterForm = observer(
               radius="xl"
               size="lg"
             />
+            <span className={s.hint}>Это будет ваш уникальный никнейм</span>
           </div>
 
           <div className={s.inputGroup}>
@@ -117,6 +125,7 @@ export const RegisterForm = observer(
 
           <div className={s.termsWrapper}>
             <Checkbox
+              className={s.termsCheckbox}
               checked={values.agreeToTerms}
               onChange={(e) =>
                 handleChange('agreeToTerms', e.currentTarget.checked)
@@ -147,6 +156,7 @@ export const RegisterForm = observer(
             radius="xl"
             variant="filled"
             size="lg"
+            color="var(--accent-light)"
           >
             Продолжить
           </Button>

@@ -5,8 +5,8 @@ import { Page } from 'widgets/Page';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { resetSchema } from '../../model/validation';
 
-import s from './PasswordResetForm.module.scss';
 import { resetPasswordRequest } from 'shared/api/service/Auth/api';
+import s from './PasswordResetForm.module.scss';
 
 interface PasswordResetFormProps {
   onSuccess: (data: { login: string; phone: string; token: string }) => void;
@@ -43,7 +43,7 @@ export const PasswordResetForm = observer(
     });
 
     return (
-      <Page className={s.passwordResetForm}>
+      <Page className={s.passwordResetForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Восстановление пароля</h1>
 

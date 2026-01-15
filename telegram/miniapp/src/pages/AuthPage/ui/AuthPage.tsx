@@ -122,7 +122,7 @@ export const AuthPage = observer(() => {
         <RegisterForm
           onSuccess={(data) => {
             authStore.setTempData({
-              accountType: data.accountType,
+              phone: data.phone,
               login: data.login,
               password: data.password,
             });
@@ -136,9 +136,9 @@ export const AuthPage = observer(() => {
         <ProfileForm
           onSuccess={(profileData) => {
             authStore.setTempData({
+              accountType: profileData.accountType,
               name: profileData.name,
               lastName: profileData.lastName,
-              nickname: profileData.nickname,
               specialization: profileData.specialization,
               city: profileData.city,
             });

@@ -26,6 +26,10 @@
   &.noPaddingBottom {
     padding-bottom: 0;
   }
+
+  &.smallPaddingBottom {
+    padding-bottom: calc(37px + env(safe-area-inset-bottom));
+  }
 }
 
 .spacer {

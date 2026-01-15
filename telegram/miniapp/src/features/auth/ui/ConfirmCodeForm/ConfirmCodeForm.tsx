@@ -8,8 +8,8 @@ import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
 import { confirmCodeSchema } from '../../model/validation';
 
-import s from './ConfirmCodeForm.module.scss';
 import { verifyCodeRequest } from 'shared/api/service/Auth/api';
+import s from './ConfirmCodeForm.module.scss';
 
 interface ConfirmCodeFormProps {
   type?: ConfirmCodeType;
@@ -147,7 +147,7 @@ export const ConfirmCodeForm = observer(
     const isCodeComplete = values.code.length === CODE_LENGTH;
 
     return (
-      <Page className={s.confirmCodeForm}>
+      <Page className={s.confirmCodeForm} smallPaddingBottom>
         <div className={s.content}>
           <div className={s.titleGroup}>
             <h1 className={s.title}>{getTitle()}</h1>

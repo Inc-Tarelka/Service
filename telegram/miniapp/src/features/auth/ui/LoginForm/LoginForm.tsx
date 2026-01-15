@@ -4,9 +4,9 @@ import { observer } from 'mobx-react-lite';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { loginSchema } from '../../model/validation';
 
+import { loginRequest } from 'shared/api/service/Auth/api';
 import { Page } from 'widgets/Page';
 import s from './LoginForm.module.scss';
-import { loginRequest } from 'shared/api/service/Auth/api';
 
 interface LoginFormProps {
   onSuccess: (data: { login: string; phone: string; token: string }) => void;
@@ -48,7 +48,7 @@ export const LoginForm = observer(
     });
 
     return (
-      <Page className={s.loginForm}>
+      <Page className={s.loginForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Вход в аккаунт</h1>
 
