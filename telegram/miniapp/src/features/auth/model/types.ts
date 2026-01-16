@@ -17,6 +17,7 @@ export type AuthStep =
   | 'login' // Вход: логин + пароль
   | 'confirmLogin' // Подтверждение входа (код в Telegram)
   | 'register' // Регистрация: тип + логин + пароль + правила
+  | 'registerConfirm' // Подтверждение телефона регистрации
   | 'registerProfile' // Расскажите о себе
   | 'reset' // Восстановление пароля: ввод логина
   | 'confirmReset' // Подтверждение телефона
@@ -28,6 +29,7 @@ export const VALID_STEPS: AuthStep[] = [
   'login',
   'confirmLogin',
   'register',
+  'registerConfirm',
   'registerProfile',
   'reset',
   'confirmReset',
@@ -37,19 +39,17 @@ export const VALID_STEPS: AuthStep[] = [
 export type AccountType = 'specialist' | 'company';
 
 export interface TempAuthData {
-  // Login/Register
   login?: string;
   phone?: string;
   verificationToken?: string;
+  verificationRequestId?: string;
+  verificationCode?: string;
 
-  // Register specific
   accountType?: AccountType;
   password?: string;
 
-  // Reset password
   resetToken?: string;
 
-  // Profile data (registerProfile step)
   name?: string;
   lastName?: string;
   nickname?: string;
@@ -87,30 +87,4 @@ export interface NewPasswordFormData {
   confirmPassword: string;
 }
 
-export type ConfirmCodeType = 'login' | 'reset';
-
-export const CITIES = [
-  'Москва',
-  'Санкт-Петербург',
-  'Новосибирск',
-  'Екатеринбург',
-  'Казань',
-  'Нижний Новгород',
-  'Челябинск',
-  'Самара',
-  'Омск',
-  'Ростов-на-Дону',
-];
-
-export const SPECIALIZATIONS = [
-  'Вариант по умолчанию',
-  'Разработка',
-  'Дизайн',
-  'Маркетинг',
-  'Продажи',
-  'Аналитика',
-  'Управление',
-  'Финансы',
-  'HR',
-  'Другое',
-];
+export type ConfirmCodeType = 'login' | 'reset' | 'register';

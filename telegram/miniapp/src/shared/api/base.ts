@@ -7,7 +7,7 @@ let isServerDown = false;
 let serverDownTimestamp = 0;
 
 /**
- * Загружает токен из CloudStorage или localStorage (один раз при старте).
+ * Загружает токен из CloudStorage (один раз при старте).
  */
 export const loadAccessTokenOnce = async (): Promise<void> => {
   try {
@@ -29,40 +29,31 @@ export const loadAccessTokenOnce = async (): Promise<void> => {
         return;
       }
     }
-
-    const localToken = localStorage.getItem('access_token');
-    if (localToken) {
-      cachedToken = localToken;
-    }
   } catch (error) {
     console.error('Error loading token:', error);
   }
 };
 
+export const getAccessToken = () => cachedToken;
+
 export const setAccessToken = (token: string | undefined) => {
   cachedToken = token;
 
-  if (token) {
-    localStorage.setItem('access_token', token);
-
-    if (
-      WebApp.CloudStorage &&
-      (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
-    ) {
-      WebApp.CloudStorage.setItem('access_token', token, (error) => {
-        if (error) {
-          console.error('Error saving token to CloudStorage:', error);
-        }
-      });
-    }
-  } else {
-    localStorage.removeItem('access_token');
+  if (
+    token &&
+    WebApp.CloudStorage &&
+    (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
+  ) {
+    WebApp.CloudStorage.setItem('access_token', token, (error) => {
+      if (error) {
+        console.error('Error saving token to CloudStorage:', error);
+      }
+    });
   }
 };
 
 export const clearAccessToken = () => {
   cachedToken = undefined;
-  localStorage.removeItem('access_token');
 
   if (
     WebApp.CloudStorage &&

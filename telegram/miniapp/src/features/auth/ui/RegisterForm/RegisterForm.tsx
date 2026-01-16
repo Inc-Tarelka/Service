@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
@@ -23,7 +24,6 @@ export const RegisterForm = observer(
       handleChange,
       handleInputChange,
       handleSubmit,
-      // setErrors,
     } = useFormWithValidation({
       initialValues: {
         phone: '',
@@ -34,11 +34,15 @@ export const RegisterForm = observer(
       },
       schema: registerSchema,
       onSubmit: async (values) => {
-        onSuccess({
-          phone: values.phone,
-          login: values.login,
-          password: values.password,
-        });
+        const success = await verificationStore.sendCode(values.phone);
+        if (success) {
+          onSuccess({
+            phone: values.phone,
+            login: values.login,
+            password: values.password,
+            verificationRequestId: verificationStore.requestId,
+          });
+        }
       },
     });
 

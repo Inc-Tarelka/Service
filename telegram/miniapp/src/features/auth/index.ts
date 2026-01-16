@@ -32,12 +32,7 @@ export const RegisterForm = lazy(() =>
 );
 
 export { authStore } from './model/AuthStore';
-export {
-  CITIES,
-  DEFAULT_STEP,
-  SPECIALIZATIONS,
-  VALID_STEPS,
-} from './model/types';
+export { DEFAULT_STEP, VALID_STEPS } from './model/types';
 export type {
   AccountType,
   AuthStep,

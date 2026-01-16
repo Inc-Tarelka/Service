@@ -13,12 +13,13 @@ import {
   ProfileForm,
   RegisterForm,
   VALID_STEPS,
-  authStore as wizardStore, // Rename feature store to wizardStore
+  authStore as wizardStore,
 } from 'features/auth';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import classNames from 'shared/library/ClassNames/classNames';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 
 const STEP_GUARDS: Partial<
   Record<AuthStep, { check: () => boolean; fallback: AuthStep }>
@@ -27,8 +28,12 @@ const STEP_GUARDS: Partial<
     check: () => wizardStore.hasVerificationToken,
     fallback: 'login',
   },
+  registerConfirm: {
+    check: () => !!wizardStore.tempData.verificationRequestId,
+    fallback: 'register',
+  },
   registerProfile: {
-    check: () => wizardStore.hasLogin,
+    check: () => !!wizardStore.tempData.verificationCode,
     fallback: 'register',
   },
   confirmReset: {
@@ -90,7 +95,6 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'login' ? 'visible' : 'hidden'}>
         <LoginForm
           onSuccess={() => {
-            // Login successful (token in storage), navigate to main
             navigate(RoutePath.main, { replace: true });
           }}
           onNavigateToRegister={() => goToStep('register')}
@@ -121,10 +125,34 @@ export const AuthPage = observer(() => {
               phone: data.phone,
               login: data.login,
               password: data.password,
+              verificationRequestId: data.verificationRequestId,
             });
-            goToStep('registerProfile');
+            goToStep('registerConfirm');
           }}
           onNavigateToLogin={() => goToStep('login')}
+        />
+      </Activity>
+
+      <Activity mode={step === 'registerConfirm' ? 'visible' : 'hidden'}>
+        <ConfirmCodeForm
+          type="register"
+          onSuccess={() => {
+            goToStep('registerProfile');
+          }}
+          onResend={async () => {
+            if (wizardStore.tempData.phone) {
+              const success = await verificationStore.sendCode(
+                wizardStore.tempData.phone,
+              );
+              if (success && verificationStore.requestId) {
+                wizardStore.setTempData({
+                  verificationRequestId: verificationStore.requestId,
+                });
+              }
+            } else {
+              goToStep('register', { replace: true });
+            }
+          }}
         />
       </Activity>
 

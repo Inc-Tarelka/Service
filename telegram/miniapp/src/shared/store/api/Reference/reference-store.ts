@@ -21,6 +21,7 @@ export class ReferenceStore {
   }
 
   getCitiesAction = async () => {
+    if (this.cities.length > 0) return;
     try {
       const promise = getCitiesRequest();
       this.citiesData = fromPromise(promise);
@@ -32,6 +33,7 @@ export class ReferenceStore {
   };
 
   getDirectionsAction = async () => {
+    if (this.directions.length > 0) return;
     try {
       const promise = getDirectionsRequest();
       this.directionsData = fromPromise(promise);
@@ -43,6 +45,7 @@ export class ReferenceStore {
   };
 
   getSpecializationsAction = async () => {
+    if (this.specializations.length > 0) return;
     try {
       const promise = getSpecializationsRequest();
       this.specializationsData = fromPromise(promise);
@@ -53,3 +56,5 @@ export class ReferenceStore {
     }
   };
 }
+
+export const referenceStore = new ReferenceStore();

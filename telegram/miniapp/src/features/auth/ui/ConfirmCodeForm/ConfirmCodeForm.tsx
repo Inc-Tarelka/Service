@@ -3,12 +3,12 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
 import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
 import { confirmCodeSchema } from '../../model/validation';
 
-import { verifyCodeRequest } from 'shared/api/service/Auth/api';
 import s from './ConfirmCodeForm.module.scss';
 
 interface ConfirmCodeFormProps {
@@ -36,19 +36,32 @@ export const ConfirmCodeForm = observer(
       onSubmit: async (values) => {
         try {
           const requestId =
+            verificationStore.requestId ||
+            authStore.tempData.verificationRequestId ||
             authStore.tempData.verificationToken ||
             authStore.tempData.resetToken;
 
-          const response = await verifyCodeRequest({
-            verificationCode: values.code,
-            verificationRequestId: requestId || 'mock-id',
-          });
+          if (!requestId) {
+            setErrors({ code: 'Ошибка: ID запроса не найден' });
+            return;
+          }
 
-          if (response.status === 'success') {
-            onSuccess('mock-token-from-verify');
+          let success = false;
+          if (verificationStore.requestId) {
+            success = await verificationStore.verifyCode(values.code);
+          } else {
+            verificationStore.requestId = requestId;
+            success = await verificationStore.verifyCode(values.code);
+          }
+
+          if (success) {
+            if (type === 'register') {
+              authStore.setTempData({ verificationCode: values.code });
+            }
+            onSuccess();
           } else {
             setErrors({
-              code: 'Неверный код',
+              code: verificationStore.error || 'Неверный код',
             });
           }
         } catch (err) {
@@ -121,9 +134,16 @@ export const ConfirmCodeForm = observer(
     );
 
     const getTitle = () => {
-      return type === 'login'
-        ? 'Подтверждение входа'
-        : 'Подтверждение телефона';
+      switch (type) {
+        case 'login':
+          return 'Подтверждение входа';
+        case 'register':
+          return 'Подтверждение регистрации';
+        case 'reset':
+          return 'Восстановление пароля';
+        default:
+          return 'Подтверждение телефона';
+      }
     };
 
     const getSubtitle = () => {

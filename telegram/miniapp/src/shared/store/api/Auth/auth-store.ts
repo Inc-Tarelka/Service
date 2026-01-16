@@ -1,6 +1,12 @@
 import { makeAutoObservable } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
+  clearAccessToken,
+  getAccessToken,
+  loadAccessTokenOnce,
+  setAccessToken,
+} from 'shared/api/base';
+import {
   loginRequest,
   logoutRequest,
   registerRequest,
@@ -19,29 +25,32 @@ import {
 } from 'shared/api/service/Auth/types';
 
 export class AuthStore {
-  // Observables for async state
   loginData?: IPromiseBasedObservable<LoginResponse>;
   registerData?: IPromiseBasedObservable<RegisterResponse>;
   phoneVerificationData?: IPromiseBasedObservable<SendPhoneVerificationResponse>;
   codeVerificationData?: IPromiseBasedObservable<VerifyCodeResponse>;
 
-  // Session state
   isAuth = false;
   token: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
-    this.token = localStorage.getItem('access_token');
-    if (this.token) {
-      this.isAuth = true;
-    }
+    this.init();
   }
+
+  init = async () => {
+    await loadAccessTokenOnce();
+    const token = getAccessToken();
+    if (token) {
+      this.isAuth = true;
+      this.token = token;
+    }
+  };
 
   // ================= ACTIONS =================
 
   loginAction = async (data: LoginRequest): Promise<boolean> => {
     try {
-      // Wrap the promise to track state (pending/fulfilled/rejected)
       const promise = loginRequest(data);
       this.loginData = fromPromise(promise);
 
@@ -49,8 +58,7 @@ export class AuthStore {
 
       this.isAuth = true;
       this.token = response.accessToken;
-      localStorage.setItem('access_token', response.accessToken);
-      localStorage.setItem('refresh_token', response.refreshToken);
+      setAccessToken(response.accessToken);
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -67,8 +75,7 @@ export class AuthStore {
 
       this.isAuth = true;
       this.token = response.accessToken;
-      localStorage.setItem('access_token', response.accessToken);
-      localStorage.setItem('refresh_token', response.refreshToken);
+      setAccessToken(response.accessToken);
       return true;
     } catch (error) {
       console.error('Register error:', error);
@@ -98,17 +105,13 @@ export class AuthStore {
 
   logoutAction = async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        await logoutRequest(refreshToken);
-      }
+      await logoutRequest('dummy');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       this.isAuth = false;
       this.token = null;
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      clearAccessToken();
     }
   };
 }
