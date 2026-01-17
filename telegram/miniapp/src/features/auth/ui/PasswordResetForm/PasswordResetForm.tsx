@@ -2,18 +2,20 @@ import { Button, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { Page } from 'widgets/Page';
 
+import { useStore } from 'app/StoreProvider';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { resetSchema } from '../../model/validation';
 
-// import { resetPasswordRequest } from 'shared/api/service/Auth/api';
 import s from './PasswordResetForm.module.scss';
 
 interface PasswordResetFormProps {
-  onSuccess: (data: { login: string; phone: string; token: string }) => void;
+  onSuccess: (data: { login: string; requestId: string }) => void;
 }
 
 export const PasswordResetForm = observer(
   ({ onSuccess }: PasswordResetFormProps) => {
+    const { authStore } = useStore();
+
     const {
       values,
       errors,
@@ -25,26 +27,22 @@ export const PasswordResetForm = observer(
       initialValues: { login: '' },
       schema: resetSchema,
       onSubmit: async (values) => {
-        try {
-          const response =
-            /*
-      await resetPasswordRequest({
-        phone: values.login, // Временная логика, если бы метод существовал
-      });
-      */
-            // Mock response for now as the API is removed
-            { success: true, token: 'mock_token_123' };
-          console.warn('Reset password API not implemented on backend');
+        const requestId = await authStore.forgotPasswordAction({
+          username: values.login,
+        });
 
-          if (response.success) {
-            onSuccess({
-              login: values.login,
-              phone: '+79991234567',
-              token: response.token,
-            });
-          }
-        } catch (error) {
-          console.error('Reset error:', error);
+        if (requestId) {
+          authStore.setTempData({
+            login: values.login,
+            verificationRequestId: requestId,
+          });
+          console.log('Saved login and requestId:', {
+            login: values.login,
+            requestId,
+          });
+          console.log('Current tempData:', authStore.tempData);
+          onSuccess({ login: values.login, requestId });
+        } else {
           setErrors({ login: 'Пользователь не найден' });
         }
       },
@@ -58,7 +56,9 @@ export const PasswordResetForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Логин</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.login ? s.error : ''}`,
+              }}
               value={values.login}
               onChange={handleInputChange('login')}
               placeholder="Введите логин"

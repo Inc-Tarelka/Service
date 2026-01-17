@@ -2,10 +2,10 @@ import { Button, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useStore } from 'app/StoreProvider';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
-import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
 import { confirmCodeSchema } from '../../model/validation';
 
@@ -22,6 +22,8 @@ const CODE_LENGTH = 4;
 
 export const ConfirmCodeForm = observer(
   ({ type = 'login', onSuccess, onResend }: ConfirmCodeFormProps) => {
+    const { authStore } = useStore();
+
     const {
       values,
       errors,
@@ -55,10 +57,10 @@ export const ConfirmCodeForm = observer(
           }
 
           if (success) {
-            if (type === 'register') {
+            if (type === 'register' || type === 'reset') {
               authStore.setTempData({ verificationCode: values.code });
             }
-            onSuccess();
+            onSuccess(values.code);
           } else {
             setErrors({
               code: verificationStore.error || 'Неверный код',
@@ -147,7 +149,7 @@ export const ConfirmCodeForm = observer(
     };
 
     const getSubtitle = () => {
-      const phone = authStore.maskedPhone || '+7 (999) 123-45-67';
+      const phone = authStore.maskedPhone;
       return (
         <>
           Мы отправили сообщение с кодом
@@ -185,7 +187,7 @@ export const ConfirmCodeForm = observer(
                   }}
                   type="text"
                   inputMode="numeric"
-                  className={s.codeInput}
+                  className={`${s.codeInput} ${errors.code ? s.error : ''}`}
                   value={code[index]}
                   onChange={(e) => handleCodeChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
@@ -194,8 +196,6 @@ export const ConfirmCodeForm = observer(
                 />
               ))}
           </div>
-
-          {errors.code && <p className={s.error}>{errors.code}</p>}
         </div>
 
         <div className={s.footer}>

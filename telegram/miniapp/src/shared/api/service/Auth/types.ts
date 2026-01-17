@@ -67,3 +67,22 @@ export interface RegisterResponse {
   refreshToken: string;
   userId: number;
 }
+
+export interface ForgotPasswordRequest {
+  username: string;
+}
+
+export interface ForgotPasswordResponse {
+  requestId: string;
+}
+
+export interface ResetPasswordRequest {
+  newPassword: string;
+  username: string;
+  verificationCode: string;
+  verificationRequestId: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+}

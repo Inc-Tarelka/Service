@@ -2,6 +2,7 @@ import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
+import { useStore } from 'app/StoreProvider';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
@@ -17,6 +18,8 @@ interface RegisterFormProps {
 
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
+    const { authStore } = useStore();
+
     const {
       values,
       errors,
@@ -36,6 +39,15 @@ export const RegisterForm = observer(
       onSubmit: async (values) => {
         const success = await verificationStore.sendCode(values.phone);
         if (success) {
+          authStore.setTempData({
+            phone: values.phone,
+            login: values.login,
+            password: values.password,
+            verificationRequestId: verificationStore.requestId || '',
+          });
+
+          console.log('RegisterForm saved to tempData:', authStore.tempData);
+
           onSuccess({
             phone: values.phone,
             login: values.login,
@@ -68,12 +80,20 @@ export const RegisterForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Телефон</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.phone ? s.error : ''}`,
+              }}
               value={values.phone}
-              readOnly
+              onChange={handleInputChange('phone')}
               placeholder="Получить из Telegram"
-              rightSection={<ChevronRightIcon />}
-              onClick={handleRequestPhone}
+              rightSection={
+                <div
+                  onClick={handleRequestPhone}
+                  style={{ cursor: 'pointer', display: 'flex' }}
+                >
+                  <ChevronRightIcon />
+                </div>
+              }
               radius="xl"
               size="lg"
               error={errors.phone}
@@ -83,7 +103,9 @@ export const RegisterForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Логин</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.login ? s.error : ''}`,
+              }}
               value={values.login}
               onChange={handleInputChange('login')}
               placeholder="Введите логин"
@@ -97,7 +119,9 @@ export const RegisterForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.password ? s.error : ''}`,
+              }}
               value={values.password}
               onChange={handleInputChange('password')}
               placeholder="Минимум 8 символов"
@@ -110,7 +134,9 @@ export const RegisterForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Повторите пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.confirmPassword ? s.error : ''}`,
+              }}
               value={values.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
               placeholder="Повторите пароль"

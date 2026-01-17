@@ -31,6 +31,7 @@ const AppContent = observer(() => {
   );
 
   useEffect(() => {
+    WebApp.CloudStorage.setItem('access_token', '');
     loadAccessTokenOnce();
     WebApp.disableVerticalSwipes();
     WebApp.enableClosingConfirmation();

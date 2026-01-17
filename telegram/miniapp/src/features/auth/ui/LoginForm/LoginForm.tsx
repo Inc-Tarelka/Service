@@ -1,11 +1,11 @@
 import { Button, PasswordInput, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 
-import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { loginSchema } from '../../model/validation';
-import { Page } from 'widgets/Page';
-import s from './LoginForm.module.scss';
 import { useStore } from 'app/StoreProvider';
+import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { Page } from 'widgets/Page';
+import { loginSchema } from '../../model/validation';
+import s from './LoginForm.module.scss';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -48,7 +48,9 @@ export const LoginForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Логин</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.login ? s.error : ''}`,
+              }}
               value={values.login}
               onChange={handleInputChange('login')}
               placeholder="Введите логин"
@@ -66,7 +68,9 @@ export const LoginForm = observer(
               </span>
             </div>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.password ? s.error : ''}`,
+              }}
               value={values.password}
               onChange={handleInputChange('password')}
               placeholder="Введите пароль"

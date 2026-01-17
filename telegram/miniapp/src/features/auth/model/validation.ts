@@ -87,7 +87,6 @@ export const confirmCodeSchema = z.object({
   code: z
     .string()
     .min(1, 'Введите код')
-    .length(4, 'Код должен содержать 4 цифры')
     .regex(/^\d+$/, 'Код должен содержать только цифры'),
 });
 

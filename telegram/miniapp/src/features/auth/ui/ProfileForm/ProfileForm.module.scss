@@ -17,9 +17,12 @@
 }
 
 .typeSelector {
+  background-color: var(--tertiary-bg-color);
+  border-radius: 40px;
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
+  padding: 6px;
 }
 
 .typeButton {
@@ -41,6 +44,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  .input, .select {
+    &.error {
+      border-color: var(--red) !important;
+    }
+  }
 }
 
 .labelRow {

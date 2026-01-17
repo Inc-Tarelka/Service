@@ -1,12 +1,10 @@
 import { Button, Select, TextInput } from '@mantine/core';
-import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { Page } from 'widgets/Page';
-import { authStore as wizardStore } from '../../model/AuthStore';
 import { AccountType } from '../../model/types';
 import { profileSchema } from '../../model/validation';
 
@@ -41,7 +39,10 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     schema: profileSchema,
     onSubmit: async (values) => {
       try {
-        const wizardData = wizardStore.tempData;
+        const wizardData = authStore.tempData;
+
+        console.log('ProfileForm submitting with tempData:', wizardData);
+        console.log('ProfileForm values:', values);
 
         if (
           !wizardData.login ||
@@ -77,23 +78,39 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
 
         if (isNaN(cityId) || isNaN(specializationId)) {
           console.error('Invalid ID selection');
+          setErrors({ name: 'Выберите город и специализацию' });
           return;
         }
 
-        const success = await authStore.registerAction({
+        console.log('Calling registerAction with:', {
           account: accountData,
           cityIds: [cityId],
-          directionIds: [],
           specializationIds: [specializationId],
-          initData: WebApp.initData || '',
           phoneVerification: {
             verificationCode: wizardData.verificationCode,
             verificationRequestId: wizardData.verificationRequestId,
           },
         });
 
+        const success = await authStore.registerAction({
+          account: accountData,
+          cityIds: [cityId],
+          directionIds: [],
+          specializationIds: [specializationId],
+          initData:
+            'user=%7B%22id%22%3A6969807631%2C%22first_name%22%3A%22%D0%BA%D1%80%D1%83%D0%B6%D0%BA%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22kryshkia%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2Fns51B3uNbn3VnRNQyaZjvhPopkMCpSbAF5BkCoFCEDO1VuzohY4ufKHP7ov8LozQ.svg%22%7D&chat_instance=-7734611608118716575&chat_type=private&auth_date=1768670445&signature=njBEzZMOm0aUFq1M7TSKoXkxwvFwKlFC-TUyqxdGJ-z9lFUA_XBZ8jro7pjR2EHP-zZTdF4hvOnVnCvcQJzRBw&hash=258a3993814a5fdce98a7110e4636d7e786142939f05f5879e0c86161dbf89a4',
+          phoneVerification: {
+            verificationCode: wizardData.verificationCode,
+            verificationRequestId: wizardData.verificationRequestId,
+          },
+        });
+
+        console.log('Registration result:', success);
+
         if (success) {
           onSuccess(values);
+        } else {
+          setErrors({ name: 'Ошибка регистрации' });
         }
       } catch (error) {
         console.error('Profile error:', error);
@@ -143,7 +160,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
             {isCompany ? 'Название организации' : 'Имя (название организации)'}
           </span>
           <TextInput
-            classNames={{ input: s.input }}
+            classNames={{ input: `${s.input} ${errors.name ? s.error : ''}` }}
             value={values.name}
             onChange={handleInputChange('name')}
             placeholder={isCompany ? 'Название компании' : 'Ваше имя'}
@@ -172,7 +189,9 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         <div className={s.inputGroup}>
           <span className={s.label}>Специализация</span>
           <Select
-            classNames={{ input: s.select }}
+            classNames={{
+              input: `${s.select} ${errors.specialization ? s.error : ''}`,
+            }}
             value={values.specialization}
             onChange={(val) => handleChange('specialization', val)}
             onDropdownOpen={() => referenceStore.getSpecializationsAction()}
@@ -209,7 +228,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         <div className={s.inputGroup}>
           <span className={s.label}>Город</span>
           <Select
-            classNames={{ input: s.select }}
+            classNames={{ input: `${s.select} ${errors.city ? s.error : ''}` }}
             value={values.city}
             onChange={(val) => handleChange('city', val)}
             onDropdownOpen={() => referenceStore.getCitiesAction()}

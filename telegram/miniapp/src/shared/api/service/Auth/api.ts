@@ -2,12 +2,16 @@ import { API_URL } from 'shared/api/api_url';
 import { publicInstance } from 'shared/api/base';
 
 import {
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   SendPhoneVerificationRequest,
   SendPhoneVerificationResponse,
   VerifyCodeRequest,
@@ -69,6 +73,28 @@ export const refreshRequest = async (
 ): Promise<RefreshResponse> => {
   const response = await publicInstance.post<RefreshResponse>(
     API_URL.refresh(),
+    data,
+  );
+  return response.data;
+};
+
+// =============================== FORGOT PASSWORD ===============================
+export const forgotPasswordRequest = async (
+  data: ForgotPasswordRequest,
+): Promise<ForgotPasswordResponse> => {
+  const response = await publicInstance.post<ForgotPasswordResponse>(
+    API_URL.forgot_password(),
+    data,
+  );
+  return response.data;
+};
+
+// =============================== RESET PASSWORD ===============================
+export const resetPasswordRequest = async (
+  data: ResetPasswordRequest,
+): Promise<ResetPasswordResponse> => {
+  const response = await publicInstance.post<ResetPasswordResponse>(
+    API_URL.reset_password(),
     data,
   );
   return response.data;
