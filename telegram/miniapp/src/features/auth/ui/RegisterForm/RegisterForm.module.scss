@@ -59,6 +59,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  .input {
+    &.error {
+      border-color: var(--red) !important;
+    }
+  }
 }
 
 .label {
@@ -77,6 +83,10 @@
     color: var(--text-color-secondary) !important;
     font: var(--font-caption) !important;
   }
+}
+
+.checkboxError {
+  border-color: var(--red) !important;
 }
 
 .termsLink {

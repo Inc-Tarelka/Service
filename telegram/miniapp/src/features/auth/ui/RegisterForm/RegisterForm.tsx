@@ -149,6 +149,9 @@ export const RegisterForm = observer(
           <div className={s.termsWrapper}>
             <Checkbox
               className={s.termsCheckbox}
+              classNames={{
+                input: errors.agreeToTerms ? s.checkboxError : '',
+              }}
               checked={values.agreeToTerms}
               onChange={(e) =>
                 handleChange('agreeToTerms', e.currentTarget.checked)
@@ -161,9 +164,6 @@ export const RegisterForm = observer(
               }
               size="sm"
             />
-            {errors.agreeToTerms && (
-              <p className={s.termsError}>{errors.agreeToTerms}</p>
-            )}
           </div>
         </div>
 

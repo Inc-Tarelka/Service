@@ -1,6 +1,6 @@
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { loadAccessTokenOnce } from 'shared/api/base';
 import { routeConfig } from 'shared/config/routeConfig/routeConfig';
@@ -9,12 +9,12 @@ import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
 import { Navbar } from 'widgets/Navbar';
-import { NotInTelegramPlaceholder } from 'widgets/NotInTelegramPlaceholder';
 import { WelcomeScreen } from 'widgets/WelcomeScreen';
 import { AppLoader } from './providers';
 import { AppRouter } from './providers/router';
 import { useTheme } from './providers/ThemeProvider/lib/useTheme';
 import { RootStoreContext, useStore } from './StoreProvider/ui/StoreProvider';
+import { NotInTelegramPlaceholderLazy } from 'widgets/NotInTelegramPlaceholder';
 
 const rootStore = new RootStore();
 
@@ -78,11 +78,15 @@ const AppContent = observer(() => {
   }, [viewportStore]);
 
   if (isInTelegram === null) {
-    return <WelcomeScreen />;
+    return null;
   }
 
   if (!isInTelegram) {
-    return <NotInTelegramPlaceholder />;
+    return (
+      <Suspense fallback={<WelcomeScreen />}>
+        <NotInTelegramPlaceholderLazy />
+      </Suspense>
+    );
   }
 
   const renderNavbar = () => {

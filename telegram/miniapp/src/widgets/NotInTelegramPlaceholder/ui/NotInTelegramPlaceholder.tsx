@@ -1,6 +1,6 @@
 import { Button } from '@mantine/core';
-import s from './NotInTelegramPlaceholder.module.scss';
 import LogoLarge from 'shared/assets/logo/logo-large.svg';
+import s from './NotInTelegramPlaceholder.module.scss';
 
 export const NotInTelegramPlaceholder = () => {
   return (
@@ -24,3 +24,5 @@ export const NotInTelegramPlaceholder = () => {
     </div>
   );
 };
+
+export default NotInTelegramPlaceholder;
