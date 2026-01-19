@@ -9,14 +9,12 @@ import {
   osName,
   osVersion,
 } from 'react-device-detect';
-
 export class ViewportStore {
   isExpanded: boolean = false;
   viewportHeight: number = 0;
   isFullscreen: boolean = false;
   platform: string = 'unknown';
 
-  // Device detection flags
   readonly isDesktopDevice = isDesktop;
   readonly isMobileDevice = isMobile;
   readonly isTabletDevice = isTablet;
@@ -36,6 +34,7 @@ export class ViewportStore {
 
     if (WebApp.isVersionAtLeast('8.0')) {
       WebApp.onEvent('fullscreenChanged', this.handleFullscreenChange);
+      WebApp.onEvent('fullscreenFailed', this.handleFullscreenFailed);
     }
   }
 
@@ -47,6 +46,10 @@ export class ViewportStore {
     this.isFullscreen = WebApp.isFullscreen;
   };
 
+  private handleFullscreenFailed = (params: { error: string }) => {
+    console.warn('Fullscreen failed:', params.error);
+  };
+
   private updateViewportState() {
     this.isExpanded = WebApp.isExpanded;
     this.viewportHeight = WebApp.viewportHeight;
@@ -54,8 +57,12 @@ export class ViewportStore {
     this.platform = WebApp.platform;
   }
 
+  get isFullsize(): boolean {
+    return this.isExpanded && !this.isFullscreen;
+  }
+
   get shouldShowNavbar(): boolean {
-    return !this.isDesktop;
+    return !this.isDesktopDevice && !this.isFullsize;
   }
 
   get isDesktop(): boolean {
@@ -68,6 +75,9 @@ export class ViewportStore {
 
   destroy() {
     WebApp.offEvent('viewportChanged', this.handleViewportChange);
-    WebApp.offEvent('fullscreenChanged', this.handleFullscreenChange);
+    if (WebApp.isVersionAtLeast('8.0')) {
+      WebApp.offEvent('fullscreenChanged', this.handleFullscreenChange);
+      WebApp.offEvent('fullscreenFailed', this.handleFullscreenFailed);
+    }
   }
 }

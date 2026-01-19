@@ -10,11 +10,18 @@ interface NavbarProps {
 }
 
 export const Navbar = observer(({ className, hideLogo }: NavbarProps) => {
-  const { isDesktop } = useViewport();
+  const { isDesktop, isFullsize } = useViewport();
 
   return (
     <div
-      className={classNames(s.navbar, { [s.desktop]: isDesktop }, [className])}
+      className={classNames(
+        s.navbar,
+        {
+          [s.desktop]: isDesktop,
+          [s.fullsize]: isFullsize,
+        },
+        [className],
+      )}
     >
       {!hideLogo && <img src={LogoSvg} alt="Logo" className={s.logo} />}
     </div>
