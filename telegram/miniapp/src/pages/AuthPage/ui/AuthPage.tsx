@@ -5,7 +5,6 @@ import s from './AuthPage.module.scss';
 
 import type { AuthStep } from 'features/auth';
 import {
-  authStore,
   ConfirmCodeForm,
   DEFAULT_STEP,
   LoginForm,
@@ -15,44 +14,18 @@ import {
   RegisterForm,
   VALID_STEPS,
 } from 'features/auth';
+import { useStore } from 'app/StoreProvider';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import classNames from 'shared/library/ClassNames/classNames';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 
-const STEP_GUARDS: Partial<
-  Record<AuthStep, { check: () => boolean; fallback: AuthStep }>
-> = {
-  confirmLogin: {
-    check: () => authStore.hasVerificationToken,
-    fallback: 'login',
-  },
-  registerProfile: {
-    check: () => authStore.hasLogin,
-    fallback: 'register',
-  },
-  confirmReset: {
-    check: () => authStore.hasLogin,
-    fallback: 'reset',
-  },
-  newPassword: {
-    check: () => authStore.hasResetToken,
-    fallback: 'reset',
-  },
-};
-
-/**
- * Главная страница авторизации с step-based навигацией
- *
- * Flow:
- * - Вход: login → confirmLogin → main
- * - Регистрация: register → registerProfile → main
- * - Восстановление: reset → confirmReset → newPassword → login
- */
 export const AuthPage = observer(() => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setToken } = useAuth();
+  const { authStore } = useStore();
 
   const rawStep = searchParams.get('step');
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
@@ -77,25 +50,16 @@ export const AuthPage = observer(() => {
   );
 
   useEffect(() => {
-    const guard = STEP_GUARDS[step];
-    if (!guard) return;
-
-    if (!guard.check()) {
-      goToStep(guard.fallback, { replace: true });
-    }
-  }, [step, goToStep]);
+    console.log('Current step:', step);
+    console.log('authStore.tempData:', authStore.tempData);
+  }, [step, authStore.tempData]);
 
   return (
     <div className={classNames(s.authPage, {}, [])}>
       <Activity mode={step === 'login' ? 'visible' : 'hidden'}>
         <LoginForm
-          onSuccess={(data) => {
-            authStore.setTempData({
-              login: data.login,
-              phone: data.phone,
-              verificationToken: data.token,
-            });
-            goToStep('confirmLogin');
+          onSuccess={() => {
+            navigate(RoutePath.main, { replace: true });
           }}
           onNavigateToRegister={() => goToStep('register')}
           onNavigateToReset={() => goToStep('reset')}
@@ -122,26 +86,43 @@ export const AuthPage = observer(() => {
         <RegisterForm
           onSuccess={(data) => {
             authStore.setTempData({
-              accountType: data.accountType,
+              phone: data.phone,
               login: data.login,
               password: data.password,
+              verificationRequestId: data.verificationRequestId,
             });
-            goToStep('registerProfile');
+            goToStep('registerConfirm');
           }}
           onNavigateToLogin={() => goToStep('login')}
         />
       </Activity>
 
+      <Activity mode={step === 'registerConfirm' ? 'visible' : 'hidden'}>
+        <ConfirmCodeForm
+          type="register"
+          onSuccess={() => {
+            goToStep('registerProfile');
+          }}
+          onResend={async () => {
+            if (authStore.tempData.phone) {
+              const success = await verificationStore.sendCode(
+                authStore.tempData.phone,
+              );
+              if (success && verificationStore.requestId) {
+                authStore.setTempData({
+                  verificationRequestId: verificationStore.requestId,
+                });
+              }
+            } else {
+              goToStep('register', { replace: true });
+            }
+          }}
+        />
+      </Activity>
+
       <Activity mode={step === 'registerProfile' ? 'visible' : 'hidden'}>
         <ProfileForm
-          onSuccess={(profileData) => {
-            authStore.setTempData({
-              name: profileData.name,
-              lastName: profileData.lastName,
-              nickname: profileData.nickname,
-              specialization: profileData.specialization,
-              city: profileData.city,
-            });
+          onSuccess={() => {
             authStore.clearTempData();
             navigate(RoutePath.main, { replace: true });
           }}
@@ -151,11 +132,12 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'reset' ? 'visible' : 'hidden'}>
         <PasswordResetForm
           onSuccess={(data) => {
+            console.log('PasswordResetForm onSuccess:', data);
             authStore.setTempData({
               login: data.login,
-              phone: data.phone,
-              resetToken: data.token,
+              verificationRequestId: data.requestId,
             });
+            console.log('After setTempData:', authStore.tempData);
             goToStep('confirmReset');
           }}
         />
@@ -164,21 +146,47 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'confirmReset' ? 'visible' : 'hidden'}>
         <ConfirmCodeForm
           type="reset"
-          onSuccess={(verifiedToken) => {
-            authStore.setTempData({ resetToken: verifiedToken });
+          onSuccess={(code) => {
+            console.log('ConfirmCodeForm onSuccess with code:', code);
+            console.log('Current tempData:', authStore.tempData);
             goToStep('newPassword');
           }}
-          onResend={() => goToStep('reset', { replace: true })}
+          onResend={async () => {
+            if (authStore.tempData.login) {
+              const requestId = await authStore.forgotPasswordAction({
+                username: authStore.tempData.login,
+              });
+
+              if (requestId) {
+                authStore.setTempData({
+                  verificationRequestId: requestId,
+                });
+              } else {
+                console.error('Failed to resend password reset code');
+                goToStep('reset', { replace: true });
+              }
+            } else {
+              console.error('No login found in tempData');
+              goToStep('reset', { replace: true });
+            }
+          }}
         />
       </Activity>
 
       <Activity mode={step === 'newPassword' ? 'visible' : 'hidden'}>
         <NewPasswordForm
           onSuccess={(token) => {
+            console.log('NewPasswordForm onSuccess called with token:', token);
+            console.log('authStore.isAuth:', authStore.isAuth);
+            console.log('authStore.token:', authStore.token);
+
             authStore.clearTempData();
+
             if (token) {
               setToken(token);
-              navigate(RoutePath.main, { replace: true });
+              setTimeout(() => {
+                navigate(RoutePath.main, { replace: true });
+              }, 100);
             } else {
               goToStep('login', { replace: true });
             }

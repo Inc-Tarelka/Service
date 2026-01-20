@@ -56,12 +56,16 @@
   &::placeholder {
     color: var(--tertiary-text-color);
   }
+
+  &.error {
+    border: 2px solid var(--red) !important;
+  }
 }
 
-.error {
+.errorText {
   color: var(--red);
   font: var(--font-caption);
-  margin-bottom: 16px;
+  margin-top: 16px;
   text-align: center;
 }
 

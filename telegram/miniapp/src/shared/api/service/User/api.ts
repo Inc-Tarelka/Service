@@ -12,4 +12,4 @@ export const getUserById = async (id: string) =>
 
 // =============================== UPDATE PROFILE ===============================
 export const updateProfile = async (data: Partial<User>) =>
-  await baseInstanceV1.post<User>(API_URL.update_profile(), data);
+  await baseInstanceV1.post<User>(API_URL.profile(), data);

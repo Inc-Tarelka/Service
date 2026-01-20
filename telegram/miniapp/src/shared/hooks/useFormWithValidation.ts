@@ -77,7 +77,7 @@ export function useFormWithValidation<T extends Record<string, any>>({
     [handleChange],
   );
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const validation = validateForm(schema, values);
 
     if (!validation.success) {
@@ -93,7 +93,7 @@ export function useFormWithValidation<T extends Record<string, any>>({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [schema, values, onSubmit]);
 
   return {
     values,

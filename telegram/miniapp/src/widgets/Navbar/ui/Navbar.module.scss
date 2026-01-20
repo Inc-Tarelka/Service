@@ -12,7 +12,8 @@
   top: 0;
   z-index: 100;
 
-  &.desktop {
+  &.desktop,
+  &.fullsize {
     display: none;
   }
 }
@@ -28,7 +29,8 @@
   height: var(--total-navbar-height);
   width: 100%;
 
-  &.desktop {
+  &.desktop,
+  &.fullsize {
     display: none;
   }
 }

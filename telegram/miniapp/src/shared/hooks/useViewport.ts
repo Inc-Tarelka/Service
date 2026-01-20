@@ -8,6 +8,7 @@ export const useViewport = () => {
     viewportHeight: viewportStore.viewportHeight,
     shouldShowNavbar: viewportStore.shouldShowNavbar,
     isFullscreen: viewportStore.isFullscreen,
+    isFullsize: viewportStore.isFullsize,
     isDesktop: viewportStore.isDesktop,
     isMobile: viewportStore.isMobile,
     isTablet: viewportStore.isTabletDevice,

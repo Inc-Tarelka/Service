@@ -1,13 +1,14 @@
 import { Button, PasswordInput, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Page } from 'widgets/Page';
 
+import { useStore } from 'app/StoreProvider';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { authStore } from '../../model/AuthStore';
 import { newPasswordSchema } from '../../model/validation';
-
 import s from './NewPasswordForm.module.scss';
-import { setNewPasswordRequest } from 'shared/api/service/Auth/api';
 
 interface NewPasswordFormProps {
   onSuccess: (token?: string) => void;
@@ -15,6 +16,21 @@ interface NewPasswordFormProps {
 
 export const NewPasswordForm = observer(
   ({ onSuccess }: NewPasswordFormProps) => {
+    const { authStore } = useStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      const { login, verificationCode, verificationRequestId } =
+        authStore.tempData;
+
+      console.log('NewPasswordForm mounted with tempData:', authStore.tempData);
+
+      if (!login || !verificationCode || !verificationRequestId) {
+        console.error('Missing required data, redirecting to reset');
+        navigate(RoutePath.auth + '?step=reset', { replace: true });
+      }
+    }, [authStore.tempData, navigate]);
+
     const {
       values,
       errors,
@@ -26,28 +42,56 @@ export const NewPasswordForm = observer(
       initialValues: { password: '', confirmPassword: '' },
       schema: newPasswordSchema,
       onSubmit: async (values) => {
-        try {
-          const response = await setNewPasswordRequest({
-            token: authStore.tempData.resetToken || '',
-            password: values.password,
-          });
+        const { login, verificationCode, verificationRequestId } =
+          authStore.tempData;
 
-          if (response.success) {
-            onSuccess(response.token);
-          } else {
-            setErrors({
-              password: response.message || 'Ошибка сохранения пароля',
-            });
-          }
-        } catch (error) {
-          console.error('Set password error:', error);
-          setErrors({ password: 'Ошибка сохранения пароля' });
+        console.log('Submitting reset with:', {
+          login,
+          verificationCode,
+          verificationRequestId,
+        });
+
+        if (!login || !verificationCode || !verificationRequestId) {
+          setErrors({ password: 'Не верные данные для сброса' });
+          return;
+        }
+
+        const resetSuccess = await authStore.resetPasswordAction({
+          newPassword: values.password,
+          username: login,
+          verificationCode: verificationCode,
+          verificationRequestId: verificationRequestId,
+        });
+
+        console.log('Reset password success:', resetSuccess);
+
+        if (!resetSuccess) {
+          setErrors({ password: 'Ошибка смены пароля' });
+          return;
+        }
+
+        // Автоматически логиним пользователя после смены пароля
+        const loginSuccess = await authStore.loginAction({
+          username: login,
+          password: values.password,
+        });
+
+        console.log('Auto-login success:', loginSuccess);
+        console.log('Token after login:', authStore.token);
+
+        if (loginSuccess) {
+          const token = authStore.token;
+          console.log('Calling onSuccess with token:', token);
+          onSuccess(token || undefined);
+        } else {
+          console.log('Login failed, calling onSuccess without token');
+          onSuccess();
         }
       },
     });
 
     return (
-      <Page className={s.newPasswordForm}>
+      <Page className={s.newPasswordForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Новый пароль</h1>
           <Text className={s.subtitle}>
@@ -58,7 +102,9 @@ export const NewPasswordForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.password ? s.error : ''}`,
+              }}
               value={values.password}
               onChange={handleInputChange('password')}
               placeholder="Минимум 8 символов"
@@ -71,7 +117,9 @@ export const NewPasswordForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Повторите пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.confirmPassword ? s.error : ''}`,
+              }}
               value={values.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
               placeholder="Повторите пароль"

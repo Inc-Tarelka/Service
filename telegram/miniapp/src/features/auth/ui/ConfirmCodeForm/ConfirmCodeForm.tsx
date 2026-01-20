@@ -2,14 +2,14 @@ import { Button, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useStore } from 'app/StoreProvider';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
-import { authStore } from '../../model/AuthStore';
 import { ConfirmCodeType } from '../../model/types';
 import { confirmCodeSchema } from '../../model/validation';
 
 import s from './ConfirmCodeForm.module.scss';
-import { verifyCodeRequest } from 'shared/api/service/Auth/api';
 
 interface ConfirmCodeFormProps {
   type?: ConfirmCodeType;
@@ -22,6 +22,8 @@ const CODE_LENGTH = 4;
 
 export const ConfirmCodeForm = observer(
   ({ type = 'login', onSuccess, onResend }: ConfirmCodeFormProps) => {
+    const { authStore } = useStore();
+
     const {
       values,
       errors,
@@ -35,20 +37,33 @@ export const ConfirmCodeForm = observer(
       schema: confirmCodeSchema,
       onSubmit: async (values) => {
         try {
-          const response = await verifyCodeRequest({
-            phone: authStore.tempData.phone || '',
-            code: values.code,
-            token:
-              authStore.tempData.verificationToken ||
-              authStore.tempData.resetToken ||
-              '',
-          });
+          const requestId =
+            verificationStore.requestId ||
+            authStore.tempData.verificationRequestId ||
+            authStore.tempData.verificationToken ||
+            authStore.tempData.resetToken;
 
-          if (response.success) {
-            onSuccess(response.accessToken);
+          if (!requestId) {
+            setErrors({ code: 'Ошибка: ID запроса не найден' });
+            return;
+          }
+
+          let success = false;
+          if (verificationStore.requestId) {
+            success = await verificationStore.verifyCode(values.code);
+          } else {
+            verificationStore.requestId = requestId;
+            success = await verificationStore.verifyCode(values.code);
+          }
+
+          if (success) {
+            if (type === 'register' || type === 'reset') {
+              authStore.setTempData({ verificationCode: values.code });
+            }
+            onSuccess(values.code);
           } else {
             setErrors({
-              code: response.message || 'Неверный код',
+              code: verificationStore.error || 'Неверный код',
             });
           }
         } catch (err) {
@@ -121,13 +136,20 @@ export const ConfirmCodeForm = observer(
     );
 
     const getTitle = () => {
-      return type === 'login'
-        ? 'Подтверждение входа'
-        : 'Подтверждение телефона';
+      switch (type) {
+        case 'login':
+          return 'Подтверждение входа';
+        case 'register':
+          return 'Подтверждение регистрации';
+        case 'reset':
+          return 'Восстановление пароля';
+        default:
+          return 'Подтверждение телефона';
+      }
     };
 
     const getSubtitle = () => {
-      const phone = authStore.maskedPhone || '+7 (999) 123-45-67';
+      const phone = authStore.maskedPhone;
       return (
         <>
           Мы отправили сообщение с кодом
@@ -147,7 +169,7 @@ export const ConfirmCodeForm = observer(
     const isCodeComplete = values.code.length === CODE_LENGTH;
 
     return (
-      <Page className={s.confirmCodeForm}>
+      <Page className={s.confirmCodeForm} smallPaddingBottom>
         <div className={s.content}>
           <div className={s.titleGroup}>
             <h1 className={s.title}>{getTitle()}</h1>
@@ -165,7 +187,7 @@ export const ConfirmCodeForm = observer(
                   }}
                   type="text"
                   inputMode="numeric"
-                  className={s.codeInput}
+                  className={`${s.codeInput} ${errors.code ? s.error : ''}`}
                   value={code[index]}
                   onChange={(e) => handleCodeChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
@@ -174,8 +196,6 @@ export const ConfirmCodeForm = observer(
                 />
               ))}
           </div>
-
-          {errors.code && <p className={s.error}>{errors.code}</p>}
         </div>
 
         <div className={s.footer}>

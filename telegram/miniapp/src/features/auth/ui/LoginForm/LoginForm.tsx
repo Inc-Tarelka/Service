@@ -1,21 +1,21 @@
 import { Button, PasswordInput, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 
+import { useStore } from 'app/StoreProvider';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { loginSchema } from '../../model/validation';
-
 import { Page } from 'widgets/Page';
+import { loginSchema } from '../../model/validation';
 import s from './LoginForm.module.scss';
-import { loginRequest } from 'shared/api/service/Auth/api';
 
 interface LoginFormProps {
-  onSuccess: (data: { login: string; phone: string; token: string }) => void;
+  onSuccess: () => void;
   onNavigateToRegister: () => void;
   onNavigateToReset: () => void;
 }
 
 export const LoginForm = observer(
   ({ onSuccess, onNavigateToRegister, onNavigateToReset }: LoginFormProps) => {
+    const { authStore } = useStore();
     const {
       values,
       errors,
@@ -27,35 +27,30 @@ export const LoginForm = observer(
       initialValues: { login: '', password: '' },
       schema: loginSchema,
       onSubmit: async (values) => {
-        try {
-          const response = await loginRequest({
-            phone: values.login,
-            password: values.password,
-          });
+        const success = await authStore.loginAction({
+          username: values.login,
+          password: values.password,
+        });
 
-          if (response.success) {
-            onSuccess({
-              login: values.login,
-              phone: '+79991234567',
-              token: response.token,
-            });
-          }
-        } catch (error) {
-          console.error('Login error:', error);
+        if (success) {
+          onSuccess();
+        } else {
           setErrors({ password: 'Неверный логин или пароль' });
         }
       },
     });
 
     return (
-      <Page className={s.loginForm}>
+      <Page className={s.loginForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Вход в аккаунт</h1>
 
           <div className={s.inputGroup}>
             <span className={s.label}>Логин</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.login ? s.error : ''}`,
+              }}
               value={values.login}
               onChange={handleInputChange('login')}
               placeholder="Введите логин"
@@ -73,7 +68,9 @@ export const LoginForm = observer(
               </span>
             </div>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.password ? s.error : ''}`,
+              }}
               value={values.password}
               onChange={handleInputChange('password')}
               placeholder="Введите пароль"

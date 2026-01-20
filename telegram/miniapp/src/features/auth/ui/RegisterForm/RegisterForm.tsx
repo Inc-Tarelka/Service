@@ -1,24 +1,25 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
+import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
+import { useStore } from 'app/StoreProvider';
+import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
-import { AccountType } from '../../model/types';
 import { registerSchema } from '../../model/validation';
 
 import s from './RegisterForm.module.scss';
 
 interface RegisterFormProps {
-  onSuccess: (data: {
-    accountType: AccountType;
-    login: string;
-    password: string;
-  }) => void;
+  onSuccess: (data: any) => void;
   onNavigateToLogin: () => void;
 }
 
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
+    const { authStore } = useStore();
+
     const {
       values,
       errors,
@@ -26,60 +27,85 @@ export const RegisterForm = observer(
       handleChange,
       handleInputChange,
       handleSubmit,
-      setErrors,
     } = useFormWithValidation({
       initialValues: {
-        accountType: 'specialist' as AccountType,
+        phone: '',
         login: '',
         password: '',
         confirmPassword: '',
-        agreeToTerms: false,
+        agreeToTerms: false as any as true,
       },
       schema: registerSchema,
       onSubmit: async (values) => {
-        try {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          onSuccess({
-            accountType: values.accountType,
+        const success = await verificationStore.sendCode(values.phone);
+        if (success) {
+          authStore.setTempData({
+            phone: values.phone,
             login: values.login,
             password: values.password,
+            verificationRequestId: verificationStore.requestId || '',
           });
-        } catch (error) {
-          console.error('Register error:', error);
-          setErrors({ login: 'Ошибка регистрации' });
+
+          console.log('RegisterForm saved to tempData:', authStore.tempData);
+
+          onSuccess({
+            phone: values.phone,
+            login: values.login,
+            password: values.password,
+            verificationRequestId: verificationStore.requestId,
+          });
         }
       },
     });
 
+    const handleRequestPhone = () => {
+      WebApp.requestContact((success: boolean, response: any) => {
+        if (success && response?.responseUnsafe?.contact?.phone_number) {
+          let phoneNumber = response.responseUnsafe.contact.phone_number;
+          if (!phoneNumber.startsWith('+')) {
+            phoneNumber = '+' + phoneNumber;
+          }
+          handleChange('phone', phoneNumber);
+        } else {
+          console.log('Phone request failed or cancelled');
+        }
+      });
+    };
+
     return (
-      <Page className={s.registerForm}>
+      <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
 
-          <div className={s.typeSelector}>
-            <Button
-              className={`${s.typeButton} ${values.accountType === 'specialist' ? s.active : ''} `}
-              onClick={() => handleChange('accountType', 'specialist')}
-              variant="outline"
+          <div className={s.inputGroup}>
+            <span className={s.label}>Телефон</span>
+            <TextInput
+              classNames={{
+                input: `${s.input} ${errors.phone ? s.error : ''}`,
+              }}
+              value={values.phone}
+              onChange={handleInputChange('phone')}
+              placeholder="Получить из Telegram"
+              rightSection={
+                <div
+                  onClick={handleRequestPhone}
+                  style={{ cursor: 'pointer', display: 'flex' }}
+                >
+                  <ChevronRightIcon />
+                </div>
+              }
               radius="xl"
-            >
-              Специалист
-            </Button>
-            <Button
-              className={`${s.typeButton} ${values.accountType === 'company' ? s.active : ''} `}
-              onClick={() => handleChange('accountType', 'company')}
-              variant="outline"
-              radius="xl"
-            >
-              Компания
-            </Button>
+              size="lg"
+              error={errors.phone}
+            />
           </div>
 
           <div className={s.inputGroup}>
             <span className={s.label}>Логин</span>
             <TextInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.login ? s.error : ''}`,
+              }}
               value={values.login}
               onChange={handleInputChange('login')}
               placeholder="Введите логин"
@@ -87,12 +113,15 @@ export const RegisterForm = observer(
               radius="xl"
               size="lg"
             />
+            <span className={s.hint}>Это будет ваш уникальный никнейм</span>
           </div>
 
           <div className={s.inputGroup}>
             <span className={s.label}>Пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.password ? s.error : ''}`,
+              }}
               value={values.password}
               onChange={handleInputChange('password')}
               placeholder="Минимум 8 символов"
@@ -105,7 +134,9 @@ export const RegisterForm = observer(
           <div className={s.inputGroup}>
             <span className={s.label}>Повторите пароль</span>
             <PasswordInput
-              classNames={{ input: s.input }}
+              classNames={{
+                input: `${s.input} ${errors.confirmPassword ? s.error : ''}`,
+              }}
               value={values.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
               placeholder="Повторите пароль"
@@ -117,6 +148,10 @@ export const RegisterForm = observer(
 
           <div className={s.termsWrapper}>
             <Checkbox
+              className={s.termsCheckbox}
+              classNames={{
+                input: errors.agreeToTerms ? s.checkboxError : '',
+              }}
               checked={values.agreeToTerms}
               onChange={(e) =>
                 handleChange('agreeToTerms', e.currentTarget.checked)
@@ -129,9 +164,6 @@ export const RegisterForm = observer(
               }
               size="sm"
             />
-            {errors.agreeToTerms && (
-              <p className={s.termsError}>{errors.agreeToTerms}</p>
-            )}
           </div>
         </div>
 
@@ -147,6 +179,7 @@ export const RegisterForm = observer(
             radius="xl"
             variant="filled"
             size="lg"
+            color="var(--accent-light)"
           >
             Продолжить
           </Button>

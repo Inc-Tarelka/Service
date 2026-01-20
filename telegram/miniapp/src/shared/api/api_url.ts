@@ -1,21 +1,25 @@
 export const API_URL = {
   // Auth
   login: () => '/auth/login',
-  register: () => '/auth/register',
-  verify_code: () => '/auth/verify',
-  reset_password: () => '/auth/reset-password',
-  set_new_password: () => '/auth/set-new-password',
+  logout: () => '/auth/logout',
+  telegram_register: () => '/auth/telegram/register',
+  verify_code: () => '/auth/phone/verify',
+  send_phone: () => '/auth/phone/send',
+  refresh: () => '/auth/refresh',
+  forgot_password: () => '/auth/password/forgot',
+  reset_password: () => '/auth/password/reset',
 
-  // User
-  profile: () => '/user/profile',
-  user: (id: string) => `/user/${id}`,
-  update_profile: () => '/user/update',
+  // References
+  cities: () => '/references/cities',
+  directions: () => '/references/directions',
+  specializations: () => '/references/specializations',
 
-  // Interaction
+  profile: () => '/users/me',
+  user: (id: string | number) => `/users/${id}`,
+
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,
 
-  // Publication
   publications: () => '/publications',
   publication: (id: string) => `/publications/${id}`,
 };
