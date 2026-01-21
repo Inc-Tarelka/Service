@@ -57,9 +57,6 @@ const AppContent = observer(() => {
     }
 
     try {
-      if (WebApp.isVersionAtLeast('6.1')) {
-        WebApp.CloudStorage.setItem('access_token', '');
-      }
       loadAccessTokenOnce();
       WebApp.disableVerticalSwipes();
       WebApp.enableClosingConfirmation();

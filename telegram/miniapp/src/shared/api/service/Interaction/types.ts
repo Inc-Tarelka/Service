@@ -1,15 +1,35 @@
-import { User } from 'shared/api/service/User/types';
-
-export type InteractionType = 'request' | 'offer';
-
 export interface Interaction {
   id: string;
-  type: InteractionType;
-  title: string;
+  type: 'offer' | 'collaboration';
   description: string;
-  projectId?: string;
+  comment?: string;
   projectName?: string;
-  initiator: User;
-  createdAt: string;
-  status: 'pending' | 'accepted' | 'rejected';
+
+  initiator: {
+    avatarUrl: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    profession?: string;
+    city?: string;
+  };
+
+  // For collaboration requests
+  projectDetails?: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+  };
+
+  // For offers
+  needDetails?: {
+    title: string;
+    description: string;
+  };
+
+  serviceDetails?: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+  };
 }

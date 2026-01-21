@@ -28,8 +28,8 @@ export const PublicationsList = observer((props: PublicationsListProps) => {
   return (
     <SimpleGrid
       cols={2}
-      spacing={16}
-      verticalSpacing={16}
+      spacing={4}
+      verticalSpacing={4}
       className={classNames(s.publicationsList, {}, [className])}
     >
       {Array.isArray(publications) ? publications.map(renderPublication) : null}

@@ -1,9 +1,9 @@
 import { AuthPage } from 'pages/AuthPage';
 import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
-import { WelcomePage } from 'pages/WelcomePage';
 import { ProfilePage } from 'pages/profile';
 import { UserProfilePage } from 'pages/user-profile';
+import { WelcomePage } from 'pages/user-profile/ui/UserProfilePage';
 import { RouteProps } from 'react-router-dom';
 
 export interface MyAppRoutes {
