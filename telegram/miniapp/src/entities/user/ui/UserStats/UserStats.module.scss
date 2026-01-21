@@ -7,11 +7,17 @@
 
 .stat {
   align-items: center;
+  cursor: pointer;
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 4px;
   text-align: center;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .count {

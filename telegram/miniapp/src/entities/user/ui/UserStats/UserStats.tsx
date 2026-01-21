@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import { UserStats as UserStatsType } from 'shared/api/service/User/types';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import classes from './UserStats.module.scss';
 
 interface UserStatsProps {
@@ -6,19 +8,29 @@ interface UserStatsProps {
 }
 
 export const UserStats = ({ stats }: UserStatsProps) => {
+  const navigate = useNavigate();
+
+  const handleCollaboratorsClick = () => {
+    navigate(`${RoutePath.collaborators}?tab=collaborators`);
+  };
+
+  const handleOutgoingClick = () => {
+    navigate(`${RoutePath.collaborators}?tab=outgoing`);
+  };
+
   return (
     <div className={classes.container}>
-      <div className={classes.stat}>
+      <div className={classes.stat} onClick={handleCollaboratorsClick}>
         <span className={classes.count}>{stats.collaborations}</span>
-        <span className={classes.label}>коллаборации</span>
+        <span className={classes.label}>соавторы</span>
       </div>
 
-      <div className={classes.stat}>
+      <div className={classes.stat} onClick={handleOutgoingClick}>
         <span className={classes.count}>{stats.wantsToWork}</span>
         <span className={classes.label}>
-          хотел бы
+          исходящие
           <br />
-          поработать
+          запросы
         </span>
       </div>
 
