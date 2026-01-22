@@ -14,7 +14,6 @@ export const OfferCollaborationButton = ({
       size="lg"
       variant="filled"
       onClick={onClick}
-      bg="var(--accent-color)"
       c="var(--bg-color)"
     >
       Предложить сотрудничество

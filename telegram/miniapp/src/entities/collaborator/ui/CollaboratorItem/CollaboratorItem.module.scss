@@ -1,0 +1,30 @@
+.card {
+  border-radius: 24px;
+  cursor: pointer;
+  padding: 4px;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.cardTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.cardDescription {
+  color: var(--text-color);
+  font: var(--font-caption);
+  font-weight: 400;
+  margin: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}

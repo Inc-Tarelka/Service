@@ -1,0 +1,188 @@
+import { User } from '../api/service/User/types';
+import { UserRole } from '../consts/userRoles';
+
+export const MOCK_COLLABORATORS: User[] = [
+  {
+    id: '101',
+    username: 'ivan_camera',
+    firstName: 'Иван',
+    lastName: 'Иванов',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Оператор',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 15, wantsToWork: 5, projects: 8 },
+  },
+  {
+    id: '102',
+    username: 'nick_name',
+    firstName: 'Петр',
+    lastName: 'Петров',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Режиссер',
+    city: 'Санкт-Петербург',
+    role: UserRole.USER,
+    stats: { collaborations: 22, wantsToWork: 8, projects: 12 },
+  },
+  {
+    id: '103',
+    username: 'alex_director',
+    firstName: 'Александр',
+    lastName: 'Александров',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Продюсер',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 30, wantsToWork: 12, projects: 20 },
+  },
+  {
+    id: '104',
+    username: 'maria_sound',
+    firstName: 'Мария',
+    lastName: 'Смирнова',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Звукорежиссер',
+    city: 'Казань',
+    role: UserRole.USER,
+    stats: { collaborations: 18, wantsToWork: 6, projects: 10 },
+  },
+  {
+    id: '105',
+    username: 'dmitry_light',
+    firstName: 'Дмитрий',
+    lastName: 'Соколов',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Осветитель',
+    city: 'Екатеринбург',
+    role: UserRole.USER,
+    stats: { collaborations: 12, wantsToWork: 4, projects: 7 },
+  },
+  {
+    id: '106',
+    username: 'anna_editor',
+    firstName: 'Анна',
+    lastName: 'Кузнецова',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Монтажер',
+    city: 'Новосибирск',
+    role: UserRole.USER,
+    stats: { collaborations: 25, wantsToWork: 10, projects: 15 },
+  },
+  {
+    id: '107',
+    username: 'sergey_actor',
+    firstName: 'Сергей',
+    lastName: 'Волков',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Актер',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 20, wantsToWork: 7, projects: 11 },
+  },
+  {
+    id: '108',
+    username: 'olga_makeup',
+    firstName: 'Ольга',
+    lastName: 'Новикова',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Гример',
+    city: 'Санкт-Петербург',
+    role: UserRole.USER,
+    stats: { collaborations: 14, wantsToWork: 5, projects: 9 },
+  },
+  {
+    id: '109',
+    username: 'mikhail_writer',
+    firstName: 'Михаил',
+    lastName: 'Морозов',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Сценарист',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 28, wantsToWork: 11, projects: 18 },
+  },
+  {
+    id: '110',
+    username: 'elena_costume',
+    firstName: 'Елена',
+    lastName: 'Павлова',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Костюмер',
+    city: 'Краснодар',
+    role: UserRole.USER,
+    stats: { collaborations: 16, wantsToWork: 6, projects: 10 },
+  },
+];
+
+export const MOCK_OUTGOING_REQUESTS: User[] = [
+  {
+    id: '201',
+    username: 'victor_producer',
+    firstName: 'Виктор',
+    lastName: 'Лебедев',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Продюсер',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 10, wantsToWork: 3, projects: 6 },
+  },
+  {
+    id: '202',
+    username: 'tatiana_photo',
+    firstName: 'Татьяна',
+    lastName: 'Семенова',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Фотограф',
+    city: 'Санкт-Петербург',
+    role: UserRole.USER,
+    stats: { collaborations: 17, wantsToWork: 7, projects: 11 },
+  },
+  {
+    id: '203',
+    username: 'roman_composer',
+    firstName: 'Роман',
+    lastName: 'Федоров',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Композитор',
+    city: 'Казань',
+    role: UserRole.USER,
+    stats: { collaborations: 13, wantsToWork: 4, projects: 8 },
+  },
+  {
+    id: '204',
+    username: 'natalia_choreographer',
+    firstName: 'Наталья',
+    lastName: 'Васильева',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'Хореограф',
+    city: 'Москва',
+    role: UserRole.USER,
+    stats: { collaborations: 19, wantsToWork: 8, projects: 12 },
+  },
+  {
+    id: '205',
+    username: 'andrey_vfx',
+    firstName: 'Андрей',
+    lastName: 'Егоров',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1463453091185-61582044d556?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    profession: 'VFX Artist',
+    city: 'Екатеринбург',
+    role: UserRole.USER,
+    stats: { collaborations: 21, wantsToWork: 9, projects: 14 },
+  },
+];

@@ -1,0 +1,67 @@
+.title {
+  color: var(--text-color);
+  font: var(--font-h2);
+  margin: 0;
+}
+
+.sectionTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: 24px;
+  padding: 12px;
+}
+
+.cardTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.cardDescription {
+  color: var(--text-color);
+  font: var(--font-caption);
+  font-weight: 400;
+  margin: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.projectContent {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.projectText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.projectImage {
+  border-radius: 8px;
+  flex-shrink: 0;
+  height: 48px;
+  object-fit: cover;
+  width: 48px;
+}
+
+.comment {
+  color: var(--text-color);
+  font: var(--font-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  margin: 0;
+}

@@ -32,12 +32,6 @@ export const PublicationItem = ({
               {publication.likesCount}
             </Text>
           </div>
-
-          <div className={classes.content}>
-            <Text className={classes.title} truncate>
-              {publication.title}
-            </Text>
-          </div>
         </div>
       </div>
     </Box>

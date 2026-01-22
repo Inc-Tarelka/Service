@@ -1,2 +1,2 @@
-export { ProfileTabsSwitcher } from './ui/ProfileTabsSwitcher/ProfileTabsSwitcher';
-export type { ProfileTab } from './ui/ProfileTabsSwitcher/ProfileTabsSwitcher';
+export { PROFILE_TABS } from './config/constants';
+export type { ProfileTab } from './model/types';

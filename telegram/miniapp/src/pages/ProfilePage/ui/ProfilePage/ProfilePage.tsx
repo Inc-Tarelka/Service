@@ -1,13 +1,14 @@
 import { Box } from '@mantine/core';
 import { InteractionsList } from 'entities/interaction';
 import { PublicationsList } from 'entities/publication';
-import { ProfileTab, ProfileTabsSwitcher } from 'features/profile-tabs';
+import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { useState } from 'react';
 import {
   MOCK_INTERACTIONS,
   MOCK_PUBLICATIONS,
   MOCK_USER,
 } from 'shared/mocks/profileMocks';
+import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -22,7 +23,11 @@ export const ProfilePage = () => {
       <ProfileBanner user={user} isOwnProfile={true} />
 
       <Box className={classes.tabsSection}>
-        <ProfileTabsSwitcher activeTab={activeTab} onTabChange={setActiveTab}>
+        <TabsSwitcher
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={PROFILE_TABS}
+        >
           {activeTab === 'publications' && (
             <PublicationsList publications={MOCK_PUBLICATIONS} />
           )}
@@ -30,7 +35,7 @@ export const ProfilePage = () => {
           {activeTab === 'interactions' && (
             <InteractionsList interactions={MOCK_INTERACTIONS} canEdit={true} />
           )}
-        </ProfileTabsSwitcher>
+        </TabsSwitcher>
       </Box>
     </Page>
   );

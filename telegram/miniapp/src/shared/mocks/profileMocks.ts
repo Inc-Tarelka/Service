@@ -56,32 +56,73 @@ export const MOCK_INTERACTIONS: Interaction[] = [
   {
     id: '1',
     type: 'offer',
-    title: 'Отклик на потребность',
     description:
       'Могу сдать в аренду камеру модель такая-то за стоимость такую-то',
     projectName: 'Реклама для Яндекс Клауд',
-    initiator: MOCK_OTHER_USER,
-    createdAt: '2023-10-10',
-    status: 'pending',
+    initiator: {
+      avatarUrl: MOCK_OTHER_USER.avatarUrl!,
+      firstName: MOCK_OTHER_USER.firstName!,
+      lastName: MOCK_OTHER_USER.lastName!,
+      username: MOCK_OTHER_USER.username!,
+      profession: MOCK_OTHER_USER.profession,
+      city: MOCK_OTHER_USER.city,
+    },
+    needDetails: {
+      title: 'Оператор на короткий метр',
+      description:
+        'Описание вакансии или потребности в услуге, текст в три строки, дальше троеточие дальше троеточие дальше троеточие дальше тр...',
+    },
+    serviceDetails: {
+      title: 'Реклама для Яндекс Клауд',
+      description: 'Описание проекта текстовое бл...',
+      imageUrl:
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    },
+    comment:
+      'Я оператор, крутой классный человечек, живу и работаю в Москве, [ixe jnrkbryenmcz усаолушьсвтлдувтдл',
   },
   {
     id: '2',
-    type: 'request',
-    title: 'Запрос на сотрудничество',
+    type: 'collaboration',
     description:
       'Хотел бы предложить вам работу оператором в новом проекте "Звезды в Африке"',
-    initiator: MOCK_OTHER_USER,
-    createdAt: '2023-10-11',
-    status: 'pending',
+    initiator: {
+      avatarUrl: MOCK_OTHER_USER.avatarUrl!,
+      firstName: MOCK_OTHER_USER.firstName!,
+      lastName: MOCK_OTHER_USER.lastName!,
+      username: MOCK_OTHER_USER.username!,
+      profession: MOCK_OTHER_USER.profession,
+      city: MOCK_OTHER_USER.city,
+    },
+    projectDetails: {
+      title: 'Реклама для Яндекс Клауд',
+      description: 'Описание проекта текстовое бл...',
+      imageUrl:
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    },
+    comment:
+      'Хотел бы предложить вам работу оператором в новом проекте "Звезды в Африке"',
   },
   {
     id: '3',
-    type: 'request',
-    title: 'Запрос на сотрудничество',
+    type: 'collaboration',
     description:
       'Хотел бы предложить вам работу оператором в новом проекте "Звезды в Африке"',
-    initiator: MOCK_OTHER_USER,
-    createdAt: '2023-10-12',
-    status: 'pending',
+    initiator: {
+      avatarUrl: MOCK_OTHER_USER.avatarUrl!,
+      firstName: MOCK_OTHER_USER.firstName!,
+      lastName: MOCK_OTHER_USER.lastName!,
+      username: MOCK_OTHER_USER.username!,
+      profession: MOCK_OTHER_USER.profession,
+      city: MOCK_OTHER_USER.city,
+    },
+    projectDetails: {
+      title: 'Реклама для Яндекс Клауд',
+      description: 'Описание проекта текстовое бл...',
+      imageUrl:
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    },
+    comment:
+      'Хотел бы предложить вам работу оператором в новом проекте "Звезды в Африке"',
   },
 ];

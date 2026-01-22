@@ -4,10 +4,11 @@ import {
   OfferCollaborationButton,
   OfferCollaborationDrawer,
 } from 'features/offer-collaboration';
-import { ProfileTab, ProfileTabsSwitcher } from 'features/profile-tabs';
+import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { MOCK_OTHER_USER, MOCK_PUBLICATIONS } from 'shared/mocks/profileMocks';
+import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -27,10 +28,13 @@ export const UserProfilePage = observer(() => {
       </Box>
 
       <Box className={classes.tabsSection}>
-        <ProfileTabsSwitcher
+        <TabsSwitcher
+          className={classes.tabsSwitcher}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          allowedTabs={['publications', 'info']}
+          tabs={PROFILE_TABS.filter((t) =>
+            (['publications', 'info'] as ProfileTab[]).includes(t.value),
+          )}
         >
           {activeTab === 'publications' && (
             <PublicationsList publications={MOCK_PUBLICATIONS} />
@@ -38,7 +42,7 @@ export const UserProfilePage = observer(() => {
           {activeTab === 'info' && (
             <ProfileInfoSection user={user} isPublicView={true} />
           )}
-        </ProfileTabsSwitcher>
+        </TabsSwitcher>
       </Box>
 
       <OfferCollaborationDrawer
