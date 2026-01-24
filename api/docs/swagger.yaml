@@ -1,0 +1,815 @@
+basePath: /api/v1
+definitions:
+  model.AccountData:
+    properties:
+      companyName:
+        description: Для COMPANY
+        type: string
+      name:
+        description: Для PERSON
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      surname:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/model.AccountType'
+        enum:
+        - PERSON
+        - COMPANY
+      username:
+        type: string
+    required:
+    - password
+    - phone
+    - type
+    - username
+    type: object
+  model.AccountType:
+    enum:
+    - PERSON
+    - COMPANY
+    type: string
+    x-enum-varnames:
+    - AccountTypePerson
+    - AccountTypeCompany
+  model.City:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.ConfirmLogoUploadRequest:
+    properties:
+      key:
+        type: string
+      mimeType:
+        type: string
+      size:
+        type: integer
+    required:
+    - key
+    type: object
+  model.ConfirmLogoUploadResponse:
+    properties:
+      logoUrl:
+        type: string
+    type: object
+  model.Direction:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  model.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  model.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      userId:
+        type: integer
+    type: object
+  model.PasswordForgotRequest:
+    properties:
+      username:
+        type: string
+    required:
+    - username
+    type: object
+  model.PasswordForgotResponse:
+    properties:
+      requestId:
+        type: string
+    type: object
+  model.PasswordResetRequest:
+    properties:
+      newPassword:
+        minLength: 6
+        type: string
+      username:
+        type: string
+      verificationCode:
+        type: string
+      verificationRequestId:
+        type: string
+    required:
+    - newPassword
+    - username
+    - verificationCode
+    - verificationRequestId
+    type: object
+  model.PasswordResetResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  model.PhoneVerification:
+    properties:
+      verificationCode:
+        type: string
+      verificationRequestId:
+        type: string
+    type: object
+  model.PresignUploadRequest:
+    properties:
+      contentType:
+        type: string
+    required:
+    - contentType
+    type: object
+  model.PresignUploadResponse:
+    properties:
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      key:
+        type: string
+      uploadUrl:
+        type: string
+    type: object
+  model.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    required:
+    - refreshToken
+    type: object
+  model.RefreshResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  model.RegisterRequest:
+    properties:
+      account:
+        $ref: '#/definitions/model.AccountData'
+      cityIds:
+        items:
+          type: integer
+        type: array
+      directionIds:
+        items:
+          type: integer
+        type: array
+      initData:
+        type: string
+      phoneVerification:
+        $ref: '#/definitions/model.PhoneVerification'
+      specializationIds:
+        items:
+          type: integer
+        type: array
+    required:
+    - account
+    - initData
+    type: object
+  model.RegisterResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      userId:
+        type: integer
+    type: object
+  model.SendPhoneVerificationRequest:
+    properties:
+      phoneNumber:
+        type: string
+    required:
+    - phoneNumber
+    type: object
+  model.SendPhoneVerificationResponse:
+    properties:
+      requestId:
+        type: string
+    type: object
+  model.SetLogoURLRequest:
+    properties:
+      logoUrl:
+        type: string
+    required:
+    - logoUrl
+    type: object
+  model.Specialization:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.SuccessResponse:
+    properties:
+      data: {}
+      success:
+        type: boolean
+    type: object
+  model.TarelkaCompany:
+    properties:
+      company_name:
+        type: string
+      tarelka_user_id:
+        type: integer
+    type: object
+  model.TarelkaPerson:
+    properties:
+      name:
+        type: string
+      surname:
+        type: string
+      tarelka_user_id:
+        type: integer
+    type: object
+  model.TarelkaUserFull:
+    properties:
+      cities:
+        items:
+          $ref: '#/definitions/model.City'
+        type: array
+      company:
+        $ref: '#/definitions/model.TarelkaCompany'
+      created_at:
+        type: string
+      directions:
+        items:
+          $ref: '#/definitions/model.Direction'
+        type: array
+      id:
+        type: integer
+      logo_url:
+        type: string
+      person:
+        $ref: '#/definitions/model.TarelkaPerson'
+      phone:
+        type: string
+      specializations:
+        items:
+          $ref: '#/definitions/model.Specialization'
+        type: array
+      telegram_url:
+        type: string
+      tg_user_id:
+        type: integer
+      type:
+        $ref: '#/definitions/model.AccountType'
+      username:
+        type: string
+    type: object
+  model.VerifyCodeRequest:
+    properties:
+      verificationCode:
+        type: string
+      verificationRequestId:
+        type: string
+    required:
+    - verificationCode
+    - verificationRequestId
+    type: object
+  model.VerifyCodeResponse:
+    properties:
+      phone:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Backend API для Telegram Mini App Tarelka
+  title: Tarelka API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизация по username и паролю
+      parameters:
+      - description: Данные авторизации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Авторизация
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Отзыв refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Выход
+      tags:
+      - auth
+  /auth/password/forgot:
+    post:
+      consumes:
+      - application/json
+      description: По username отправляет код на привязанный номер телефона, возвращает
+        requestId
+      parameters:
+      - description: Данные для отправки кода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PasswordForgotRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PasswordForgotResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Запрос на восстановление пароля (отправка кода)
+      tags:
+      - auth
+  /auth/password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Принимает username, requestId, code и новый пароль; если проверка
+        проходит — меняет пароль
+      parameters:
+      - description: Данные для смены пароля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PasswordResetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Смена пароля по коду
+      tags:
+      - auth
+  /auth/phone/send:
+    post:
+      consumes:
+      - application/json
+      description: Принимает номер телефона и отправляет запрос на Telegram Gateway,
+        возвращает requestId
+      parameters:
+      - description: Данные для отправки кода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SendPhoneVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SendPhoneVerificationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Отправка кода верификации телефона
+      tags:
+      - auth
+  /auth/phone/verify:
+    post:
+      consumes:
+      - application/json
+      description: Передаём requestId и code, получаем статус проверки
+      parameters:
+      - description: Данные проверки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.VerifyCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.VerifyCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Проверка кода телефона (ранний шаг)
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Обновление access token с помощью refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RefreshResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Обновление токенов
+      tags:
+      - auth
+  /auth/telegram/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация нового пользователя Tarelka через Telegram Mini App
+      parameters:
+      - description: Данные регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Регистрация через Telegram
+      tags:
+      - auth
+  /references/cities:
+    get:
+      description: Получение списка всех городов
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.City'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Список городов
+      tags:
+      - references
+  /references/directions:
+    get:
+      description: Получение списка всех направлений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Direction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Список направлений
+      tags:
+      - references
+  /references/specializations:
+    get:
+      description: Получение списка всех специализаций
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Specialization'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Список специализаций
+      tags:
+      - references
+  /users/{id}:
+    get:
+      description: Получение информации о пользователе по ID
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TarelkaUserFull'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить пользователя
+      tags:
+      - users
+  /users/{id}/logo/confirm:
+    post:
+      description: Подтверждение загрузки файла и сохранение конечной ссылки
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные подтверждения
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmLogoUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ConfirmLogoUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подтвердить загрузку лого
+      tags:
+      - users
+  /users/{id}/logo/presign:
+    post:
+      description: Генерация presigned URL для загрузки логотипа пользователя в хранилище
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные запроса
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.PresignUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PresignUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Presigned URL для загрузки лого
+      tags:
+      - users
+  /users/{id}/logo/url:
+    post:
+      description: Сохранить в профиле внешнюю ссылку на логотип (например, из Telegram)
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Ссылка на лого
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.SetLogoURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Установить внешнюю ссылку лого
+      tags:
+      - users
+  /users/me:
+    get:
+      description: Получение информации о текущем авторизованном пользователе
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TarelkaUserFull'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Текущий пользователь
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

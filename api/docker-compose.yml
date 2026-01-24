@@ -1,0 +1,86 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      # ENVIRONMENT is provided via env_file; avoid overriding with default
+      - PORT=${PORT:-8080}
+      - DATABASE_URL=postgres://tarelka:tarelka@postgres:5432/tarelka?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_GATEWAY_TOKEN=${TELEGRAM_GATEWAY_TOKEN}
+      - TELEGRAM_GATEWAY_URL=${TELEGRAM_GATEWAY_URL}
+      - ACCESS_TOKEN_TTL=15m
+      - REFRESH_TOKEN_TTL=168h
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=tarelka-network"
+      # HTTPS router
+      - "traefik.http.routers.api.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.certresolver=myresolver"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+      # HTTP router to redirect to HTTPS
+      - "traefik.http.routers.api-web.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`)"
+      - "traefik.http.routers.api-web.entrypoints=web"
+      - "traefik.http.routers.api-web.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tarelka-network
+
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.dashboard=true"
+      - "--log.level=DEBUG"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - tarelka-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=tarelka
+      - POSTGRES_PASSWORD=tarelka
+      - POSTGRES_DB=tarelka
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tarelka -d tarelka"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tarelka-network
+
+volumes:
+  postgres_data:
+
+networks:
+  tarelka-network:
+    driver: bridge

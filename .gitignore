@@ -10,3 +10,52 @@ build/
 bin/
 obj/
 *.log
+
+
+# Бинарные файлы (скомпилированные)
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Зависимости
+vendor/
+
+# Переменные окружения (секреты)
+.env
+.env.*
+!.env.example
+
+# Логи
+*.log
+
+# Тесты и покрытие
+*.test
+*.out
+coverage.txt
+
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+*.code-workspace
+
+# Временные файлы ОС
+.DS_Store
+Thumbs.db
+
+# OS / editor artifacts
+.vscode/
+.idea/
+
+# Go build outputs
+bin/
+*.out
+
+# Traefik ACME storage (contains private keys and certs)
+letsencrypt/acme.json
+
+# Node / front-end (if any)
+node_modules/
