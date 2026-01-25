@@ -1,0 +1,23 @@
+package repository
+
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// Repositories содержит все репозитории
+type Repositories struct {
+	TgUser      TgUserRepository
+	TarelkaUser TarelkaUserRepository
+	Reference   ReferenceRepository
+	Token       TokenRepository
+}
+
+// NewRepositories создаёт все репозитории
+func NewRepositories(pool *pgxpool.Pool) *Repositories {
+	return &Repositories{
+		TgUser:      NewTgUserRepository(pool),
+		TarelkaUser: NewTarelkaUserRepository(pool),
+		Reference:   NewReferenceRepository(pool),
+		Token:       NewTokenRepository(pool),
+	}
+}

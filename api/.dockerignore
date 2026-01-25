@@ -1,0 +1,17 @@
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+/bin
+/build
+/dist
+coverage/
+*.log
+
+vendor/
+**/*.test
+
+.env
+node_modules/

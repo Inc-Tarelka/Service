@@ -1,0 +1,11 @@
+development:
+  dialect: postgres
+  datasource: postgres://tarelka:tarelka@localhost:5432/tarelka?sslmode=disable
+  dir: migrations
+  table: migrations
+
+production:
+  dialect: postgres
+  datasource: ${DATABASE_URL}
+  dir: migrations
+  table: migrations
