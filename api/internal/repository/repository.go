@@ -10,6 +10,7 @@ type Repositories struct {
 	TarelkaUser TarelkaUserRepository
 	Reference   ReferenceRepository
 	Token       TokenRepository
+	Publication PublicationRepository
 }
 
 // NewRepositories создаёт все репозитории
@@ -19,5 +20,6 @@ func NewRepositories(pool *pgxpool.Pool) *Repositories {
 		TarelkaUser: NewTarelkaUserRepository(pool),
 		Reference:   NewReferenceRepository(pool),
 		Token:       NewTokenRepository(pool),
+		Publication: NewPublicationRepository(pool),
 	}
 }

@@ -148,3 +148,20 @@ type ConfirmLogoUploadResponse struct {
 type SetLogoURLRequest struct {
 	LogoURL string `json:"logoUrl" binding:"required"`
 }
+
+// Wallpaper/cover reuse same confirm request; response contains wallpaper url
+type ConfirmWallpaperUploadResponse struct {
+	WallpaperURL string `json:"wallpaperUrl"`
+}
+
+type SetWallpaperURLRequest struct {
+	WallpaperURL string `json:"wallpaperUrl" binding:"required"`
+}
+
+// UpdateUserRequest - partial update (PATCH) for user profile
+type UpdateUserRequest struct {
+	Bio       *string `json:"bio,omitempty"`
+	Education *string `json:"education,omitempty"`
+	// Use the same enum values as model.FindWork (string values)
+	FindWork *string `json:"find_work,omitempty"`
+}

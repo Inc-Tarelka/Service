@@ -27,9 +27,27 @@ type TarelkaUser struct {
 	Phone        *string     `json:"phone,omitempty" db:"phone"`
 	PasswordHash string      `json:"-" db:"password_hash"`
 	LogoURL      *string     `json:"logo_url,omitempty" db:"logo_url"`
-	TelegramURL  *string     `json:"telegram_url,omitempty" db:"telegram_url"`
-	CreatedAt    time.Time   `json:"created_at" db:"created_at"`
+	// Wallpaper (cover image) URL — stored in S3 similarly to LogoURL
+	WallpaperURL *string `json:"wallpaper_url,omitempty" db:"wallpaper_url"`
+	// Short bio / about me
+	Bio *string `json:"bio,omitempty" db:"bio"`
+	// FindWork — enum indicating whether user is looking for a job
+	FindWork *FindWork `json:"find_work,omitempty" db:"find_work"`
+	// Education — free text
+	Education   *string   `json:"education,omitempty" db:"education"`
+	TelegramURL *string   `json:"telegram_url,omitempty" db:"telegram_url"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
+
+// FindWork — вариант поиска работы
+type FindWork string
+
+const (
+	// Use ASCII codes at storage level to avoid DB encoding issues; map to localized strings at UI
+	FindWorkLooking     FindWork = "LOOKING"
+	FindWorkNotLooking  FindWork = "NOT_LOOKING"
+	FindWorkOpenToOffer FindWork = "OPEN_TO_OFFERS"
+)
 
 // TarelkaPerson - дополнение для PERSON
 type TarelkaPerson struct {

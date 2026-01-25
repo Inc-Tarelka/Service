@@ -8,10 +8,11 @@ import (
 
 // Services содержит все сервисы
 type Services struct {
-	Auth      AuthService
-	User      UserService
-	Reference ReferenceService
-	Storage   StorageService
+	Auth        AuthService
+	User        UserService
+	Reference   ReferenceService
+	Storage     StorageService
+	Publication PublicationService
 }
 
 // Deps зависимости для создания сервисов
@@ -42,8 +43,9 @@ func NewServices(deps Deps) *Services {
 			deps.TelegramGatewayToken,
 			deps.TelegramGatewayURL,
 		),
-		User:      NewUserService(deps.Repos.TarelkaUser, deps.Storage),
-		Reference: NewReferenceService(deps.Repos.Reference),
-		Storage:   deps.Storage,
+		User:        NewUserService(deps.Repos.TarelkaUser, deps.Storage),
+		Reference:   NewReferenceService(deps.Repos.Reference),
+		Storage:     deps.Storage,
+		Publication: NewPublicationService(deps.Repos.Publication),
 	}
 }

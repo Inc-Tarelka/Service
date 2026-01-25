@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/jackc/pgx/v5"
@@ -23,6 +26,11 @@ type TarelkaUserRepository interface {
 	GetFullUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error)
 	UpdatePasswordHash(ctx context.Context, userID int64, newHash string) error
 	UpdateLogoURL(ctx context.Context, userID int64, url string) error
+	UpdateWallpaperURL(ctx context.Context, userID int64, url string) error
+	// UpdateProfile updates profile fields (bio, find_work, education). Pass nil for fields that shouldn't be changed.
+	UpdateProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error
+	// Delete user and related rows
+	Delete(ctx context.Context, userID int64) error
 
 	// Person
 	CreatePerson(ctx context.Context, person *model.TarelkaPerson) error
@@ -359,6 +367,88 @@ func (r *tarelkaUserRepository) UpdateLogoURL(ctx context.Context, userID int64,
 	}
 	if cmd.RowsAffected() == 0 {
 		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateWallpaperURL обновляет ссылку на обложку пользователя
+func (r *tarelkaUserRepository) UpdateWallpaperURL(ctx context.Context, userID int64, url string) error {
+	query := `UPDATE tarelka_users SET wallpaper_url = $1 WHERE id = $2`
+	cmd, err := r.pool.Exec(ctx, query, url, userID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateProfile updates profile fields selectively
+func (r *tarelkaUserRepository) UpdateProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error {
+	// Build dynamic SET clause
+	parts := []string{}
+	args := []interface{}{}
+	idx := 1
+	if bio != nil {
+		parts = append(parts, "bio = $"+strconv.Itoa(idx))
+		args = append(args, *bio)
+		idx++
+	}
+	if findWork != nil {
+		parts = append(parts, "find_work = $"+strconv.Itoa(idx))
+		args = append(args, *findWork)
+		idx++
+	}
+	if education != nil {
+		parts = append(parts, "education = $"+strconv.Itoa(idx))
+		args = append(args, *education)
+		idx++
+	}
+	if len(parts) == 0 {
+		return nil
+	}
+	// add user id
+	args = append(args, userID)
+	query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
+	cmd, err := r.pool.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// Delete удаляет пользователя и связанные сущности в транзакции
+func (r *tarelkaUserRepository) Delete(ctx context.Context, userID int64) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// remove relations and subtype entries
+	stmts := []string{
+		"DELETE FROM user_specializations WHERE tarelka_user_id = $1",
+		"DELETE FROM user_directions WHERE tarelka_user_id = $1",
+		"DELETE FROM user_cities WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_persons WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_companies WHERE tarelka_user_id = $1",
+		"DELETE FROM tokens WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_users WHERE id = $1",
+	}
+	for _, q := range stmts {
+		if _, err := tx.Exec(ctx, q, userID); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
 	}
 	return nil
 }

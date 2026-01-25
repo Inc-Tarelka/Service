@@ -10,9 +10,10 @@ import (
 
 // Handler содержит все обработчики
 type Handler struct {
-	auth      *AuthHandler
-	user      *UserHandler
-	reference *ReferenceHandler
+	auth        *AuthHandler
+	user        *UserHandler
+	reference   *ReferenceHandler
+	publication *PublicationHandler
 
 	authService service.AuthService
 }
@@ -23,6 +24,7 @@ func NewHandler(services *service.Services) *Handler {
 		auth:        NewAuthHandler(services.Auth),
 		user:        NewUserHandler(services.User),
 		reference:   NewReferenceHandler(services.Reference),
+		publication: NewPublicationHandler(services.Publication),
 		authService: services.Auth,
 	}
 }
@@ -69,6 +71,22 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				users.POST("/:id/logo/presign", h.user.PresignLogoUpload)
 				users.POST("/:id/logo/confirm", h.user.ConfirmLogoUpload)
 				users.POST("/:id/logo/url", h.user.SetLogoURL)
+				// Wallpaper endpoints
+				users.POST(":id/wallpaper/presign", h.user.PresignWallpaperUpload)
+				users.POST(":id/wallpaper/confirm", h.user.ConfirmWallpaperUpload)
+				users.POST(":id/wallpaper/url", h.user.SetWallpaperURL)
+				// Partial update and delete
+				users.PATCH(":id", h.user.PatchUser)
+				users.DELETE("/me", h.user.DeleteCurrentUser)
+			}
+
+			// Publications
+			pubs := protected.Group("/publications")
+			{
+				pubs.POST("", h.publication.CreatePublication)
+				pubs.PUT(":id", h.publication.UpdatePublication)
+				pubs.POST(":id/comments", h.publication.AddComment)
+				pubs.POST(":id/likes", h.publication.LikePublication)
 			}
 		}
 	}

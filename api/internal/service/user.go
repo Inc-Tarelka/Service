@@ -19,6 +19,16 @@ type UserService interface {
 	ConfirmLogoUpload(ctx context.Context, userID int64, key string, mimeType string, size int64) (logoURL string, err error)
 	// Set logo from an external URL (e.g., Telegram avatar)
 	SetLogoURLFromExternal(ctx context.Context, userID int64, url string) error
+	// Wallpaper (cover) flows
+	PresignWallpaperUpload(ctx context.Context, userID int64, contentType string) (key string, uploadURL string, headers map[string]string, err error)
+	ConfirmWallpaperUpload(ctx context.Context, userID int64, key string, mimeType string, size int64) (wallpaperURL string, err error)
+	SetWallpaperURLFromExternal(ctx context.Context, userID int64, url string) error
+
+	// Update profile fields selectively
+	UpdateUserProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error
+
+	// Delete user account
+	DeleteUser(ctx context.Context, userID int64) error
 }
 
 type userService struct {
@@ -62,6 +72,62 @@ func (s *userService) PresignLogoUpload(ctx context.Context, userID int64, conte
 		return "", "", nil, err
 	}
 	return key, url, headers, nil
+}
+
+// PresignWallpaperUpload generates a presigned URL to upload user's wallpaper to storage
+func (s *userService) PresignWallpaperUpload(ctx context.Context, userID int64, contentType string) (string, string, map[string]string, error) {
+	if s.storage == nil {
+		return "", "", nil, fmt.Errorf("storage not configured")
+	}
+	contentType = canonicalizeContentType(contentType)
+	ext := mimeExtFromContentType(contentType)
+	if ext == "" {
+		ext = "bin"
+	}
+	key := fmt.Sprintf("user/%d/wallpaper.%s", userID, ext)
+	url, headers, err := s.storage.PresignPut(ctx, key, contentType, 15*time.Minute)
+	if err != nil {
+		return "", "", nil, err
+	}
+	return key, url, headers, nil
+}
+
+// ConfirmWallpaperUpload persists final wallpaper URL after successful upload
+func (s *userService) ConfirmWallpaperUpload(ctx context.Context, userID int64, key string, mimeType string, size int64) (string, error) {
+	if s.storage == nil {
+		return "", fmt.Errorf("storage not configured")
+	}
+	if ct, err := s.storage.HeadContentType(ctx, key); err == nil && ct != "" {
+		mimeType = ct
+	}
+	mimeType = canonicalizeContentType(mimeType)
+	wallpaperURL := s.storage.PublicURL(key)
+	if err := s.tarelkaUserRepo.UpdateWallpaperURL(ctx, userID, wallpaperURL); err != nil {
+		return "", err
+	}
+	return wallpaperURL, nil
+}
+
+// SetWallpaperURLFromExternal validates and sets wallpaper_url from an external link
+func (s *userService) SetWallpaperURLFromExternal(ctx context.Context, userID int64, url string) error {
+	if url == "" || len(url) > 2000 {
+		return fmt.Errorf("invalid url")
+	}
+	if !strings.HasPrefix(url, "https://") {
+		return fmt.Errorf("url must be https")
+	}
+	return s.tarelkaUserRepo.UpdateWallpaperURL(ctx, userID, url)
+}
+
+// UpdateUserProfile updates bio/find_work/education
+func (s *userService) UpdateUserProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error {
+	return s.tarelkaUserRepo.UpdateProfile(ctx, userID, bio, findWork, education)
+}
+
+// DeleteUser deletes user account and related data
+func (s *userService) DeleteUser(ctx context.Context, userID int64) error {
+	// Optionally: delete user files from storage (logos, wallpapers) — omitted for now
+	return s.tarelkaUserRepo.Delete(ctx, userID)
 }
 
 // ConfirmLogoUpload persists final logo URL after successful upload

@@ -37,12 +37,30 @@ definitions:
     x-enum-varnames:
     - AccountTypePerson
     - AccountTypeCompany
+  model.AddCommentRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
   model.City:
     properties:
       id:
         type: integer
       name:
         type: string
+    type: object
+  model.Comment:
+    properties:
+      authorId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
     type: object
   model.ConfirmLogoUploadRequest:
     properties:
@@ -60,6 +78,45 @@ definitions:
       logoUrl:
         type: string
     type: object
+  model.ConfirmWallpaperUploadResponse:
+    properties:
+      wallpaperUrl:
+        type: string
+    type: object
+  model.CreateOrUpdatePublicationRequest:
+    properties:
+      cityId:
+        type: integer
+      coAuthorIds:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      imageUrls:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      needs:
+        items:
+          $ref: '#/definitions/model.NeedUpsertItem'
+        type: array
+      tagIds:
+        items:
+          type: integer
+        type: array
+      type:
+        allOf:
+        - $ref: '#/definitions/model.PublicationType'
+        enum:
+        - PROJECT
+        - SERVICE
+    required:
+    - name
+    - type
+    type: object
   model.Direction:
     properties:
       id:
@@ -74,6 +131,16 @@ definitions:
       message:
         type: string
     type: object
+  model.FindWork:
+    enum:
+    - LOOKING
+    - NOT_LOOKING
+    - OPEN_TO_OFFERS
+    type: string
+    x-enum-varnames:
+    - FindWorkLooking
+    - FindWorkNotLooking
+    - FindWorkOpenToOffer
   model.LoginRequest:
     properties:
       password:
@@ -92,6 +159,31 @@ definitions:
         type: string
       userId:
         type: integer
+    type: object
+  model.NeedUpsertItem:
+    properties:
+      budget:
+        type: integer
+      cityId:
+        type: integer
+      deadlineEnd:
+        type: string
+      deadlineStart:
+        description: ISO-8601
+        type: string
+      description:
+        type: string
+      id:
+        description: if provided, update; otherwise create
+        type: integer
+      name:
+        type: string
+      tagIds:
+        items:
+          type: integer
+        type: array
+    required:
+    - name
     type: object
   model.PasswordForgotRequest:
     properties:
@@ -152,6 +244,14 @@ definitions:
       uploadUrl:
         type: string
     type: object
+  model.PublicationType:
+    enum:
+    - PROJECT
+    - SERVICE
+    type: string
+    x-enum-varnames:
+    - PublicationTypeProject
+    - PublicationTypeService
   model.RefreshRequest:
     properties:
       refreshToken:
@@ -218,6 +318,13 @@ definitions:
     required:
     - logoUrl
     type: object
+  model.SetWallpaperURLRequest:
+    properties:
+      wallpaperUrl:
+        type: string
+    required:
+    - wallpaperUrl
+    type: object
   model.Specialization:
     properties:
       id:
@@ -249,6 +356,9 @@ definitions:
     type: object
   model.TarelkaUserFull:
     properties:
+      bio:
+        description: Short bio / about me
+        type: string
       cities:
         items:
           $ref: '#/definitions/model.City'
@@ -261,6 +371,13 @@ definitions:
         items:
           $ref: '#/definitions/model.Direction'
         type: array
+      education:
+        description: Education — free text
+        type: string
+      find_work:
+        allOf:
+        - $ref: '#/definitions/model.FindWork'
+        description: FindWork — enum indicating whether user is looking for a job
       id:
         type: integer
       logo_url:
@@ -280,6 +397,19 @@ definitions:
       type:
         $ref: '#/definitions/model.AccountType'
       username:
+        type: string
+      wallpaper_url:
+        description: Wallpaper (cover image) URL — stored in S3 similarly to LogoURL
+        type: string
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      bio:
+        type: string
+      education:
+        type: string
+      find_work:
+        description: Use the same enum values as model.FindWork (string values)
         type: string
     type: object
   model.VerifyCodeRequest:
@@ -569,6 +699,151 @@ paths:
       summary: Регистрация через Telegram
       tags:
       - auth
+  /publications:
+    post:
+      parameters:
+      - description: Данные публикации
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrUpdatePublicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать публикацию
+      tags:
+      - publications
+  /publications/{id}:
+    put:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные публикации
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrUpdatePublicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить публикацию
+      tags:
+      - publications
+  /publications/{id}/comments:
+    post:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Комментарий
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.AddCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Добавить комментарий к публикации
+      tags:
+      - publications
+  /publications/{id}/likes:
+    post:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поставить лайк публикации (идемпотентно)
+      tags:
+      - publications
   /references/cities:
     get:
       description: Получение списка всех городов
@@ -661,6 +936,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Получить пользователя
+      tags:
+      - users
+    patch:
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Поля для обновления
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Частичное обновление профиля пользователя
       tags:
       - users
   /users/{id}/logo/confirm:
@@ -780,7 +1092,142 @@ paths:
       summary: Установить внешнюю ссылку лого
       tags:
       - users
+  /users/{id}/wallpaper/confirm:
+    post:
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные подтверждения
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.ConfirmLogoUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ConfirmWallpaperUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подтвердить загрузку обложки
+      tags:
+      - users
+  /users/{id}/wallpaper/presign:
+    post:
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные запроса
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.PresignUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PresignUploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Presigned URL для загрузки обложки
+      tags:
+      - users
+  /users/{id}/wallpaper/url:
+    post:
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Ссылка на обложку
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.SetWallpaperURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Установить внешнюю ссылку обложки
+      tags:
+      - users
   /users/me:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить аккаунт текущего пользователя
+      tags:
+      - users
     get:
       description: Получение информации о текущем авторизованном пользователе
       produces:
