@@ -2,6 +2,7 @@ import { AuthPage } from 'pages/AuthPage';
 import { CollaboratorsPage } from 'pages/CollaboratorsPage';
 import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
+import { PostPage } from 'pages/PostPage';
 import { ProfilePage } from 'pages/ProfilePage';
 import { UserProfilePage } from 'pages/UserProfilePage';
 import { WelcomePage } from 'pages/WelcomePage';
@@ -19,6 +20,7 @@ export enum AppRoutes {
   PROFILE = 'profile',
   USER_PROFILE = 'user_profile',
   COLLABORATORS = 'collaborators',
+  POST = 'post',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   NOT_FOUND = 'not_found',
 }
@@ -30,6 +32,7 @@ export const RoutePath: Record<AppRoutes, string> = {
   [AppRoutes.PROFILE]: '/profile',
   [AppRoutes.USER_PROFILE]: '/profile/:id',
   [AppRoutes.COLLABORATORS]: '/collaborators',
+  [AppRoutes.POST]: '/post',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: '*',
 };
@@ -64,6 +67,12 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
     path: RoutePath.collaborators,
     hideNavbar: true,
     element: <CollaboratorsPage />,
+  },
+  [AppRoutes.POST]: {
+    path: RoutePath.post,
+    hideNavbar: true,
+    hideLayout: true,
+    element: <PostPage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {

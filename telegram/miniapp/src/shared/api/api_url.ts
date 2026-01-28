@@ -22,4 +22,8 @@ export const API_URL = {
 
   publications: () => '/publications',
   publication: (id: string) => `/publications/${id}`,
+
+  // Posts
+  posts: () => '/posts',
+  post_tags: () => '/posts/tags',
 };

@@ -10,3 +10,11 @@ build/
 bin/
 obj/
 *.log
+
+# Agents
+.agent
+.agents
+agents/
+agents
+.cursordist/
+.agent/

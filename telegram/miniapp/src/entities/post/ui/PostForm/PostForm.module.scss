@@ -1,0 +1,93 @@
+.postForm {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-caption);
+}
+
+.charCount {
+  color: var(--tertiary-text-color);
+  font: var(--font-caption);
+}
+
+.input {
+  input {
+    background: var(--card-bg) !important;
+    border: none !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.textarea {
+  textarea {
+    background: var(--card-bg) !important;
+    border: none !important;
+    border-radius: 24px !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+    min-height: 100px !important;
+    padding: 16px 20px !important;
+    resize: none !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.typeSelector {
+  background-color: var(--tertiary-bg-color);
+  border-radius: 40px;
+  display: flex;
+  gap: 12px;
+  padding: 6px;
+}
+
+.typeButton {
+  background: transparent !important;
+  color: var(--text-color) !important;
+  flex: 1;
+  font: var(--font-body) !important;
+  height: 40px !important;
+  transition: all 0.2s !important;
+
+  &.active {
+    background: var(--green) !important;
+    border-color: var(--green) !important;
+    color: var(--bg-color) !important;
+  }
+}
+
+.select {
+  input {
+    background: var(--card-bg) !important;
+    border: none !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}

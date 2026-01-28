@@ -1,0 +1,33 @@
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--green);
+  border-radius: 40px;
+  color: var(--text-color);
+  display: flex;
+  font: var(--font-body);
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+}
+
+.tagClose {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  display: flex;
+  font-size: 20px;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+}

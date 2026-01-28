@@ -1,0 +1,55 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow-y: hidden;
+  padding: 16px;
+}
+
+.content {
+  flex: 1;
+}
+
+.scrollContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.footer {
+  margin-top: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-top: 16px;
+  width: 100%;
+}
+
+.divider {
+  background: var(--secondary-card-bg);
+  height: 1px;
+  margin: 8px 0;
+}
+
+.searchHeader {
+  margin-bottom: 16px;
+}
+
+.searchInput {
+  background: var(--card-bg) !important;
+  border: none !important;
+  color: var(--text-color) !important;
+
+  &::placeholder {
+    color: var(--tertiary-text-color) !important;
+  }
+}
+
+.searchIcon {
+	color: var(--text-color-secondary) !important;
+}

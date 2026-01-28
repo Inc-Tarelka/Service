@@ -1,0 +1,86 @@
+.item {
+  background: var(--card-bg);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 88px;
+  position: relative;
+  transition: opacity 0.2s ease;
+  width: 88px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.image {
+  border-radius: 4px;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.numberBadge {
+  align-items: center;
+  background: rgb(0, 0, 0, 0.4);
+  border: 2px solid var(--green);
+  border-radius: 4px;
+  color: var(--text-color);
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  height: 18px;
+  justify-content: center;
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  transition: all 0.15s ease;
+  width: 18px;
+  z-index: 1;
+}
+
+.numberBadge.selected {
+  background: var(--green);
+  color: var(--bg-color);
+}
+
+.previewOverlay {
+  align-items: center;
+  animation: fadeIn 0.15s ease;
+  backdrop-filter: blur(8px);
+  background: rgb(0, 0, 0, 0.85);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  pointer-events: none;
+  position: fixed;
+  touch-action: none;
+  z-index: 1000;
+}
+
+.previewContainer {
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgb(0, 0, 0, 0.4);
+  max-height: 80vh;
+  max-width: 400px;
+  overflow: hidden;
+  width: 80vw;
+}
+
+.previewImage {
+  height: auto;
+  object-fit: contain;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

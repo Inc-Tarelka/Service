@@ -20,6 +20,7 @@
     "@mantine/hooks": "^8.3.10",
     "@twa-dev/sdk": "^8.0.2",
     "axios": "^1.10.0",
+    "dayjs": "^1.11.19",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
     "mobx-utils": "^6.1.1",
