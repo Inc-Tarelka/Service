@@ -1,19 +1,17 @@
 import { Button, Drawer, Stack, Text } from '@mantine/core';
-import classes from './ActionsDrawer.module.scss';
+import classNames from 'shared/library/ClassNames/classNames';
+import s from './ActionsDrawer.module.scss';
 
 interface ActionsDrawerProps {
   opened: boolean;
   onClose: () => void;
   onDelete?: () => void;
   title?: string;
+  fullWidth?: boolean;
 }
 
-export const ActionsDrawer = ({
-  opened,
-  onClose,
-  onDelete,
-  title = 'Вы уверены, что хотите удалить запрос на сотрудничество?',
-}: ActionsDrawerProps) => {
+export const ActionsDrawer = (props: ActionsDrawerProps) => {
+  const { opened, onClose, onDelete, title = 'Вы уверены?', fullWidth } = props;
   const handleDelete = () => {
     onDelete?.();
     onClose();
@@ -30,7 +28,17 @@ export const ActionsDrawer = ({
       radius={40}
     >
       <Stack gap={24}>
-        <Text className={classes.title}>{title}</Text>
+        <Text
+          className={classNames(
+            s.title,
+            {
+              [s.fullWidth]: fullWidth,
+            },
+            [],
+          )}
+        >
+          {title}
+        </Text>
 
         <Stack gap={12}>
           <Button

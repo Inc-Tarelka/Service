@@ -1,13 +1,21 @@
 import { ActionIcon } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 import SettingsIcon from 'shared/assets/icons/settings';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
-interface EditProfileButtonProps {
-  onClick?: () => void;
-}
+export const EditProfileButton = () => {
+  const navigate = useNavigate();
 
-export const EditProfileButton = ({ onClick }: EditProfileButtonProps) => {
+  const handleNavigateToSettings = () => {
+    navigate(RoutePath.settings);
+  };
+
   return (
-    <ActionIcon variant="transparent" color="gray" onClick={onClick}>
+    <ActionIcon
+      variant="transparent"
+      color="gray"
+      onClick={handleNavigateToSettings}
+    >
       <SettingsIcon />
     </ActionIcon>
   );

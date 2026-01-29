@@ -1,0 +1,39 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.header {
+  align-items: center;
+  display: flex;
+}
+
+.backButton {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  cursor: pointer;
+  display: flex;
+  gap: 4px;
+  padding: 0; 
+}
+
+.icon {
+  height: 24px;
+  width: 24px;
+}
+
+.backText {
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  font-weight: 600;
+  margin: 0;
+}

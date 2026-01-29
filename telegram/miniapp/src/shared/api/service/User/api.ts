@@ -1,6 +1,6 @@
 import { API_URL } from 'shared/api/api_url';
 import { baseInstanceV1 } from 'shared/api/base';
-import { User } from './types';
+import { DeleteAccountResponse, User } from './types';
 
 // =============================== GET PROFILE ===============================
 export const getProfile = async () =>
@@ -13,3 +13,7 @@ export const getUserById = async (id: string) =>
 // =============================== UPDATE PROFILE ===============================
 export const updateProfile = async (data: Partial<User>) =>
   await baseInstanceV1.post<User>(API_URL.profile(), data);
+
+// =============================== DELETE ACCOUNT ===============================
+export const deleteAccount = async () =>
+  await baseInstanceV1.delete<DeleteAccountResponse>(API_URL.delete_account());

@@ -68,8 +68,8 @@
 .selectionHighlight {
   background: rgb(255, 255, 255, 0.05);
   border-radius: 12px;
-  inset: 0;
   height: 40px;
+  inset: 0;
   margin: auto;
   
   /* Absolute centering without calc/transform logic dependency */

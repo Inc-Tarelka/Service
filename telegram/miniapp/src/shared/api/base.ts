@@ -103,7 +103,6 @@ function normalizeBaseURL(baseURL: string | undefined): string {
  */
 function createPrivateInstance(): AxiosInstance {
   const instance = axios.create({
-    withCredentials: true,
     baseURL: normalizeBaseURL(import.meta.env.VITE_BASE_URL),
     headers: {
       'Content-Type': 'application/json',

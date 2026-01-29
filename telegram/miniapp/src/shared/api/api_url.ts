@@ -26,4 +26,7 @@ export const API_URL = {
   // Posts
   posts: () => '/posts',
   post_tags: () => '/posts/tags',
+
+  // User
+  delete_account: () => '/users/me',
 };

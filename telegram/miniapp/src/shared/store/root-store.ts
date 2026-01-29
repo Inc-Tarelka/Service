@@ -1,5 +1,6 @@
 import { AuthStore } from './api/Auth/auth-store';
 import { ReferenceStore } from './api/Reference/reference-store';
+import { UserStore } from './api/User/user-store';
 import { GalleryStore } from './gallery-store';
 import { ViewportStore } from './viewport-store';
 import { WebAppStore } from './web-app-store';
@@ -10,4 +11,5 @@ export class RootStore {
   authStore = new AuthStore();
   referenceStore = new ReferenceStore();
   galleryStore = new GalleryStore();
+  userStore = new UserStore();
 }

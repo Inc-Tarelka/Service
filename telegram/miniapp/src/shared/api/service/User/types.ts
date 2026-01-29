@@ -22,3 +22,8 @@ export interface User {
   education?: string;
   specialization?: string;
 }
+
+export interface DeleteAccountResponse {
+  data: string;
+  success: boolean;
+}

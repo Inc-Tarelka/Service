@@ -4,6 +4,7 @@ import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
 import { PostPage } from 'pages/PostPage';
 import { ProfilePage } from 'pages/ProfilePage';
+import { SettingsPage } from 'pages/SettingsPage';
 import { UserProfilePage } from 'pages/UserProfilePage';
 import { WelcomePage } from 'pages/WelcomePage';
 import { RouteProps } from 'react-router-dom';
@@ -21,6 +22,7 @@ export enum AppRoutes {
   USER_PROFILE = 'user_profile',
   COLLABORATORS = 'collaborators',
   POST = 'post',
+  SETTINGS = 'settings',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   NOT_FOUND = 'not_found',
 }
@@ -33,6 +35,7 @@ export const RoutePath: Record<AppRoutes, string> = {
   [AppRoutes.USER_PROFILE]: '/profile/:id',
   [AppRoutes.COLLABORATORS]: '/collaborators',
   [AppRoutes.POST]: '/post',
+  [AppRoutes.SETTINGS]: '/settings', // /settings?section=profile|security|notifications|terms
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: '*',
 };
@@ -73,6 +76,12 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
     hideNavbar: true,
     hideLayout: true,
     element: <PostPage />,
+  },
+  [AppRoutes.SETTINGS]: {
+    path: RoutePath.settings,
+    hideNavbar: true,
+    hideLayout: true,
+    element: <SettingsPage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {

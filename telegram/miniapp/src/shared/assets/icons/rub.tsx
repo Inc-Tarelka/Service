@@ -1,4 +1,6 @@
-const RubIcon = (props: React.SVGProps<SVGSVGElement>) => (
+import { SVGProps } from 'react';
+
+const RubIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     width="20"
     height="20"

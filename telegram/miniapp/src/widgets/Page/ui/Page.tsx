@@ -24,7 +24,7 @@ export const Page = observer((props: PageProps) => {
         {
           [s.desktop]: isDesktop,
           [s.withNavbar]: needsSpacer,
-          [s.noPaddingBottom]: noPaddingBottom,
+          [s.defaultPaddingBottom]: !noPaddingBottom && !smallPaddingBottom,
           [s.smallPaddingBottom]: smallPaddingBottom,
         },
         [className],

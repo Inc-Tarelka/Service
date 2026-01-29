@@ -224,13 +224,15 @@ export class AuthStore {
 
   logoutAction = async () => {
     try {
-      await logoutRequest('dummy');
+      await logoutRequest();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      this.isAuth = false;
-      this.token = null;
-      this.clearTempData();
+      runInAction(() => {
+        this.isAuth = false;
+        this.token = null;
+        this.clearTempData();
+      });
       clearAccessToken();
     }
   };
