@@ -10,6 +10,7 @@ export const MOCK_USERS: User[] = [
     profession: 'Оператор',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
   },
   {
@@ -20,6 +21,7 @@ export const MOCK_USERS: User[] = [
     profession: 'Оператор',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
   },
   {
@@ -30,6 +32,7 @@ export const MOCK_USERS: User[] = [
     profession: 'Оператор',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
   },
 ];

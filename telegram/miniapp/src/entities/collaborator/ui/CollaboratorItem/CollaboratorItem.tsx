@@ -12,7 +12,10 @@ export const CollaboratorItem = ({
   onClick,
 }: CollaboratorItemProps) => {
   return (
-    <Box className={classes.card} onClick={() => onClick?.(collaborator.id)}>
+    <Box
+      className={classes.card}
+      onClick={() => onClick?.(String(collaborator.id))}
+    >
       <Group gap={12} align="flex-start">
         <Avatar src={collaborator.avatarUrl} size={40} radius="xl" />
         <Box className={classes.userInfo}>

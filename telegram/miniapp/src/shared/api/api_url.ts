@@ -29,4 +29,5 @@ export const API_URL = {
 
   // User
   delete_account: () => '/users/me',
+  me: () => '/users/me',
 };

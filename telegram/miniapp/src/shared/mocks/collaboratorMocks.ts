@@ -12,6 +12,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Оператор',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 15, wantsToWork: 5, projects: 8 },
   },
   {
@@ -24,6 +25,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Режиссер',
     city: 'Санкт-Петербург',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 22, wantsToWork: 8, projects: 12 },
   },
   {
@@ -36,6 +38,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Продюсер',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 30, wantsToWork: 12, projects: 20 },
   },
   {
@@ -48,6 +51,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Звукорежиссер',
     city: 'Казань',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 18, wantsToWork: 6, projects: 10 },
   },
   {
@@ -60,6 +64,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Осветитель',
     city: 'Екатеринбург',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 12, wantsToWork: 4, projects: 7 },
   },
   {
@@ -72,6 +77,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Монтажер',
     city: 'Новосибирск',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 25, wantsToWork: 10, projects: 15 },
   },
   {
@@ -84,6 +90,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Актер',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 20, wantsToWork: 7, projects: 11 },
   },
   {
@@ -96,6 +103,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Гример',
     city: 'Санкт-Петербург',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 14, wantsToWork: 5, projects: 9 },
   },
   {
@@ -108,6 +116,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Сценарист',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 28, wantsToWork: 11, projects: 18 },
   },
   {
@@ -120,6 +129,7 @@ export const MOCK_COLLABORATORS: User[] = [
     profession: 'Костюмер',
     city: 'Краснодар',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 16, wantsToWork: 6, projects: 10 },
   },
 ];
@@ -135,6 +145,7 @@ export const MOCK_OUTGOING_REQUESTS: User[] = [
     profession: 'Продюсер',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 10, wantsToWork: 3, projects: 6 },
   },
   {
@@ -147,6 +158,7 @@ export const MOCK_OUTGOING_REQUESTS: User[] = [
     profession: 'Фотограф',
     city: 'Санкт-Петербург',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 17, wantsToWork: 7, projects: 11 },
   },
   {
@@ -159,6 +171,7 @@ export const MOCK_OUTGOING_REQUESTS: User[] = [
     profession: 'Композитор',
     city: 'Казань',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 13, wantsToWork: 4, projects: 8 },
   },
   {
@@ -171,6 +184,7 @@ export const MOCK_OUTGOING_REQUESTS: User[] = [
     profession: 'Хореограф',
     city: 'Москва',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 19, wantsToWork: 8, projects: 12 },
   },
   {
@@ -183,6 +197,7 @@ export const MOCK_OUTGOING_REQUESTS: User[] = [
     profession: 'VFX Artist',
     city: 'Екатеринбург',
     role: UserRole.USER,
+    type: 'PERSON',
     stats: { collaborations: 21, wantsToWork: 9, projects: 14 },
   },
 ];

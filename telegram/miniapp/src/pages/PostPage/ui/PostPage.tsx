@@ -15,13 +15,13 @@ import {
   PostType,
 } from 'shared/api/service/Post/types';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
+import { useBackButton } from 'shared/hooks/useBackButton';
+import { tagsData } from 'shared/mocks/tagsMock';
+import { MOCK_USERS } from 'shared/mocks/userListMocks';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import { Page } from 'widgets/Page';
 import classes from './PostPage.module.scss';
-import { useBackButton } from 'shared/hooks/useBackButton';
-import { MOCK_USERS } from 'shared/mocks/userListMocks';
-import { tagsData } from 'shared/mocks/tagsMock';
 
 type PostStep = 'gallery' | 'creating' | 'collaborators';
 
@@ -118,7 +118,7 @@ export const PostPage = observer(() => {
     const user = MOCK_USERS.find((u) => u.id === userId);
     if (user && !collaborators.find((c) => c.id === userId)) {
       const newCollaborator: PostCollaborator = {
-        id: user.id,
+        id: String(user.id),
         name: `${user.firstName} ${user.lastName}`,
         profession: user.profession || '',
         city: user.city || '',

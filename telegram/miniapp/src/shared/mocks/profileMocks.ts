@@ -5,6 +5,7 @@ import { UserRole } from '../consts/userRoles';
 
 export const MOCK_USER: User = {
   id: '1',
+  type: 'PERSON',
   username: 'nick_name',
   firstName: 'Иван',
   lastName: 'Иванов',

@@ -46,7 +46,7 @@ export const UserProfilePage = observer(() => {
       </Box>
 
       <OfferCollaborationDrawer
-        userId={user.id}
+        userId={String(user.id)}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
       />
