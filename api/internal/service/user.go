@@ -13,6 +13,10 @@ import (
 type UserService interface {
 	GetUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error)
 	GetUsersByTelegramID(ctx context.Context, telegramID int64) ([]*model.TarelkaUserFull, error)
+	// Search users by name (person name/surname or company name)
+	SearchUsersByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+	// Search users by Telegram handle/url
+	SearchUsersByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
 	// Presign URL for uploading a user's logo image
 	PresignLogoUpload(ctx context.Context, userID int64, contentType string) (key string, uploadURL string, headers map[string]string, err error)
 	// Confirm upload and set final logo URL
@@ -52,6 +56,28 @@ func (s *userService) GetUser(ctx context.Context, id int64) (*model.TarelkaUser
 func (s *userService) GetUsersByTelegramID(ctx context.Context, telegramID int64) ([]*model.TarelkaUserFull, error) {
 	// TODO: Реализовать запрос всех аккаунтов по telegram_id
 	return nil, nil
+}
+
+// SearchUsersByName delegates to repository
+func (s *userService) SearchUsersByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return s.tarelkaUserRepo.SearchByName(ctx, q, limit, offset)
+}
+
+// SearchUsersByTelegram delegates to repository
+func (s *userService) SearchUsersByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return s.tarelkaUserRepo.SearchByTelegram(ctx, q, limit, offset)
 }
 
 // PresignLogoUpload generates a presigned URL to upload user's logo to storage

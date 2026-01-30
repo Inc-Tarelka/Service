@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/Inc-Tarelka/api/internal/service"
@@ -72,6 +73,66 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+
+// SearchUsersByName godoc
+// @Summary Поиск пользователей по имени
+// @Description Ищет профили по имени/фамилии (PERSON) или названию компании (COMPANY)
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Строка поиска"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.TarelkaUserFull
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/search/name [get]
+func (h *UserHandler) SearchUsersByName(c *gin.Context) {
+	q := strings.TrimSpace(c.Query("q"))
+	if q == "" {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_query"})
+		return
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	res, err := h.userService.SearchUsersByName(c.Request.Context(), q, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// SearchUsersByTelegram godoc
+// @Summary Поиск пользователей по Telegram
+// @Description Ищет профили по ссылке/нику Telegram (поле telegram_url)
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Строка поиска (@ник или часть ссылки)"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.TarelkaUserFull
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/search/telegram [get]
+func (h *UserHandler) SearchUsersByTelegram(c *gin.Context) {
+	q := strings.TrimSpace(c.Query("q"))
+	if q == "" {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_query"})
+		return
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	res, err := h.userService.SearchUsersByTelegram(c.Request.Context(), q, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
 }
 
 // PresignLogoUpload godoc

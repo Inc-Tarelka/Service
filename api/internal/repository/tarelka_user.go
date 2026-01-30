@@ -32,6 +32,12 @@ type TarelkaUserRepository interface {
 	// Delete user and related rows
 	Delete(ctx context.Context, userID int64) error
 
+	// Search helpers
+	// SearchByName finds users by person name/surname or company name (ILIKE, contains)
+	SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+	// SearchByTelegram finds users by telegram_url (ILIKE, contains)
+	SearchByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+
 	// Person
 	CreatePerson(ctx context.Context, person *model.TarelkaPerson) error
 	GetPerson(ctx context.Context, userID int64) (*model.TarelkaPerson, error)
@@ -343,6 +349,139 @@ func (r *tarelkaUserRepository) GetCities(ctx context.Context, userID int64) ([]
 		cities = append(cities, c)
 	}
 	return cities, nil
+}
+
+// SearchByName finds users by person name/surname or company name
+func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if strings.TrimSpace(q) == "" {
+		return []*model.TarelkaUserFull{}, nil
+	}
+	// Build base pattern for ILIKE contains search
+	base := strings.TrimSpace(q)
+	pattern := "%" + base + "%"
+	tokens := strings.Fields(base)
+
+	// Build dynamic WHERE with optional tokenized matching (name/surname in any order)
+	where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+	args := []interface{}{pattern}
+	// If user entered two+ tokens, try matching name and surname independently in any order
+	if len(tokens) >= 2 {
+		t1 := "%" + tokens[0] + "%"
+		t2 := "%" + tokens[1] + "%"
+		where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+		args = append(args, t1, t2)
+	}
+
+	// Compose final query with computed parameter positions for limit/offset
+	// limit and offset placeholders depend on args length
+	limPos := len(args) + 1
+	offPos := len(args) + 2
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
+		WHERE %s
+		ORDER BY u.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, where, limPos, offPos)
+
+	args = append(args, limit, offset)
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u             model.TarelkaUser
+			name, surname *string
+			companyName   *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&name, &surname, &companyName,
+		); err != nil {
+			return nil, err
+		}
+
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		// Attach subtype
+		if name != nil || surname != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(name), Surname: valueOrEmpty(surname)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// SearchByTelegram finds users by telegram_url
+func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if strings.TrimSpace(q) == "" {
+		return []*model.TarelkaUserFull{}, nil
+	}
+	// Normalize handle: strip leading '@' and whitespace; search as substring in telegram_url
+	handle := strings.TrimSpace(q)
+	if strings.HasPrefix(handle, "@") {
+		handle = handle[1:]
+	}
+	pattern := "%" + handle + "%"
+	query := `
+		SELECT 
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
+		WHERE u.telegram_url ILIKE $1
+		ORDER BY u.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, pattern, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u             model.TarelkaUser
+			name, surname *string
+			companyName   *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&name, &surname, &companyName,
+		); err != nil {
+			return nil, err
+		}
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		if name != nil || surname != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(name), Surname: valueOrEmpty(surname)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// helper to deref *string with empty fallback
+func valueOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 // UpdatePasswordHash обновляет хеш пароля пользователя

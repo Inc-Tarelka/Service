@@ -75,6 +75,9 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				users.POST(":id/wallpaper/presign", h.user.PresignWallpaperUpload)
 				users.POST(":id/wallpaper/confirm", h.user.ConfirmWallpaperUpload)
 				users.POST(":id/wallpaper/url", h.user.SetWallpaperURL)
+				// Search endpoints
+				users.GET("/search/name", h.user.SearchUsersByName)
+				users.GET("/search/telegram", h.user.SearchUsersByTelegram)
 				// Partial update and delete
 				users.PATCH(":id", h.user.PatchUser)
 				users.DELETE("/me", h.user.DeleteCurrentUser)
