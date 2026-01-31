@@ -5,6 +5,7 @@ import {
   getAccessToken,
   loadAccessTokenOnce,
   setAccessToken,
+  setRefreshToken,
 } from 'shared/api/base';
 import {
   forgotPasswordRequest,
@@ -144,6 +145,7 @@ export class AuthStore {
       });
 
       setAccessToken(response.accessToken);
+      setRefreshToken(response.refreshToken);
 
       console.log('Token saved:', this.token);
       console.log('isAuth:', this.isAuth);
@@ -165,6 +167,7 @@ export class AuthStore {
       this.isAuth = true;
       this.token = response.accessToken;
       setAccessToken(response.accessToken);
+      setRefreshToken(response.refreshToken);
       return true;
     } catch (error) {
       console.error('Register error:', error);

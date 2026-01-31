@@ -20,8 +20,9 @@ export const API_URL = {
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,
 
-  publications: () => '/publications',
-  publication: (id: string) => `/publications/${id}`,
+  // Publications
+  generate_url_publication: () => '/publications/images/presign',
+  post_publication: () => '/publications',
 
   // Posts
   posts: () => '/posts',

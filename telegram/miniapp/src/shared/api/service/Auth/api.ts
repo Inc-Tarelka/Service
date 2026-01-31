@@ -31,7 +31,7 @@ export const loginRequest = async (
 
 // =============================== LOGOUT ===============================
 export const logoutRequest = async (): Promise<void> => {
-  await baseInstanceV1.post(API_URL.logout());
+  await baseInstanceV1.post(API_URL.logout(), {});
 };
 
 // =============================== REGISTER ===============================

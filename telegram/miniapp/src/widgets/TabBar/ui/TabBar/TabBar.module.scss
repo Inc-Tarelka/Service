@@ -1,5 +1,5 @@
 .container {
-  background: var(--primary-stroke);
+  background: var(--bg-color);
   inset: auto 0 0;
   padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   position: fixed;
@@ -9,7 +9,6 @@
 
 .tabbar {
   backdrop-filter: blur(10px);
-  background-color: var(--primary-stroke);
   border-top: 1px solid var(--card-bg, rgb(0, 0, 0, 0.1));
   display: flex;
   height: var(--TabBar-size);
@@ -18,7 +17,7 @@
 
 .tab {
   align-items: center;
-  color: var(--text-color, #999);
+  color: var(--text-color);
   display: flex;
   flex: 1;
   justify-content: center;

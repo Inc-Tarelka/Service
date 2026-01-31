@@ -5,7 +5,7 @@ import classes from './PublicationItem.module.scss';
 
 interface PublicationItemProps {
   publication: Publication;
-  onClick?: (id: string) => void;
+  onClick?: (id: number) => void;
 }
 
 export const PublicationItem = ({
@@ -20,7 +20,7 @@ export const PublicationItem = ({
       <div
         className={classes.image}
         style={{
-          backgroundImage: `url(${publication.imageUrl})`,
+          backgroundImage: `url(${publication.imageUrls?.[0] || ''})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -29,7 +29,7 @@ export const PublicationItem = ({
           <div className={classes.likes}>
             <HeartIcon />
             <Text size="xs" fw={700}>
-              {publication.likesCount}
+              {0}
             </Text>
           </div>
         </div>

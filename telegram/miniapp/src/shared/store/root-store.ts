@@ -1,4 +1,6 @@
 import { AuthStore } from './api/Auth/auth-store';
+import { PostStore } from './api/Post/post-store';
+import { PublicationStore } from './api/Publication/publication-store';
 import { ReferenceStore } from './api/Reference/reference-store';
 import { UserStore } from './api/User/user-store';
 import { GalleryStore } from './gallery-store';
@@ -12,4 +14,6 @@ export class RootStore {
   referenceStore = new ReferenceStore();
   galleryStore = new GalleryStore();
   userStore = new UserStore();
+  postStore = new PostStore();
+  publicationStore = new PublicationStore();
 }

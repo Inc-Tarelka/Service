@@ -47,6 +47,7 @@ export const ActionsDrawer = (props: ActionsDrawerProps) => {
             size="lg"
             color={'var(--red)'}
             onClick={handleDelete}
+            notDark
           >
             Удалить
           </Button>

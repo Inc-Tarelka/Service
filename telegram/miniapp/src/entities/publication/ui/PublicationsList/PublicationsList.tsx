@@ -9,7 +9,7 @@ interface PublicationsListProps {
   className?: string;
   publications: Publication[];
   isLoading?: boolean;
-  onItemClick?: (id: string) => void;
+  onItemClick?: (id: number) => void;
 }
 
 export const PublicationsList = observer((props: PublicationsListProps) => {

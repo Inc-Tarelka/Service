@@ -1,4 +1,3 @@
-import WebApp from '@twa-dev/sdk';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 export interface GalleryPhoto {
@@ -8,7 +7,6 @@ export interface GalleryPhoto {
   addedAt: number;
 }
 
-const STORAGE_KEY = 'gallery_photos';
 const MAX_PHOTOS = 10;
 
 export class GalleryStore {
@@ -18,82 +16,7 @@ export class GalleryStore {
 
   constructor() {
     makeAutoObservable(this);
-    this.loadFromCloudStorage();
   }
-
-  // === Cloud Storage Methods ===
-
-  loadFromCloudStorage = async (): Promise<void> => {
-    this.isLoading = true;
-
-    try {
-      if (
-        WebApp.CloudStorage &&
-        typeof WebApp.CloudStorage.getItems === 'function' &&
-        (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
-      ) {
-        const items: Record<string, string> = await new Promise(
-          (resolve, reject) => {
-            WebApp.CloudStorage.getItems([STORAGE_KEY], (error, result) => {
-              if (error) reject(error);
-              else resolve(result || {});
-            });
-          },
-        );
-
-        const data = items?.[STORAGE_KEY];
-        if (data && data !== '') {
-          const parsed = JSON.parse(data);
-          runInAction(() => {
-            this.photos = parsed.photos || [];
-            this.selectionOrder = parsed.selectionOrder || [];
-          });
-        }
-      } else {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (data) {
-          const parsed = JSON.parse(data);
-          runInAction(() => {
-            this.photos = parsed.photos || [];
-            this.selectionOrder = parsed.selectionOrder || [];
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading gallery from storage:', error);
-    } finally {
-      runInAction(() => {
-        this.isLoading = false;
-      });
-    }
-  };
-
-  saveToCloudStorage = async (): Promise<void> => {
-    try {
-      const data = JSON.stringify({
-        photos: this.photos,
-        selectionOrder: this.selectionOrder,
-      });
-
-      if (
-        WebApp.CloudStorage &&
-        typeof WebApp.CloudStorage.setItem === 'function' &&
-        (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
-      ) {
-        await new Promise<void>((resolve, reject) => {
-          WebApp.CloudStorage.setItem(STORAGE_KEY, data, (error) => {
-            if (error) reject(error);
-            else resolve();
-          });
-        });
-      } else {
-        // Fallback to localStorage
-        localStorage.setItem(STORAGE_KEY, data);
-      }
-    } catch (error) {
-      console.error('Error saving gallery to storage:', error);
-    }
-  };
 
   // === Photo Management ===
 
@@ -113,21 +36,19 @@ export class GalleryStore {
 
         runInAction(() => {
           this.photos.push(photo);
+          this.selectionOrder.push(photo.id);
         });
       } catch (error) {
         console.error('Error adding photo:', error);
       }
     }
-
-    await this.saveToCloudStorage();
   };
 
-  removePhoto = async (id: string): Promise<void> => {
+  removePhoto = (id: string): void => {
     runInAction(() => {
       this.photos = this.photos.filter((p) => p.id !== id);
       this.selectionOrder = this.selectionOrder.filter((sid) => sid !== id);
     });
-    await this.saveToCloudStorage();
   };
 
   toggleSelection = (id: string): void => {
@@ -137,7 +58,6 @@ export class GalleryStore {
     } else {
       this.selectionOrder.push(id);
     }
-    this.saveToCloudStorage();
   };
 
   getSelectionNumber = (id: string): number => {
@@ -147,20 +67,31 @@ export class GalleryStore {
 
   selectAll = (): void => {
     this.selectionOrder = this.photos.map((p) => p.id);
-    this.saveToCloudStorage();
   };
 
   deselectAll = (): void => {
     this.selectionOrder = [];
-    this.saveToCloudStorage();
   };
 
-  clearAll = async (): Promise<void> => {
+  reorderPhotos = (oldIndex: number, newIndex: number): void => {
+    if (oldIndex === newIndex) return;
+
+    runInAction(() => {
+      const reordered = [...this.photos];
+      const [movedItem] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, movedItem);
+      this.photos = reordered;
+      this.selectionOrder = this.photos.map((p) => p.id);
+    });
+
+    console.log('completed');
+  };
+
+  clearAll = (): void => {
     runInAction(() => {
       this.photos = [];
       this.selectionOrder = [];
     });
-    await this.saveToCloudStorage();
   };
 
   // === Computed ===

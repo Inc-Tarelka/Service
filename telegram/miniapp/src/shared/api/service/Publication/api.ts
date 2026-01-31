@@ -1,11 +1,26 @@
 import { API_URL } from 'shared/api/api_url';
 import { baseInstanceV1 } from 'shared/api/base';
-import { Publication } from './types';
+import type {
+  CreatePublicationRequest,
+  PresignRequest,
+  PresignResponse,
+  Publication,
+} from './types';
 
-// =============================== GET PUBLICATIONS ===============================
-export const getPublications = async () =>
-  await baseInstanceV1.get<Publication[]>(API_URL.publications());
+/**
+ * Request presigned URLs for uploading images to S3
+ */
+export const presignImages = async (request: PresignRequest) =>
+  (
+    await baseInstanceV1.post<PresignResponse>(
+      API_URL.generate_url_publication(),
+      request,
+    )
+  ).data;
 
-// =============================== GET PUBLICATION BY ID ===============================
-export const getPublicationById = async (id: string) =>
-  await baseInstanceV1.get<Publication>(API_URL.publication(id));
+/**
+ * Create a new publication
+ */
+export const createPublication = async (request: CreatePublicationRequest) =>
+  (await baseInstanceV1.post<Publication>(API_URL.post_publication(), request))
+    .data;

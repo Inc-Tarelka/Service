@@ -98,7 +98,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           directionIds: [],
           specializationIds: [specializationId],
           initData:
-            'user=%7B%22id%22%3A6969807631%2C%22first_name%22%3A%22%D0%BA%D1%80%D1%83%D0%B6%D0%BA%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22kryshkia%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2Fns51B3uNbn3VnRNQyaZjvhPopkMCpSbAF5BkCoFCEDO1VuzohY4ufKHP7ov8LozQ.svg%22%7D&chat_instance=-7734611608118716575&chat_type=private&auth_date=1768670445&signature=njBEzZMOm0aUFq1M7TSKoXkxwvFwKlFC-TUyqxdGJ-z9lFUA_XBZ8jro7pjR2EHP-zZTdF4hvOnVnCvcQJzRBw&hash=258a3993814a5fdce98a7110e4636d7e786142939f05f5879e0c86161dbf89a4',
+            'user=%7B%22id%22%3A6969807631%2C%22first_name%22%3A%22%D0%BA%D1%80%D1%83%D0%B6%D0%BA%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22kryshkia%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2Fns51B3uNbn3VnRNQyaZjvhPopkMCpSbAF5BkCoFCEDO1VuzohY4ufKHP7ov8LozQ.svg%22%7D&chat_instance=-7734611608118716575&chat_type=private&auth_date=1769879812&signature=xXXUjkUfw4bi--mkri9PMhlERwsM1bxY8pgtk4pDplU6OoatHUXTcotE6uyBPjGKeIhe7WsU5YqPzkFQQW5vAQ&hash=aab9365ce077c830310ea848b99de9d2f909ec4777de494c777d9751795a33cf',
           phoneVerification: {
             verificationCode: wizardData.verificationCode,
             verificationRequestId: wizardData.verificationRequestId,
@@ -170,21 +170,19 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           />
         </div>
 
-        {!isCompany && (
-          <div className={s.inputGroup}>
-            <div className={s.labelRow}>
-              <span className={s.label}>Фамилия</span>
-            </div>
-            <TextInput
-              classNames={{ input: s.input }}
-              value={values.lastName}
-              onChange={handleInputChange('lastName')}
-              placeholder="Ваша фамилия"
-              radius="xl"
-              size="lg"
-            />
+        <div className={s.inputGroup}>
+          <div className={s.labelRow}>
+            <span className={s.label}>Фамилия</span>
           </div>
-        )}
+          <TextInput
+            classNames={{ input: s.input }}
+            value={values.lastName}
+            onChange={handleInputChange('lastName')}
+            placeholder="Ваша фамилия"
+            radius="xl"
+            size="lg"
+          />
+        </div>
 
         <div className={s.inputGroup}>
           <span className={s.label}>Специализация</span>

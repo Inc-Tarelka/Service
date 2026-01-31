@@ -285,6 +285,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               variant="filled"
               fullWidth
               onClick={handleStartDateConfirm}
+              c="var(--bg-color)"
             >
               Готово
             </Button>
@@ -325,6 +326,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               variant="filled"
               fullWidth
               onClick={handleEndDateConfirm}
+              c="var(--bg-color)"
             >
               Готово
             </Button>

@@ -4,6 +4,7 @@ import { PostType } from 'shared/api/service/Post/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { TagList } from 'shared/ui/TagList';
 import classes from './PostForm.module.scss';
+import { observer } from 'mobx-react-lite';
 
 interface CityOption {
   value: string;
@@ -39,7 +40,7 @@ interface PostFormProps {
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
-export const PostForm = (props: PostFormProps) => {
+export const PostForm = observer((props: PostFormProps) => {
   const {
     values,
     onChange,
@@ -187,4 +188,4 @@ export const PostForm = (props: PostFormProps) => {
       </div>
     </div>
   );
-};
+});

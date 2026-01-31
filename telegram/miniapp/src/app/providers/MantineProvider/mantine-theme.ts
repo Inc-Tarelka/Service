@@ -107,11 +107,15 @@ export const mantineTheme = createTheme({
       styles: (_theme: MantineTheme, props: any) => ({
         root: {
           fontWeight: props.size === 'lg' && 500,
+          ...(props.variant !== 'outline' &&
+            !props.notDark &&
+            !props.disabled && {
+              color: props.c || 'var(--dark-text-color)',
+            }),
           ...(props.variant === 'filled' &&
             !props.disabled &&
             props.bg && {
               backgroundColor: props.bg,
-              color: props.c || 'var(--bg-color)',
               '&:hover': {
                 backgroundColor: props.bg,
                 filter: 'brightness(0.9)',

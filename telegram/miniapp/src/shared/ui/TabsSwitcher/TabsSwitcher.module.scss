@@ -6,6 +6,7 @@
   mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
   -ms-overflow-style: none;
   overflow-x: auto;
+  scroll-behavior: smooth;
   scrollbar-width: none;
 }
 
@@ -14,39 +15,45 @@
 }
 
 .tabsList {
+  border-bottom: 1px solid var(--card-bg);
   display: flex;
   gap: 8px;
   min-width: max-content;
   padding-right: 40px;
+  position: relative;
 }
 
 .tab {
   background-color: transparent;
   border: none;
-  border-radius: 40px;
-  color: var(--text-color-secondary);
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  color: var(--tertiary-text-color);
   cursor: pointer;
   font: var(--font-body);
   height: 40px;
   padding: 0 20px;
+  position: relative;
   transition:
-    background-color 0.2s ease,
+    border-color 0.2s ease,
     color 0.2s ease;
   white-space: nowrap;
 }
 
 .tab:hover {
-  background-color: var(--card-bg);
+  color: var(--text-color);
 }
 
 .tabActive {
-  background-color: var(--green);
-  color: var(--bg-color);
-  font-weight: 600;
+  background-color: transparent;
+  border-bottom: 1px solid var(--green);
+  color: var(--text-color);
+  font-weight: 500;
 }
 
 .tabActive:hover {
-  background-color: var(--green);
+  background-color: transparent;
+  color: var(--text-color);
 }
 
 .content {

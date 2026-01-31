@@ -34,11 +34,9 @@ export const ProfilePage = observer(() => {
 
   useEffect(() => {
     userStore.getProfileAction();
-
-    // Minimum skeleton display time
     const timer = setTimeout(() => {
       setMinLoadTime(false);
-    }, 600);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [userStore]);

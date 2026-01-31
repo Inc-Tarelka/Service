@@ -1,4 +1,4 @@
-import { Button, TextInput } from '@mantine/core';
+import { Button, LoadingOverlay, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useStore } from 'app/StoreProvider';
 import { CollaboratorsList } from 'entities/collaborator';
@@ -7,14 +7,12 @@ import { PostForm } from 'entities/post';
 import { AddCollaborators, AddNeeds, NeedDrawer } from 'features/post';
 import { observer } from 'mobx-react-lite';
 import { motion } from 'motion/react';
-import { Activity, useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import {
-  PostCollaborator,
-  PostNeed,
-  PostType,
-} from 'shared/api/service/Post/types';
+import { Activity, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { PostCollaborator } from 'shared/api/service/Post/types';
+import type { CreatePublicationRequest } from 'shared/api/service/Publication';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { tagsData } from 'shared/mocks/tagsMock';
 import { MOCK_USERS } from 'shared/mocks/userListMocks';
@@ -29,8 +27,9 @@ const VALID_STEPS: PostStep[] = ['gallery', 'creating', 'collaborators'];
 const DEFAULT_STEP: PostStep = 'gallery';
 
 export const PostPage = observer(() => {
-  const { galleryStore } = useStore();
+  const { galleryStore, postStore, publicationStore } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   useBackButton();
 
@@ -46,42 +45,18 @@ export const PostPage = observer(() => {
     [setSearchParams],
   );
 
-  const [formValues, setFormValues] = useState({
-    title: '',
-    description: '',
-    type: 'project' as PostType,
-    tagIds: [] as string[],
-    cityId: '',
-  });
-
-  const [collaborators, setCollaborators] = useState<PostCollaborator[]>([]);
-  const [needs, setNeeds] = useState<PostNeed[]>([]);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-
   const citiesData = referenceStore.cities.map((c) => ({
     value: String(c.id),
     label: c.name,
   }));
 
-  const filteredUsers = searchQuery
+  const filteredUsers = postStore.searchQuery
     ? MOCK_USERS.filter((u) =>
         `${u.firstName} ${u.lastName}`
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()),
+          .includes(postStore.searchQuery.toLowerCase()),
       )
     : MOCK_USERS;
-
-  useEffect(() => {
-    if (step === 'gallery') {
-      const timer = setTimeout(() => {
-        if (galleryStore.photos.length === 0) {
-          fileInputRef.current?.click();
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [step, galleryStore.photos.length]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -95,28 +70,21 @@ export const PostPage = observer(() => {
     fileInputRef.current?.click();
   };
 
-  const handleFormChange = <K extends keyof typeof formValues>(
-    field: K,
-    value: (typeof formValues)[K],
-  ) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleDeleteImage = (index: number) => {
     const photoId = galleryStore.selectedPhotos[index]?.id;
     if (photoId) {
-      galleryStore.toggleSelection(photoId);
+      galleryStore.removePhoto(photoId);
     }
   };
 
   const handleAddCollaborator = () => {
-    setSearchQuery('');
+    postStore.setSearchQuery('');
     goToStep('collaborators');
   };
 
   const handleSelectCollaborator = (userId: string) => {
     const user = MOCK_USERS.find((u) => u.id === userId);
-    if (user && !collaborators.find((c) => c.id === userId)) {
+    if (user) {
       const newCollaborator: PostCollaborator = {
         id: String(user.id),
         name: `${user.firstName} ${user.lastName}`,
@@ -125,43 +93,87 @@ export const PostPage = observer(() => {
         avatarUrl: user.avatarUrl,
         status: 'pending',
       };
-      setCollaborators((prev) => [...prev, newCollaborator]);
+      postStore.addCollaborator(newCollaborator);
     }
     goToStep('creating');
-  };
-
-  const handleRemoveCollaborator = (id: string) => {
-    setCollaborators((prev) => prev.filter((c) => c.id !== id));
   };
 
   const [needDrawerOpened, { open: openNeedDrawer, close: closeNeedDrawer }] =
     useDisclosure(false);
 
-  const handleAddNeed = () => {
-    openNeedDrawer();
-  };
+  const handlePublish = async () => {
+    try {
+      const imageFiles = await Promise.all(
+        galleryStore.selectedPhotos.map(async (photo, index) => {
+          const response = await fetch(photo.base64);
+          const blob = await response.blob();
+          return new File([blob], photo.name || `image-${index}.jpg`, {
+            type: blob.type || 'image/jpeg',
+          });
+        }),
+      );
 
-  const handleSubmitNeed = (need: PostNeed) => {
-    setNeeds((prev) => [...prev, need]);
-  };
-
-  const handleRemoveNeed = (index: number) => {
-    setNeeds((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handlePublish = () => {
-    console.log('Publishing:', {
-      images: galleryStore.selectedPhotos.map((p) => p.base64),
-      ...formValues,
-      collaboratorIds: collaborators.map((c) => c.id),
-      needs,
-    });
+      const publicationData: Omit<CreatePublicationRequest, 'imageUrls'> = {
+        name: postStore.formValues.title,
+        type: postStore.formValues.type === 'project' ? 'PROJECT' : 'SERVICE',
+        description: postStore.formValues.description || undefined,
+        cityId: postStore.formValues.cityId
+          ? Number(postStore.formValues.cityId)
+          : undefined,
+        tagIds: [],
+        coAuthorIds: [],
+        needs: postStore.needs.map((need) => ({
+          name: need.title,
+          description: need.description,
+          budget: need.budget ? Number(need.budget) : undefined,
+          deadlineStart: need.startDate?.toISOString(),
+          deadlineEnd: need.endDate?.toISOString(),
+          tagIds: [],
+        })),
+      };
+      await publicationStore.createPublicationAction(
+        imageFiles,
+        publicationData,
+      );
+      galleryStore.clearAll();
+      postStore.resetPostData();
+      navigate(RoutePath.profile);
+    } catch (error) {
+      console.error('Failed to publish:', error);
+    }
   };
 
   const selectedImages = galleryStore.selectedPhotos.map((p) => p.base64);
 
   return (
-    <Page className={classes.page}>
+    <Page noPaddingBottom className={classes.page}>
+      <LoadingOverlay
+        visible={publicationStore.isLoading}
+        overlayProps={{ blur: 2 }}
+        loaderProps={{
+          children: (
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  marginBottom: '8px',
+                }}
+              >
+                {publicationStore.loadingText}
+              </div>
+              <div
+                style={{
+                  fontSize: '14px',
+                  color: 'var(--text-color-secondary)',
+                }}
+              >
+                {Math.round(publicationStore.uploadProgress)}%
+              </div>
+            </div>
+          ),
+        }}
+      />
       <input
         ref={fileInputRef}
         type="file"
@@ -177,7 +189,8 @@ export const PostPage = observer(() => {
             <GalleryList
               photos={galleryStore.photos}
               getSelectionNumber={galleryStore.getSelectionNumber}
-              onToggle={galleryStore.toggleSelection}
+              onToggle={() => {}}
+              onReorder={galleryStore.reorderPhotos}
               selectedCount={galleryStore.selectedCount}
               canAddMore={galleryStore.canAddMore}
               onAddMore={handleAddMore}
@@ -218,15 +231,15 @@ export const PostPage = observer(() => {
         <div className={classes.scrollContent}>
           <ImageCarousel
             images={selectedImages}
-            activeIndex={carouselIndex}
-            onIndexChange={setCarouselIndex}
+            activeIndex={postStore.carouselIndex}
+            onIndexChange={postStore.setCarouselIndex}
             onDelete={handleDeleteImage}
             showDeleteButton
           />
 
           <PostForm
-            values={formValues}
-            onChange={handleFormChange}
+            values={postStore.formValues}
+            onChange={postStore.setFormValue}
             citiesData={citiesData}
             tagsData={tagsData}
             onCitiesDropdownOpen={() => referenceStore.getCitiesAction()}
@@ -234,15 +247,15 @@ export const PostPage = observer(() => {
           />
 
           <AddCollaborators
-            collaborators={collaborators}
+            collaborators={postStore.collaborators}
             onAdd={handleAddCollaborator}
-            onRemove={handleRemoveCollaborator}
+            onRemove={postStore.removeCollaborator}
           />
 
           <AddNeeds
-            needs={needs}
-            onAdd={handleAddNeed}
-            onRemove={handleRemoveNeed}
+            needs={postStore.needs}
+            onAdd={openNeedDrawer}
+            onRemove={postStore.removeNeed}
             tagsData={tagsData}
           />
         </div>
@@ -254,7 +267,9 @@ export const PostPage = observer(() => {
             radius="xl"
             variant="filled"
             size="lg"
-            disabled={!formValues.title || !formValues.cityId}
+            disabled={
+              !postStore.formValues.title || !postStore.formValues.cityId
+            }
             bg="var(--accent-color)"
             c="var(--bg-color)"
           >
@@ -266,8 +281,8 @@ export const PostPage = observer(() => {
       <Activity mode={step === 'collaborators' ? 'visible' : 'hidden'}>
         <div className={classes.searchHeader}>
           <TextInput
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={postStore.searchQuery}
+            onChange={(e) => postStore.setSearchQuery(e.target.value)}
             placeholder="Поиск"
             rightSection={<SearchIcon className={classes.searchIcon} />}
             radius={40}
@@ -287,7 +302,7 @@ export const PostPage = observer(() => {
       <NeedDrawer
         opened={needDrawerOpened}
         onClose={closeNeedDrawer}
-        onSubmit={handleSubmitNeed}
+        onSubmit={postStore.addNeed}
         tagsData={tagsData}
       />
     </Page>

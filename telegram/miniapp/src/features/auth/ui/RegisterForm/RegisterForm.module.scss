@@ -110,7 +110,8 @@
 
 .loginLink {
   color: var(--text-color-secondary);
-  font: var(--font-caption);
+  font: var(--font-body);
+  font-weight: 400;
   text-align: left;
 
   span {

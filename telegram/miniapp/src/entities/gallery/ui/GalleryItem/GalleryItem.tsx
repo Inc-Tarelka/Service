@@ -1,5 +1,6 @@
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Image } from '@mantine/core';
-import { useCallback, useRef, useState } from 'react';
 import { GalleryPhoto } from '../../model/types';
 import classes from './GalleryItem.module.scss';
 
@@ -9,72 +10,51 @@ interface GalleryItemProps {
   onToggle: (id: string) => void;
 }
 
-const LONG_PRESS_DURATION = 300;
-
 export const GalleryItem = (props: GalleryItemProps) => {
   const { photo, selectionNumber, onToggle } = props;
-  const [showPreview, setShowPreview] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPress = useRef(false);
 
-  const handleTouchStart = useCallback(() => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setShowPreview(true);
-    }, LONG_PRESS_DURATION);
-  }, []);
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: photo.id });
 
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-    setShowPreview(false);
-  }, []);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isLongPress.current) {
-      onToggle(photo.id);
-    }
+    onToggle(photo.id);
   };
 
   return (
-    <>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={classes.item}
+      onClick={handleClick}
+      onContextMenu={(e) => e.preventDefault()}
+      {...attributes}
+      {...listeners}
+    >
+      <Image
+        src={photo.base64}
+        alt={photo.name}
+        className={classes.image}
+        loading="lazy"
+        draggable={false}
+      />
       <div
-        className={classes.item}
-        onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onContextMenu={(e) => e.preventDefault()}
+        className={`${classes.numberBadge} ${selectionNumber > 0 ? classes.selected : ''}`}
       >
-        <Image
-          src={photo.base64}
-          alt={photo.name}
-          className={classes.image}
-          loading="lazy"
-        />
-        <div
-          className={`${classes.numberBadge} ${selectionNumber > 0 ? classes.selected : ''}`}
-        >
-          {selectionNumber > 0 ? selectionNumber : ''}
-        </div>
+        {selectionNumber > 0 ? selectionNumber : ''}
       </div>
-
-      {showPreview && (
-        <div className={classes.previewOverlay}>
-          <div className={classes.previewContainer}>
-            <Image
-              src={photo.base64}
-              alt={photo.name}
-              className={classes.previewImage}
-              fit="contain"
-            />
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
