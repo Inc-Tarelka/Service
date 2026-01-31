@@ -44,6 +44,31 @@ definitions:
     required:
     - content
     type: object
+  model.AttachPublicationImageItem:
+    properties:
+      key:
+        type: string
+      position:
+        type: integer
+    required:
+    - key
+    type: object
+  model.AttachPublicationImagesRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.AttachPublicationImageItem'
+        type: array
+    required:
+    - items
+    type: object
+  model.AttachPublicationImagesResponse:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/model.PublicationImage'
+        type: array
+    type: object
   model.City:
     properties:
       id:
@@ -130,6 +155,13 @@ definitions:
         type: string
       message:
         type: string
+    type: object
+  model.FileUploadSpec:
+    properties:
+      contentType:
+        type: string
+    required:
+    - contentType
     type: object
   model.FindWork:
     enum:
@@ -226,6 +258,35 @@ definitions:
       verificationRequestId:
         type: string
     type: object
+  model.PresignPublicationImagesRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/model.FileUploadSpec'
+        type: array
+    required:
+    - files
+    type: object
+  model.PresignPublicationImagesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.PresignUploadItem'
+        type: array
+    type: object
+  model.PresignUploadItem:
+    properties:
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      key:
+        type: string
+      publicUrl:
+        type: string
+      uploadUrl:
+        type: string
+    type: object
   model.PresignUploadRequest:
     properties:
       contentType:
@@ -242,6 +303,15 @@ definitions:
       key:
         type: string
       uploadUrl:
+        type: string
+    type: object
+  model.PublicationImage:
+    properties:
+      id:
+        type: integer
+      position:
+        type: integer
+      url:
         type: string
     type: object
   model.PublicationType:
@@ -812,6 +882,87 @@ paths:
       summary: Добавить комментарий к публикации
       tags:
       - publications
+  /publications/{id}/images:
+    post:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Список ключей и позиций
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.AttachPublicationImagesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AttachPublicationImagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подтвердить загрузку и прикрепить изображения к публикации
+      tags:
+      - publications
+  /publications/{id}/images/presign:
+    post:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Список файлов
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.PresignPublicationImagesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PresignPublicationImagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Сгенерировать presigned URL'ы для загрузки изображений для конкретной
+        публикации
+      tags:
+      - publications
   /publications/{id}/likes:
     post:
       parameters:
@@ -842,6 +993,40 @@ paths:
       security:
       - BearerAuth: []
       summary: Поставить лайк публикации (идемпотентно)
+      tags:
+      - publications
+  /publications/images/presign:
+    post:
+      parameters:
+      - description: Список файлов
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.PresignPublicationImagesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PresignPublicationImagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Сгенерировать presigned URL'ы для загрузки изображений публикации (без
+        ID публикации)
       tags:
       - publications
   /references/cities:
@@ -1252,6 +1437,94 @@ paths:
       security:
       - BearerAuth: []
       summary: Текущий пользователь
+      tags:
+      - users
+  /users/search/name:
+    get:
+      description: Ищет профили по имени/фамилии (PERSON) или названию компании (COMPANY)
+      parameters:
+      - description: Строка поиска
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.TarelkaUserFull'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск пользователей по имени
+      tags:
+      - users
+  /users/search/telegram:
+    get:
+      description: Ищет профили по ссылке/нику Telegram (поле telegram_url)
+      parameters:
+      - description: Строка поиска (@ник или часть ссылки)
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.TarelkaUserFull'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск пользователей по Telegram
       tags:
       - users
 securityDefinitions:
