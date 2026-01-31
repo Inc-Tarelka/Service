@@ -162,3 +162,117 @@ func (h *PublicationHandler) LikePublication(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
 }
+
+// PresignImagesGeneric godoc
+// @Summary Сгенерировать presigned URL'ы для загрузки изображений публикации (без ID публикации)
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param payload body model.PresignPublicationImagesRequest true "Список файлов"
+// @Success 200 {object} model.PresignPublicationImagesResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/images/presign [post]
+func (h *PublicationHandler) PresignImagesGeneric(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	authorID := uid.(int64)
+
+	var req model.PresignPublicationImagesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request", Message: err.Error()})
+		return
+	}
+	items, err := h.svc.PresignPublicationImages(c.Request.Context(), authorID, nil, req.Files)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, model.PresignPublicationImagesResponse{Items: items})
+}
+
+// PresignImagesForPublication godoc
+// @Summary Сгенерировать presigned URL'ы для загрузки изображений для конкретной публикации
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Param payload body model.PresignPublicationImagesRequest true "Список файлов"
+// @Success 200 {object} model.PresignPublicationImagesResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id}/images/presign [post]
+func (h *PublicationHandler) PresignImagesForPublication(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	authorID := uid.(int64)
+	idStr := c.Param("id")
+	pubID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	var req model.PresignPublicationImagesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request", Message: err.Error()})
+		return
+	}
+	items, err := h.svc.PresignPublicationImages(c.Request.Context(), authorID, &pubID, req.Files)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, model.PresignPublicationImagesResponse{Items: items})
+}
+
+// AttachImagesToPublication godoc
+// @Summary Подтвердить загрузку и прикрепить изображения к публикации
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Param payload body model.AttachPublicationImagesRequest true "Список ключей и позиций"
+// @Success 200 {object} model.AttachPublicationImagesResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id}/images [post]
+func (h *PublicationHandler) AttachImagesToPublication(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	authorID := uid.(int64)
+	idStr := c.Param("id")
+	pubID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+	var req model.AttachPublicationImagesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request", Message: err.Error()})
+		return
+	}
+	imgs, err := h.svc.AttachPublicationImages(c.Request.Context(), pubID, authorID, req.Items)
+	if err != nil {
+		if err.Error() == "publication not found" {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, model.AttachPublicationImagesResponse{Images: imgs})
+}

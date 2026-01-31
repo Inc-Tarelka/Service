@@ -3,10 +3,12 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/Inc-Tarelka/api/internal/repository"
+	"github.com/google/uuid"
 )
 
 type PublicationService interface {
@@ -14,14 +16,19 @@ type PublicationService interface {
 	UpdatePublication(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
 	LikePublication(ctx context.Context, pubID int64, authorID int64) error
+	// PresignPublicationImages generates presigned PUT URLs for uploading images (optionally into a specific publication folder)
+	PresignPublicationImages(ctx context.Context, authorID int64, pubID *int64, files []model.FileUploadSpec) ([]model.PresignUploadItem, error)
+	// AttachPublicationImages confirms uploads and attaches them to a publication
+	AttachPublicationImages(ctx context.Context, pubID int64, authorID int64, items []model.AttachPublicationImageItem) ([]model.PublicationImage, error)
 }
 
 type publicationService struct {
-	repo repository.PublicationRepository
+	repo    repository.PublicationRepository
+	storage StorageService
 }
 
-func NewPublicationService(repo repository.PublicationRepository) PublicationService {
-	return &publicationService{repo: repo}
+func NewPublicationService(repo repository.PublicationRepository, storage StorageService) PublicationService {
+	return &publicationService{repo: repo, storage: storage}
 }
 
 func (s *publicationService) CreatePublication(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error) {
@@ -78,4 +85,67 @@ func (s *publicationService) AddComment(ctx context.Context, pubID int64, author
 
 func (s *publicationService) LikePublication(ctx context.Context, pubID int64, authorID int64) error {
 	return s.repo.AddLike(ctx, pubID, authorID)
+}
+
+// PresignPublicationImages generates presigned URLs for uploading multiple images.
+// If pubID is provided, keys will be placed under publication/{pubID}/; otherwise under publication/tmp/{authorID}/.
+func (s *publicationService) PresignPublicationImages(ctx context.Context, authorID int64, pubID *int64, files []model.FileUploadSpec) ([]model.PresignUploadItem, error) {
+	if s.storage == nil {
+		return nil, errors.New("storage not configured")
+	}
+	if len(files) == 0 {
+		return []model.PresignUploadItem{}, nil
+	}
+	items := make([]model.PresignUploadItem, 0, len(files))
+	for _, f := range files {
+		ct := canonicalizeContentType(f.ContentType)
+		ext := mimeExtFromContentType(ct)
+		if ext == "" {
+			ext = "bin"
+		}
+		uid := uuid.New().String()
+		var key string
+		if pubID != nil {
+			key = fmt.Sprintf("publication/%d/%s.%s", *pubID, uid, ext)
+		} else {
+			key = fmt.Sprintf("publication/tmp/%d/%s.%s", authorID, uid, ext)
+		}
+		url, headers, err := s.storage.PresignPut(ctx, key, ct, 15*time.Minute)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, model.PresignUploadItem{
+			Key:       key,
+			UploadURL: url,
+			Headers:   headers,
+			PublicURL: s.storage.PublicURL(key),
+		})
+	}
+	return items, nil
+}
+
+// AttachPublicationImages confirms uploaded keys and attaches them to the publication.
+// Position will be taken from request item if provided; otherwise from array order.
+func (s *publicationService) AttachPublicationImages(ctx context.Context, pubID int64, authorID int64, items []model.AttachPublicationImageItem) ([]model.PublicationImage, error) {
+	if s.storage == nil {
+		return nil, errors.New("storage not configured")
+	}
+	if len(items) == 0 {
+		return []model.PublicationImage{}, nil
+	}
+	imgs := make([]model.PublicationImage, 0, len(items))
+	for i, it := range items {
+		// Try to read actual content type to validate; ignore errors for robustness
+		if ct, err := s.storage.HeadContentType(ctx, it.Key); err == nil && ct != "" {
+			_ = canonicalizeContentType(ct)
+		}
+		url := s.storage.PublicURL(it.Key)
+		pos := it.Position
+		if pos == nil {
+			p := i
+			pos = &p
+		}
+		imgs = append(imgs, model.PublicationImage{URL: url, Position: pos})
+	}
+	return s.repo.AddImages(ctx, pubID, authorID, imgs)
 }

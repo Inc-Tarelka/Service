@@ -46,6 +46,6 @@ func NewServices(deps Deps) *Services {
 		User:        NewUserService(deps.Repos.TarelkaUser, deps.Storage),
 		Reference:   NewReferenceService(deps.Repos.Reference),
 		Storage:     deps.Storage,
-		Publication: NewPublicationService(deps.Repos.Publication),
+		Publication: NewPublicationService(deps.Repos.Publication, deps.Storage),
 	}
 }

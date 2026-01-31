@@ -18,6 +18,8 @@ type PublicationRepository interface {
 	Update(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
 	AddLike(ctx context.Context, pubID int64, authorID int64) error
+	// AddImages attaches images to an existing publication and returns created rows
+	AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error)
 }
 
 type publicationRepository struct {
@@ -258,4 +260,43 @@ func (r *publicationRepository) AddLike(ctx context.Context, pubID int64, author
 		pubID, authorID,
 	)
 	return err
+}
+
+func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error) {
+	if len(imgs) == 0 {
+		return []model.PublicationImage{}, nil
+	}
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// verify publication exists and owned by author
+	var exists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND author_id = $2)`, pubID, authorID).Scan(&exists); err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, ErrPublicationNotFound
+	}
+
+	// insert each image and return with IDs
+	out := make([]model.PublicationImage, 0, len(imgs))
+	for _, img := range imgs {
+		var id int64
+		var pos *int = img.Position
+		if err := tx.QueryRow(ctx,
+			`INSERT INTO publication_images (publication_id, url, position) VALUES ($1, $2, $3) RETURNING id`,
+			pubID, img.URL, pos,
+		).Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, model.PublicationImage{ID: id, URL: img.URL, Position: pos})
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

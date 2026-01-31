@@ -93,3 +93,36 @@ type NeedUpsertItem struct {
 type AddCommentRequest struct {
 	Content string `json:"content" binding:"required"`
 }
+
+// Publication images upload DTOs
+type FileUploadSpec struct {
+	ContentType string `json:"contentType" binding:"required"`
+}
+
+type PresignPublicationImagesRequest struct {
+	Files []FileUploadSpec `json:"files" binding:"required,dive"`
+}
+
+type PresignUploadItem struct {
+	Key       string            `json:"key"`
+	UploadURL string            `json:"uploadUrl"`
+	Headers   map[string]string `json:"headers"`
+	PublicURL string            `json:"publicUrl"`
+}
+
+type PresignPublicationImagesResponse struct {
+	Items []PresignUploadItem `json:"items"`
+}
+
+type AttachPublicationImageItem struct {
+	Key      string `json:"key" binding:"required"`
+	Position *int   `json:"position,omitempty"`
+}
+
+type AttachPublicationImagesRequest struct {
+	Items []AttachPublicationImageItem `json:"items" binding:"required,dive"`
+}
+
+type AttachPublicationImagesResponse struct {
+	Images []PublicationImage `json:"images"`
+}
