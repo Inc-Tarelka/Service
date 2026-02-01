@@ -192,6 +192,36 @@ definitions:
       userId:
         type: integer
     type: object
+  model.Need:
+    properties:
+      budget:
+        type: integer
+      cityId:
+        type: integer
+      deadlineEnd:
+        type: string
+      deadlineStart:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      publicationId:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/model.NeedTag'
+        type: array
+    type: object
+  model.NeedTag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   model.NeedUpsertItem:
     properties:
       budget:
@@ -305,6 +335,41 @@ definitions:
       uploadUrl:
         type: string
     type: object
+  model.Publication:
+    properties:
+      authorId:
+        type: integer
+      cityId:
+        type: integer
+      coAuthors:
+        items:
+          $ref: '#/definitions/model.TarelkaUser'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/model.PublicationImage'
+        type: array
+      likesCount:
+        type: integer
+      name:
+        type: string
+      needs:
+        items:
+          $ref: '#/definitions/model.Need'
+        type: array
+      tags:
+        items:
+          $ref: '#/definitions/model.PublicationTag'
+        type: array
+      type:
+        $ref: '#/definitions/model.PublicationType'
+    type: object
   model.PublicationImage:
     properties:
       id:
@@ -312,6 +377,13 @@ definitions:
       position:
         type: integer
       url:
+        type: string
+    type: object
+  model.PublicationTag:
+    properties:
+      id:
+        type: integer
+      name:
         type: string
     type: object
   model.PublicationType:
@@ -423,6 +495,38 @@ definitions:
         type: string
       tarelka_user_id:
         type: integer
+    type: object
+  model.TarelkaUser:
+    properties:
+      bio:
+        description: Short bio / about me
+        type: string
+      created_at:
+        type: string
+      education:
+        description: Education — free text
+        type: string
+      find_work:
+        allOf:
+        - $ref: '#/definitions/model.FindWork'
+        description: FindWork — enum indicating whether user is looking for a job
+      id:
+        type: integer
+      logo_url:
+        type: string
+      phone:
+        type: string
+      telegram_url:
+        type: string
+      tg_user_id:
+        type: integer
+      type:
+        $ref: '#/definitions/model.AccountType'
+      username:
+        type: string
+      wallpaper_url:
+        description: Wallpaper (cover image) URL — stored in S3 similarly to LogoURL
+        type: string
     type: object
   model.TarelkaUserFull:
     properties:
@@ -1027,6 +1131,63 @@ paths:
       - BearerAuth: []
       summary: Сгенерировать presigned URL'ы для загрузки изображений публикации (без
         ID публикации)
+      tags:
+      - publications
+  /publications/search:
+    get:
+      description: Поиск публикаций с фильтрами по типу, городу, статусу поиска работы
+        автора и специализации автора
+      parameters:
+      - description: Тип публикации (PROJECT|SERVICE)
+        in: query
+        name: type
+        type: string
+      - description: ID города
+        in: query
+        name: cityId
+        type: integer
+      - description: Статус занятости автора (LOOKING|NOT_LOOKING|OPEN_TO_OFFERS)
+        in: query
+        name: workingStatus
+        type: string
+      - description: ID специализации автора
+        in: query
+        name: specializationId
+        type: integer
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Publication'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск публикаций
       tags:
       - publications
   /references/cities:
