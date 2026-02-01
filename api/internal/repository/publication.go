@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/Inc-Tarelka/api/internal/model"
@@ -20,6 +21,8 @@ type PublicationRepository interface {
 	AddLike(ctx context.Context, pubID int64, authorID int64) error
 	// AddImages attaches images to an existing publication and returns created rows
 	AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error)
+	// Search publications with optional filters
+	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
 }
 
 type publicationRepository struct {
@@ -300,3 +303,62 @@ func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, auth
 	}
 	return out, nil
 }
+
+// Search returns publications filtered by optional criteria.
+func (r *publicationRepository) Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error) {
+	// Build dynamic query
+	base := `
+		SELECT 
+			p.id, p.author_id, p.name, p.description, p.type, p.city_id, COALESCE(lc.cnt, 0) AS likes_count, p.created_at
+		FROM publications p
+		JOIN tarelka_users u ON u.id = p.author_id
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
+		) lc ON TRUE
+		WHERE 1=1`
+
+	args := []interface{}{}
+	idx := 1
+
+	if f.Type != nil {
+		base += " AND p.type = $" + strconv.Itoa(idx)
+		args = append(args, *f.Type)
+		idx++
+	}
+	if f.CityID != nil {
+		base += " AND p.city_id = $" + strconv.Itoa(idx)
+		args = append(args, *f.CityID)
+		idx++
+	}
+	if f.WorkingStatus != nil {
+		base += " AND u.find_work = $" + strconv.Itoa(idx)
+		args = append(args, *f.WorkingStatus)
+		idx++
+	}
+	if f.SpecializationID != nil {
+		base += " AND EXISTS (SELECT 1 FROM user_specializations us WHERE us.tarelka_user_id = u.id AND us.specialization_id = $" + strconv.Itoa(idx) + ")"
+		args = append(args, *f.SpecializationID)
+		idx++
+	}
+
+	base += " ORDER BY p.created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.pool.Query(ctx, base, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]model.Publication, 0)
+	for rows.Next() {
+		var p model.Publication
+		if err := rows.Scan(&p.ID, &p.AuthorID, &p.Name, &p.Description, &p.Type, &p.CityID, &p.LikesCount, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, nil
+}
+
+// no-op

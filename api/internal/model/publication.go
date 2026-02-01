@@ -26,6 +26,18 @@ type Publication struct {
 	CreatedAt   time.Time          `json:"createdAt" db:"created_at"`
 }
 
+// PublicationSearchFilters — параметры фильтрации для поиска публикаций
+type PublicationSearchFilters struct {
+	// Type — тип публикации (PROJECT | SERVICE)
+	Type *PublicationType `json:"type,omitempty"`
+	// CityID — город публикации
+	CityID *int64 `json:"cityId,omitempty"`
+	// WorkingStatus — статус поиска работы автора публикации (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)
+	WorkingStatus *FindWork `json:"workingStatus,omitempty"`
+	// SpecializationID — специализация автора публикации
+	SpecializationID *int64 `json:"specializationId,omitempty"`
+}
+
 type PublicationImage struct {
 	ID       int64  `json:"id" db:"id"`
 	URL      string `json:"url" db:"url"`

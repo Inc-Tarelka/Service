@@ -20,6 +20,8 @@ type PublicationService interface {
 	PresignPublicationImages(ctx context.Context, authorID int64, pubID *int64, files []model.FileUploadSpec) ([]model.PresignUploadItem, error)
 	// AttachPublicationImages confirms uploads and attaches them to a publication
 	AttachPublicationImages(ctx context.Context, pubID int64, authorID int64, items []model.AttachPublicationImageItem) ([]model.PublicationImage, error)
+	// SearchPublications returns publications filtered by optional params
+	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
 }
 
 type publicationService struct {
@@ -148,4 +150,18 @@ func (s *publicationService) AttachPublicationImages(ctx context.Context, pubID 
 		imgs = append(imgs, model.PublicationImage{URL: url, Position: pos})
 	}
 	return s.repo.AddImages(ctx, pubID, authorID, imgs)
+}
+
+// SearchPublications delegates to repository with minimal validation
+func (s *publicationService) SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if f.Type != nil && *f.Type != model.PublicationTypeProject && *f.Type != model.PublicationTypeService {
+		return nil, errors.New("invalid_type")
+	}
+	return s.repo.Search(ctx, f, limit, offset)
 }

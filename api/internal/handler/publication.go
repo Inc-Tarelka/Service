@@ -276,3 +276,83 @@ func (h *PublicationHandler) AttachImagesToPublication(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, model.AttachPublicationImagesResponse{Images: imgs})
 }
+
+// SearchPublications godoc
+// @Summary Поиск публикаций
+// @Description Поиск публикаций с фильтрами по типу, городу, статусу поиска работы автора и специализации автора
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param type query string false "Тип публикации (PROJECT|SERVICE)"
+// @Param cityId query int false "ID города"
+// @Param workingStatus query string false "Статус занятости автора (LOOKING|NOT_LOOKING|OPEN_TO_OFFERS)"
+// @Param specializationId query int false "ID специализации автора"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение" default(0)
+// @Success 200 {array} model.Publication
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/search [get]
+func (h *PublicationHandler) SearchPublications(c *gin.Context) {
+	// auth required as all publications endpoints are under protected group
+	if _, exists := c.Get("user_id"); !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	var filters model.PublicationSearchFilters
+
+	if t := c.Query("type"); t != "" {
+		v := model.PublicationType(t)
+		// normalize
+		if t == "project" || t == "PROJECT" || t == "Project" {
+			v = model.PublicationTypeProject
+		} else if t == "service" || t == "SERVICE" || t == "Service" {
+			v = model.PublicationTypeService
+		}
+		filters.Type = &v
+	}
+	if cid := c.Query("cityId"); cid != "" {
+		if id, err := strconv.ParseInt(cid, 10, 64); err == nil {
+			filters.CityID = &id
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_city_id"})
+			return
+		}
+	}
+	if ws := c.Query("workingStatus"); ws != "" {
+		// Accept both localized strings and enum values
+		var v model.FindWork
+		switch ws {
+		case "LOOKING", "Ищу работу":
+			v = model.FindWorkLooking
+		case "NOT_LOOKING", "Не ищу работу":
+			v = model.FindWorkNotLooking
+		case "OPEN_TO_OFFERS", "Рассматриваю предложения по работе":
+			v = model.FindWorkOpenToOffer
+		default:
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_working_status"})
+			return
+		}
+		filters.WorkingStatus = &v
+	}
+	if sid := c.Query("specializationId"); sid != "" {
+		if id, err := strconv.ParseInt(sid, 10, 64); err == nil {
+			filters.SpecializationID = &id
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_specialization_id"})
+			return
+		}
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
