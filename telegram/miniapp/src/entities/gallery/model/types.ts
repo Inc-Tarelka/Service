@@ -3,4 +3,5 @@ export interface GalleryPhoto {
   base64: string;
   name: string;
   addedAt: number;
+  isLoading?: boolean;
 }

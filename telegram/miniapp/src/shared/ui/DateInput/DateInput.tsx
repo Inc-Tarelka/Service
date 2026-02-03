@@ -14,6 +14,7 @@ interface DateInputProps {
   onComplete?: () => void;
   placeholder?: string;
   autoFocus?: boolean;
+  error?: string;
 }
 
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
@@ -25,6 +26,7 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
       onComplete,
       placeholder = '__.__.____',
       autoFocus,
+      error,
     } = props;
 
     const [inputValue, setInputValue] = useState('');
@@ -90,7 +92,7 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
     };
 
     return (
-      <div className={classes.container}>
+      <div className={`${classes.container} ${error ? classes.error : ''}`}>
         <input
           ref={inputRef}
           type="text"

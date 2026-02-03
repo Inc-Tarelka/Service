@@ -1,16 +1,25 @@
-import { Button, LoadingOverlay, TextInput } from '@mantine/core';
+import {
+  ActionIcon,
+  Button,
+  Drawer,
+  LoadingOverlay,
+  TextInput,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useStore } from 'app/StoreProvider';
 import { CollaboratorsList } from 'entities/collaborator';
 import { GalleryList } from 'entities/gallery';
 import { PostForm } from 'entities/post';
 import { AddCollaborators, AddNeeds, NeedDrawer } from 'features/post';
+import { EditNeedPreviewDrawer } from 'features/post/ui/EditNeedPreviewDrawer/EditNeedPreviewDrawer';
+import { NeedPreviewDrawer } from 'features/post/ui/NeedPreviewDrawer/NeedPreviewDrawer';
 import { observer } from 'mobx-react-lite';
-import { motion } from 'motion/react';
-import { Activity, useCallback, useRef } from 'react';
+import { Activity, useCallback, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PostCollaborator } from 'shared/api/service/Post/types';
+import { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
 import type { CreatePublicationRequest } from 'shared/api/service/Publication';
+import PlusIcon from 'shared/assets/icons/plus';
+import XIcon from 'shared/assets/icons/x';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
@@ -21,10 +30,10 @@ import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import { Page } from 'widgets/Page';
 import classes from './PostPage.module.scss';
 
-type PostStep = 'gallery' | 'creating' | 'collaborators';
+type PostStep = 'creating' | 'collaborators';
 
-const VALID_STEPS: PostStep[] = ['gallery', 'creating', 'collaborators'];
-const DEFAULT_STEP: PostStep = 'gallery';
+const VALID_STEPS: PostStep[] = ['creating', 'collaborators'];
+const DEFAULT_STEP: PostStep = 'creating';
 
 export const PostPage = observer(() => {
   const { galleryStore, postStore, publicationStore } = useStore();
@@ -61,7 +70,8 @@ export const PostPage = observer(() => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await galleryStore.addPhotos(Array.from(files));
+      galleryStore.addPhotos(Array.from(files));
+      openGallerySheet();
     }
     e.target.value = '';
   };
@@ -100,6 +110,48 @@ export const PostPage = observer(() => {
 
   const [needDrawerOpened, { open: openNeedDrawer, close: closeNeedDrawer }] =
     useDisclosure(false);
+
+  const [
+    gallerySheetOpened,
+    { open: openGallerySheet, close: closeGallerySheet },
+  ] = useDisclosure(false);
+
+  const handleCloseGallerySheet = () => {
+    galleryStore.clearAll();
+    closeGallerySheet();
+  };
+
+  const [
+    needPreviewOpened,
+    { open: openNeedPreview, close: closeNeedPreview },
+  ] = useDisclosure(false);
+
+  const [editNeedOpened, { open: openEditNeed, close: closeEditNeed }] =
+    useDisclosure(false);
+
+  const [selectedNeed, setSelectedNeed] = useState<PostNeed | null>(null);
+
+  const handleNeedClick = (need: PostNeed) => {
+    setSelectedNeed(need);
+    openNeedPreview();
+  };
+
+  const handleEditNeed = () => {
+    openEditNeed();
+  };
+
+  const handleSaveEditedNeed = (updatedNeed: PostNeed) => {
+    console.log('Save edited need:', updatedNeed);
+    // TODO: Update logic here
+    closeEditNeed();
+  };
+
+  const handleDeleteNeed = () => {
+    console.log('Delete need');
+    // TODO: Delete logic here
+    closeEditNeed();
+    closeNeedPreview();
+  };
 
   const handlePublish = async () => {
     try {
@@ -183,59 +235,21 @@ export const PostPage = observer(() => {
         onChange={handleFileChange}
       />
 
-      <Activity mode={step === 'gallery' ? 'visible' : 'hidden'}>
-        <div className={classes.content}>
-          {galleryStore.photos.length > 0 ? (
-            <GalleryList
-              photos={galleryStore.photos}
-              getSelectionNumber={galleryStore.getSelectionNumber}
-              onToggle={() => {}}
-              onReorder={galleryStore.reorderPhotos}
-              selectedCount={galleryStore.selectedCount}
-              canAddMore={galleryStore.canAddMore}
-              onAddMore={handleAddMore}
-            />
-          ) : (
-            <div style={{ textAlign: 'center', padding: '32px' }}>
-              <p style={{ color: 'var(--text-color-secondary)' }}>
-                Выберите фотографии для публикации
-              </p>
-              <Button onClick={handleAddMore} style={{ marginTop: '16px' }}>
-                Выбрать фото
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {galleryStore.selectedCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className={classes.footer}
-          >
-            <Button
-              onClick={() => goToStep('creating')}
-              fullWidth
-              radius="xl"
-              variant="filled"
-              size="lg"
-            >
-              Дальше
-            </Button>
-          </motion.div>
-        )}
-      </Activity>
-
       <Activity mode={step === 'creating' ? 'visible' : 'hidden'}>
         <div className={classes.scrollContent}>
-          <ImageCarousel
-            images={selectedImages}
-            activeIndex={postStore.carouselIndex}
-            onIndexChange={postStore.setCarouselIndex}
-            onDelete={handleDeleteImage}
-            showDeleteButton
-          />
+          {selectedImages.length === 0 ? (
+            <div className={classes.emptyPhotoState} onClick={handleAddMore}>
+              <PlusIcon />
+            </div>
+          ) : (
+            <ImageCarousel
+              images={selectedImages}
+              activeIndex={postStore.carouselIndex}
+              onIndexChange={postStore.setCarouselIndex}
+              onDelete={handleDeleteImage}
+              showDeleteButton
+            />
+          )}
 
           <PostForm
             values={postStore.formValues}
@@ -257,6 +271,7 @@ export const PostPage = observer(() => {
             onAdd={openNeedDrawer}
             onRemove={postStore.removeNeed}
             tagsData={tagsData}
+            onNeedClick={handleNeedClick}
           />
         </div>
 
@@ -305,6 +320,69 @@ export const PostPage = observer(() => {
         onSubmit={postStore.addNeed}
         tagsData={tagsData}
       />
+
+      <NeedPreviewDrawer
+        opened={needPreviewOpened}
+        onClose={closeNeedPreview}
+        onEdit={handleEditNeed}
+        need={selectedNeed}
+        tagsData={tagsData}
+      />
+
+      <EditNeedPreviewDrawer
+        opened={editNeedOpened}
+        onClose={closeEditNeed}
+        onSave={handleSaveEditedNeed}
+        onDelete={handleDeleteNeed}
+        need={selectedNeed}
+        tagsData={tagsData}
+      />
+
+      <Drawer
+        opened={gallerySheetOpened}
+        onClose={handleCloseGallerySheet}
+        position="bottom"
+        size="100%"
+        withCloseButton={false}
+        classNames={{
+          body: classes.gallerySheetBody,
+          content: classes.gallerySheetContent,
+        }}
+      >
+        {galleryStore.photos.length > 0 && (
+          <GalleryList
+            photos={galleryStore.photos}
+            getSelectionNumber={galleryStore.getSelectionNumber}
+            onToggle={() => {}}
+            onReorder={galleryStore.reorderPhotos}
+            selectedCount={galleryStore.selectedCount}
+            canAddMore={galleryStore.canAddMore}
+            onAddMore={handleAddMore}
+          />
+        )}
+
+        <div className={classes.gallerySheetFooter}>
+          <ActionIcon
+            onClick={handleCloseGallerySheet}
+            variant="outline"
+            size={48}
+            radius="40"
+          >
+            <XIcon />
+          </ActionIcon>
+          <Button
+            onClick={closeGallerySheet}
+            fullWidth
+            radius="xl"
+            variant="filled"
+            size="lg"
+            bg="var(--accent-color)"
+            c="var(--bg-color)"
+          >
+            Добавить
+          </Button>
+        </div>
+      </Drawer>
     </Page>
   );
 });

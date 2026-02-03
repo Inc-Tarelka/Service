@@ -7,106 +7,116 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
+import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import RubIcon from 'shared/assets/icons/rub';
-import XIcon from 'shared/assets/icons/x';
-import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import TrashIcon from 'shared/assets/icons/trash';
 import { DateInput } from 'shared/ui/DateInput';
 import { DatePicker } from 'shared/ui/DatePicker';
 import { TagList } from 'shared/ui/TagList';
-import { needSchema } from '../../model/validation';
-import classes from './NeedDrawer.module.scss';
+import classes from './EditNeedPreviewDrawer.module.scss';
 
-interface NeedDrawerProps {
+interface EditNeedPreviewDrawerProps {
   opened: boolean;
   onClose: () => void;
-  onSubmit: (need: PostNeed) => void;
+  onSave: (need: PostNeed) => void;
+  onDelete: () => void;
   tagsData: { value: string; label: string }[];
+  need?: PostNeed | null;
 }
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
-export const NeedDrawer = (props: NeedDrawerProps) => {
-  const { opened, onClose, onSubmit, tagsData } = props;
+export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
+  const { opened, onClose, onSave, onDelete, tagsData, need } = props;
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [budget, setBudget] = useState('');
+
+  useEffect(() => {
+    if (need && opened) {
+      setTitle(need.title);
+      setDescription(need.description);
+      setTagIds(need.tagIds || []);
+      setStartDate(need.startDate || null);
+      setEndDate(need.endDate || null);
+      setBudget(need.budget || '');
+    }
+  }, [need, opened]);
 
   const [startDateOpened, { open: openStartDate, close: closeStartDate }] =
     useDisclosure(false);
   const [endDateOpened, { open: openEndDate, close: closeEndDate }] =
     useDisclosure(false);
 
+  const [dateError, setDateError] = useState('');
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+      );
+      const end = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+      );
+
+      if (end < start) {
+        setDateError('Дата окончания не может быть раньше даты начала');
+      } else {
+        setDateError('');
+      }
+    } else {
+      setDateError('');
+    }
+  }, [startDate, endDate]);
+
   const [tempDate, setTempDate] = useState<Date>(new Date());
 
   const endDateRef = useRef<HTMLInputElement>(null);
 
-  const {
-    values,
-    errors,
-    isSubmitting,
-    handleChange,
-    handleInputChange,
-    handleSubmit,
-    setValues,
-  } = useFormWithValidation({
-    initialValues: {
-      title: '',
-      description: '',
-      tagIds: [],
-      startDate: null as any,
-      endDate: null as any,
-      budget: '',
-    },
-    schema: needSchema,
-    onSubmit: async (values) => {
-      const need: PostNeed = {
-        title: values.title,
-        description: values.description,
-        tagIds: values.tagIds,
-        startDate: values.startDate || undefined,
-        endDate: values.endDate || undefined,
-        budget: values.budget || undefined,
-      };
-      onSubmit(need);
-      setValues({
-        title: '',
-        description: '',
-        tagIds: [],
-        startDate: null,
-        endDate: null,
-        budget: '',
-      });
-      onClose();
-    },
-  });
-
   const handleAddTag = (tagId: string | null) => {
-    if (tagId && !values.tagIds.includes(tagId)) {
-      handleChange('tagIds', [...values.tagIds, tagId]);
+    if (tagId && !tagIds.includes(tagId)) {
+      setTagIds([...tagIds, tagId]);
     }
   };
 
   const handleRemoveTag = (tagId: string) => {
-    handleChange(
-      'tagIds',
-      values.tagIds.filter((id) => id !== tagId),
-    );
+    setTagIds(tagIds.filter((id) => id !== tagId));
   };
 
-  const selectedTags = tagsData.filter((tag) =>
-    values.tagIds.includes(tag.value),
-  );
-  const availableTags = tagsData.filter(
-    (tag) => !values.tagIds.includes(tag.value),
-  );
+  const selectedTags = tagsData.filter((tag) => tagIds.includes(tag.value));
+  const availableTags = tagsData.filter((tag) => !tagIds.includes(tag.value));
+
+  const handleSave = () => {
+    const updatedNeed: PostNeed = {
+      title,
+      description,
+      tagIds,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      budget: budget || undefined,
+    };
+    onSave(updatedNeed);
+    onClose();
+  };
 
   const handleStartDateConfirm = () => {
-    handleChange('startDate', tempDate);
+    setStartDate(tempDate);
     closeStartDate();
   };
 
   const handleEndDateConfirm = () => {
-    handleChange('endDate', tempDate);
+    setEndDate(tempDate);
     closeEndDate();
   };
 
@@ -136,15 +146,12 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
             <div className={classes.inputGroup}>
               <span className={classes.label}>Название</span>
               <TextInput
-                classNames={{
-                  input: `${classes.input} ${errors.title ? classes.error : ''}`,
-                }}
-                value={values.title}
-                onChange={handleInputChange('title')}
+                classNames={{ input: classes.input }}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="Введите название"
                 radius={24}
                 size="lg"
-                error={errors.title}
               />
             </div>
 
@@ -152,17 +159,15 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               <div className={classes.labelRow}>
                 <span className={classes.label}>Описание</span>
                 <span className={classes.charCount}>
-                  {values.description.length}/{MAX_DESCRIPTION_LENGTH}
+                  {description.length}/{MAX_DESCRIPTION_LENGTH}
                 </span>
               </div>
               <Textarea
-                classNames={{
-                  input: `${classes.textarea} ${errors.description ? classes.error : ''}`,
-                }}
-                value={values.description}
+                classNames={{ input: classes.textarea }}
+                value={description}
                 onChange={(e) => {
                   const value = e.target.value.slice(0, MAX_DESCRIPTION_LENGTH);
-                  handleChange('description', value);
+                  setDescription(value);
                 }}
                 placeholder="Опишите вакансию или потребность в услуге"
                 radius={24}
@@ -171,7 +176,6 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 autosize
                 minRows={3}
                 maxRows={6}
-                error={errors.description}
               />
             </div>
 
@@ -200,46 +204,42 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               <span className={classes.label}>Сроки</span>
               <div className={classes.datesContainer}>
                 <DateInput
-                  value={values.startDate}
-                  onChange={(date) => handleChange('startDate', date)}
+                  value={startDate}
+                  onChange={setStartDate}
                   onIconClick={() => {
-                    setTempDate(values.startDate || new Date());
+                    setTempDate(startDate || new Date());
                     openStartDate();
                   }}
                   onComplete={() => {
                     endDateRef.current?.focus();
                   }}
                   placeholder="__.__.____"
-                  error={errors.startDate}
                 />
                 <span className={classes.dateSeparator}>-</span>
                 <DateInput
                   ref={endDateRef}
-                  value={values.endDate}
-                  onChange={(date) => handleChange('endDate', date)}
+                  value={endDate}
+                  onChange={setEndDate}
                   onIconClick={() => {
-                    setTempDate(values.endDate || new Date());
+                    setTempDate(endDate || new Date());
                     openEndDate();
                   }}
                   placeholder="__.__.____"
-                  error={errors.endDate}
                 />
               </div>
-              {errors.endDate && (
-                <div className={classes.errorText}>{errors.endDate}</div>
+              {dateError && (
+                <div className={classes.errorText}>{dateError}</div>
               )}
             </div>
 
             <div className={classes.inputGroup}>
               <span className={classes.label}>Бюджет</span>
               <TextInput
-                classNames={{
-                  input: `${classes.budgetInput} ${errors.budget ? classes.error : ''}`,
-                }}
-                value={values.budget}
+                classNames={{ input: classes.budgetInput }}
+                value={budget}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, '');
-                  handleChange('budget', value);
+                  setBudget(value);
                 }}
                 placeholder="Введите сумму"
                 rightSection={
@@ -255,7 +255,6 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 }
                 radius={24}
                 size="lg"
-                error={errors.budget}
               />
             </div>
           </div>
@@ -267,21 +266,36 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               size={48}
               radius="40"
             >
-              <XIcon />
+              <ArrowLeftIcon />
             </ActionIcon>
             <Button
               className={classes.submitButton}
-              onClick={handleSubmit}
-              loading={isSubmitting}
+              onClick={handleSave}
               radius="xl"
               variant="filled"
               fullWidth
               size="lg"
+              disabled={
+                !title ||
+                !description ||
+                !startDate ||
+                !endDate ||
+                !budget ||
+                !!dateError
+              }
               bg="var(--accent-color)"
               c="var(--bg-color)"
             >
-              Добавить
+              Сохранить
             </Button>
+            <ActionIcon
+              onClick={onDelete}
+              variant="outline"
+              size={48}
+              radius="40"
+            >
+              <TrashIcon />
+            </ActionIcon>
           </div>
         </div>
       </Drawer>

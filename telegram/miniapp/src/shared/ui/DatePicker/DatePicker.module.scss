@@ -3,11 +3,17 @@
 .pickerContainer {
   background: var(--tertiary-bg-color);
   border-radius: 32px;
+  cursor: grab;
   display: flex;
   gap: 16px;
   height: 160px;
   overflow: hidden;
   padding: 0 16px;
+  user-select: none;
+
+  *:focus {
+    outline: none;
+  }
 }
 
 .column {
@@ -38,6 +44,7 @@
   flex: 1;
   overflow-y: auto;
   padding-block: 40px; /* Replaces scrollPadding divs */
+  scroll-behavior: smooth;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
   z-index: 1; /* Above highlight */
@@ -51,12 +58,14 @@
 .item {
   align-items: center;
   color: var(--text-color-secondary);
+  cursor: grab;
   display: flex;
   font: var(--font-body);
   height: 40px;
   justify-content: center;
   scroll-snap-align: center;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .item.selected {

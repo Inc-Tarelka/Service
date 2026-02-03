@@ -5,6 +5,7 @@ export interface GalleryPhoto {
   base64: string;
   name: string;
   addedAt: number;
+  isLoading?: boolean;
 }
 
 const MAX_PHOTOS = 10;
@@ -24,24 +25,36 @@ export class GalleryStore {
     const remainingSlots = MAX_PHOTOS - this.photos.length;
     const filesToAdd = files.slice(0, remainingSlots);
 
-    for (const file of filesToAdd) {
+    const placeholders: GalleryPhoto[] = filesToAdd.map((file) => ({
+      id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      base64: '',
+      name: file.name,
+      addedAt: Date.now(),
+      isLoading: true,
+    }));
+
+    runInAction(() => {
+      this.photos.push(...placeholders);
+      this.selectionOrder.push(...placeholders.map((p) => p.id));
+    });
+
+    filesToAdd.forEach(async (file, index) => {
       try {
         const base64 = await this.fileToBase64(file);
-        const photo: GalleryPhoto = {
-          id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          base64,
-          name: file.name,
-          addedAt: Date.now(),
-        };
+        const placeholderId = placeholders[index].id;
 
         runInAction(() => {
-          this.photos.push(photo);
-          this.selectionOrder.push(photo.id);
+          const photo = this.photos.find((p) => p.id === placeholderId);
+          if (photo) {
+            photo.base64 = base64;
+            photo.isLoading = false;
+          }
         });
       } catch (error) {
         console.error('Error adding photo:', error);
+        this.removePhoto(placeholders[index].id);
       }
-    }
+    });
   };
 
   removePhoto = (id: string): void => {

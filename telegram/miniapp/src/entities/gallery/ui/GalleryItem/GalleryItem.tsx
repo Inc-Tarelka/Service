@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Image } from '@mantine/core';
+import { Image, Skeleton } from '@mantine/core';
 import { GalleryPhoto } from '../../model/types';
 import classes from './GalleryItem.module.scss';
 
@@ -43,13 +43,17 @@ export const GalleryItem = (props: GalleryItemProps) => {
       {...attributes}
       {...listeners}
     >
-      <Image
-        src={photo.base64}
-        alt={photo.name}
-        className={classes.image}
-        loading="lazy"
-        draggable={false}
-      />
+      {photo.isLoading ? (
+        <Skeleton height="100%" width="100%" radius={8} animate={true} />
+      ) : (
+        <Image
+          src={photo.base64}
+          alt={photo.name}
+          className={classes.image}
+          loading="lazy"
+          draggable={false}
+        />
+      )}
       <div
         className={`${classes.numberBadge} ${selectionNumber > 0 ? classes.selected : ''}`}
       >

@@ -102,30 +102,92 @@ export const DatePicker = (props: DatePickerProps) => {
     [],
   );
 
+  const useDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
+    const isDragging = useRef(false);
+    const startY = useRef(0);
+    const startScrollTop = useRef(0);
+
+    const onMouseDown = (e: React.MouseEvent) => {
+      isDragging.current = true;
+      startY.current = e.clientY;
+
+      if (ref.current) {
+        startScrollTop.current = ref.current.scrollTop;
+        ref.current.style.scrollSnapType = 'none';
+        ref.current.style.cursor = 'grabbing';
+      }
+    };
+
+    const onMouseMove = (e: React.MouseEvent) => {
+      if (!isDragging.current || !ref.current) return;
+      e.preventDefault();
+
+      const dy = e.clientY - startY.current;
+      ref.current.scrollTop = startScrollTop.current - dy * 1.5;
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+
+      if (ref.current) {
+        ref.current.style.cursor = 'grab';
+        ref.current.style.scrollSnapType = 'y mandatory';
+        setTimeout(() => {
+          if (ref.current) {
+            const currentScroll = ref.current.scrollTop;
+            ref.current.scrollTop = currentScroll + 0.5;
+          }
+        }, 50);
+      }
+    };
+
+    const onMouseLeave = () => {
+      if (isDragging.current) {
+        onMouseUp();
+      }
+    };
+
+    return {
+      onMouseDown,
+      onMouseMove,
+      onMouseUp,
+      onMouseLeave,
+    };
+  };
+
   const renderColumn = (
     ref: React.RefObject<HTMLDivElement | null>,
     items: (number | string)[],
     selectedValue: number | string,
     onScroll: () => void,
     label: string,
-  ) => (
-    <div className={classes.column}>
-      <span className={classes.columnLabel}>{label}</span>
-      <div className={classes.wheelWrapper}>
-        <div className={classes.selectionHighlight} />
-        <div ref={ref} className={classes.scrollContainer} onScroll={onScroll}>
-          {items.map((item, index) => (
-            <div
-              key={index}
-              className={`${classes.item} ${item === selectedValue ? classes.selected : ''}`}
-            >
-              {item}
-            </div>
-          ))}
+  ) => {
+    const dragHandlers = useDragScroll(ref);
+    return (
+      <div className={classes.column}>
+        <span className={classes.columnLabel}>{label}</span>
+        <div className={classes.wheelWrapper}>
+          <div className={classes.selectionHighlight} />
+          <div
+            ref={ref}
+            className={classes.scrollContainer}
+            onScroll={onScroll}
+            {...dragHandlers}
+          >
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className={`${classes.item} ${item === selectedValue ? classes.selected : ''}`}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={classes.pickerContainer}>

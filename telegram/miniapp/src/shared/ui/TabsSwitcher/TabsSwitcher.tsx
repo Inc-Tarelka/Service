@@ -36,7 +36,6 @@ export const TabsSwitcher = <T extends string>({
     }
     onTabChange?.(newTab);
 
-    // Автоматическая прокрутка к выбранному табу
     const buttonElement = event.currentTarget;
     const wrapperElement = tabsWrapperRef.current;
 

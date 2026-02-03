@@ -26,24 +26,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-
-  .input {
-    &.error {
-      border-color: var(--red) !important;
-    }
-  }
-
-  .textarea {
-    &.error {
-      border-color: var(--red) !important;
-    }
-  }
-
-  .budgetInput {
-    &.error {
-      border-color: var(--red) !important;
-    }
-  }
 }
 
 .labelRow {
@@ -54,7 +36,7 @@
 
 .label {
   color: var(--text-color);
-  font: var(--font-body);
+  font: var(--font-caption);
 }
 
 .charCount {
@@ -125,8 +107,8 @@
 }
 
 .errorText {
-  color: var(--red);
-  font: var(--font-body);
+  color: var(--error-color);
+  font: var(--font-caption);
   margin-top: 4px;
 }
 
@@ -148,10 +130,11 @@
 }
 
 .footer {  
-  bottom: 0;
   display: flex;
   gap: 12px;
-  margin-top: 32px;
+  margin-top: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-top: 16px;
   width: 100%;
 }
 

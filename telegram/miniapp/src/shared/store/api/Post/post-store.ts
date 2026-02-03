@@ -31,7 +31,6 @@ export class PostStore {
     makeAutoObservable(this);
   }
 
-  // Form actions
   setFormValue = <K extends keyof PostFormValues>(
     field: K,
     value: PostFormValues[K],
@@ -39,7 +38,6 @@ export class PostStore {
     this.formValues[field] = value;
   };
 
-  // Collaborator actions
   addCollaborator = (collaborator: PostCollaborator): void => {
     if (!this.collaborators.find((c) => c.id === collaborator.id)) {
       this.collaborators.push(collaborator);
@@ -50,7 +48,6 @@ export class PostStore {
     this.collaborators = this.collaborators.filter((c) => c.id !== id);
   };
 
-  // Need actions
   addNeed = (need: PostNeed): void => {
     this.needs.push(need);
   };
@@ -59,17 +56,14 @@ export class PostStore {
     this.needs = this.needs.filter((_, i) => i !== index);
   };
 
-  // Carousel actions
   setCarouselIndex = (index: number): void => {
     this.carouselIndex = index;
   };
 
-  // Search actions
   setSearchQuery = (query: string): void => {
     this.searchQuery = query;
   };
 
-  // Reset all post data
   resetPostData = (): void => {
     this.formValues = {
       title: '',

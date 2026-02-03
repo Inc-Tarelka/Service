@@ -1,11 +1,13 @@
-import { Button, Drawer } from '@mantine/core';
+import { ActionIcon, Button, Drawer, Text } from '@mantine/core';
 import { PostNeed } from 'shared/api/service/Post/types';
+import EditIcon from 'shared/assets/icons/edit';
 import XIcon from 'shared/assets/icons/x';
 import classes from './NeedPreviewDrawer.module.scss';
 
 interface NeedPreviewDrawerProps {
   opened: boolean;
   onClose: () => void;
+  onEdit: () => void;
   need: PostNeed | null;
   tagsData: { value: string; label: string }[];
 }
@@ -20,17 +22,15 @@ const formatDate = (date: Date | undefined): string => {
 };
 
 export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
-  const { opened, onClose, need, tagsData } = props;
-
-  if (!need) return null;
+  const { opened, onClose, onEdit, need, tagsData } = props;
 
   const getTagName = (id: string) => {
     return tagsData.find((t) => t.value === id)?.label || id;
   };
 
-  const tagsString = need.tagIds?.map(getTagName).join(', ');
+  const tagsString = need?.tagIds?.map(getTagName).join(', ');
   const dateString =
-    need.startDate && need.endDate
+    need?.startDate && need?.endDate
       ? `${formatDate(need.startDate)} - ${formatDate(need.endDate)}`
       : '';
 
@@ -43,12 +43,12 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
       withCloseButton={false}
       styles={{
         content: { background: 'var(--sheet-bg-color)' },
-        body: { padding: 0 },
+        body: { padding: 0, height: '100%' },
       }}
     >
       <div className={classes.drawer}>
         <div className={classes.header}>
-          <h3 className={classes.title}>{need.title}</h3>
+          <Text className={classes.title}>{need?.title}</Text>
           <button
             type="button"
             className={classes.closeButtonHeader}
@@ -59,7 +59,7 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
         </div>
 
         <div className={classes.content}>
-          <div className={classes.description}>{need.description}</div>
+          <div className={classes.description}>{need?.description}</div>
 
           {tagsString && (
             <div className={classes.row}>
@@ -75,7 +75,7 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
             </div>
           )}
 
-          {need.budget && (
+          {need?.budget && (
             <div className={classes.row}>
               <span className={classes.label}>Бюджет</span>
               <span className={classes.value}>{need.budget} ₽</span>
@@ -84,6 +84,9 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
         </div>
 
         <div className={classes.footer}>
+          <ActionIcon variant="outline" size={48} radius="40" onClick={onClose}>
+            <XIcon />
+          </ActionIcon>
           <Button
             radius="xl"
             variant="filled"
@@ -93,8 +96,11 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
             c="var(--bg-color)"
             onClick={onClose}
           >
-            Закрыть
+            Закрыть потребность
           </Button>
+          <ActionIcon variant="outline" size={48} radius="40" onClick={onEdit}>
+            <EditIcon />
+          </ActionIcon>
         </div>
       </div>
     </Drawer>

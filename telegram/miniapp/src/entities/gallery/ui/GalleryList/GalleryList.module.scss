@@ -7,8 +7,8 @@
 
 .title {
   color: var(--text-color);
-  font: var(--font-body);
-  font-weight: 500;
+  font: var(--font-h1);
+  font-weight: 600;
 }
 
 .count {
@@ -18,14 +18,15 @@
 }
 
 .grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
   margin: 0 auto;
 }
 
 .addMoreButton {
   align-items: center;
+  aspect-ratio: 1;
   background: transparent;
   background-color: var(--card-bg);
   border: none;
@@ -34,10 +35,10 @@
   cursor: pointer;
   display: flex;
   font-size: 32px;
-  height: 88px;
+  height: auto;
   justify-content: center;
   transition: all 0.2s ease;
-  width: 88px;
+  width: 100%;
 
   svg {
     height: 32px;

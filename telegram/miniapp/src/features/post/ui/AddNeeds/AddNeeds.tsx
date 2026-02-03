@@ -1,11 +1,8 @@
 import { Button } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
-import { NeedPreviewDrawer } from '../NeedPreviewDrawer/NeedPreviewDrawer';
 import classes from './AddNeeds.module.scss';
 
 interface AddNeedsProps {
@@ -13,19 +10,11 @@ interface AddNeedsProps {
   onAdd: () => void;
   onRemove: (index: number) => void;
   tagsData: { value: string; label: string }[];
+  onNeedClick?: (need: PostNeed) => void;
 }
 
 export const AddNeeds = (props: AddNeedsProps) => {
-  const { needs, onAdd, onRemove, tagsData } = props;
-
-  const [previewOpened, { open: openPreview, close: closePreview }] =
-    useDisclosure(false);
-  const [selectedNeed, setSelectedNeed] = useState<PostNeed | null>(null);
-
-  const handleNeedClick = (need: PostNeed) => {
-    setSelectedNeed(need);
-    openPreview();
-  };
+  const { needs, onAdd, onRemove, onNeedClick } = props;
 
   return (
     <div className={classes.section}>
@@ -39,13 +28,19 @@ export const AddNeeds = (props: AddNeedsProps) => {
       {needs.length > 0 && (
         <div className={classes.list}>
           {needs.map((need, index) => (
-            <div key={index} className={classes.needItem}>
-              <span className={classes.needTitle}>{need.title}</span>
-              <p className={classes.needDescription}>{need.description}</p>
+            <div
+              key={index}
+              className={classes.needItem}
+              onClick={() => onNeedClick?.(need)}
+            >
+              <div className={classes.needContent}>
+                <span className={classes.needTitle}>{need.title}</span>
+                <p className={classes.needDescription}>{need.description}</p>
+              </div>
               <button
                 type="button"
                 className={classes.viewMore}
-                onClick={() => handleNeedClick(need)}
+                onClick={() => onNeedClick?.(need)}
               >
                 Смотреть
                 <ChevronRightIcon />
@@ -75,13 +70,6 @@ export const AddNeeds = (props: AddNeedsProps) => {
       >
         Добавить
       </Button>
-
-      <NeedPreviewDrawer
-        opened={previewOpened}
-        onClose={closePreview}
-        need={selectedNeed}
-        tagsData={tagsData}
-      />
     </div>
   );
 };

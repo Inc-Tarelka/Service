@@ -1,12 +1,13 @@
 .item {
+  aspect-ratio: 1;
   background: var(--card-bg);
   border-radius: 8px;
   cursor: pointer;
   flex-shrink: 0;
-  height: 88px;
+  height: auto;
   position: relative;
   transition: opacity 0.2s ease;
-  width: 88px;
+  width: 100%;
 
   &:hover {
     opacity: 0.9;

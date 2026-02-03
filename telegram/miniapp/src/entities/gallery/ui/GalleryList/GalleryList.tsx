@@ -63,7 +63,7 @@ export const GalleryList = (props: GalleryListProps) => {
   return (
     <div>
       <div className={classes.header}>
-        <span className={classes.title}>Галлерея</span>
+        <span className={classes.title}>Изображения</span>
         <span className={classes.count}>
           {selectedCount}/{maxPhotos}
         </span>
