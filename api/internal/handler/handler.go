@@ -78,6 +78,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				// Search endpoints
 				users.GET("/search/name", h.user.SearchUsersByName)
 				users.GET("/search/telegram", h.user.SearchUsersByTelegram)
+				users.GET("/search/filters", h.user.SearchUsersByFilters)
 				// Partial update and delete
 				users.PATCH(":id", h.user.PatchUser)
 				users.DELETE("/me", h.user.DeleteCurrentUser)

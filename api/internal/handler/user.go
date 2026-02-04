@@ -135,6 +135,113 @@ func (h *UserHandler) SearchUsersByTelegram(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// SearchUsersByFilters godoc
+// @Summary Поиск пользователей по фильтрам
+// @Description Фильтрация по имени/компании, специализациям, типу аккаунта, статусу (find_work), городам
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param name query string false "Имя/фамилия или название компании"
+// @Param specializationIds query []int false "ID специализаций (можно несколько)"
+// @Param type query string false "Тип аккаунта (PERSON | COMPANY)"
+// @Param status query string false "Статус поиска работы (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)"
+// @Param cityIds query []int false "ID городов (можно несколько)"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.TarelkaUserFull
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/search/filters [get]
+func (h *UserHandler) SearchUsersByFilters(c *gin.Context) {
+	name := strings.TrimSpace(c.Query("name"))
+
+	// Parse specializationIds (comma-separated or repeated param)
+	specIDs := []int64{}
+	if raw := c.Query("specializationIds"); raw != "" {
+		parts := strings.Split(raw, ",")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if v, err := strconv.ParseInt(p, 10, 64); err == nil {
+				specIDs = append(specIDs, v)
+			}
+		}
+	}
+	// Allow repeated params: specializationIds=1&specializationIds=2
+	for _, p := range c.QueryArray("specializationIds") {
+		if v, err := strconv.ParseInt(strings.TrimSpace(p), 10, 64); err == nil {
+			specIDs = append(specIDs, v)
+		}
+	}
+
+	// Parse cityIds similarly
+	cityIDs := []int64{}
+	if raw := c.Query("cityIds"); raw != "" {
+		parts := strings.Split(raw, ",")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if v, err := strconv.ParseInt(p, 10, 64); err == nil {
+				cityIDs = append(cityIDs, v)
+			}
+		}
+	}
+	for _, p := range c.QueryArray("cityIds") {
+		if v, err := strconv.ParseInt(strings.TrimSpace(p), 10, 64); err == nil {
+			cityIDs = append(cityIDs, v)
+		}
+	}
+
+	// Parse type
+	var accountType *model.AccountType
+	if t := strings.TrimSpace(c.Query("type")); t != "" {
+		switch strings.ToUpper(t) {
+		case "PERSON":
+			v := model.AccountTypePerson
+			accountType = &v
+		case "COMPANY":
+			v := model.AccountTypeCompany
+			accountType = &v
+		default:
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_type"})
+			return
+		}
+	}
+
+	// Parse status (find_work)
+	var status *model.FindWork
+	if s := strings.TrimSpace(c.Query("status")); s != "" {
+		switch strings.ToUpper(s) {
+		case "LOOKING":
+			v := model.FindWorkLooking
+			status = &v
+		case "NOT_LOOKING":
+			v := model.FindWorkNotLooking
+			status = &v
+		case "OPEN_TO_OFFERS":
+			v := model.FindWorkOpenToOffer
+			status = &v
+		default:
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_status"})
+			return
+		}
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	res, err := h.userService.SearchUsersByFilters(c.Request.Context(), name, specIDs, accountType, status, cityIDs, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
 // PresignLogoUpload godoc
 // @Summary Presigned URL для загрузки лого
 // @Description Генерация presigned URL для загрузки логотипа пользователя в хранилище

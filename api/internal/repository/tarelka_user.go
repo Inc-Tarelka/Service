@@ -38,6 +38,10 @@ type TarelkaUserRepository interface {
 	// SearchByTelegram finds users by telegram_url (ILIKE, contains)
 	SearchByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
 
+	// Advanced filters
+	// SearchByFilters finds users by optional filters: name, specialization IDs, account type, status (find_work), city IDs
+	SearchByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error)
+
 	// Person
 	CreatePerson(ctx context.Context, person *model.TarelkaPerson) error
 	GetPerson(ctx context.Context, userID int64) (*model.TarelkaPerson, error)
@@ -429,9 +433,7 @@ func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, 
 	}
 	// Normalize handle: strip leading '@' and whitespace; search as substring in telegram_url
 	handle := strings.TrimSpace(q)
-	if strings.HasPrefix(handle, "@") {
-		handle = handle[1:]
-	}
+	handle = strings.TrimPrefix(handle, "@")
 	pattern := "%" + handle + "%"
 	query := `
 		SELECT 
@@ -470,6 +472,125 @@ func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, 
 		}
 		if companyName != nil {
 			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// SearchByFilters finds users by optional filters combining name/company, specializations, type, status (find_work) and cities
+func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	// Base SELECT with DISTINCT ON to avoid duplicates due to joins
+	// Build joins dynamically based on provided filters
+	joins := []string{
+		"LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id",
+		"LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id",
+	}
+	if len(specializationIDs) > 0 {
+		joins = append(joins, "INNER JOIN user_specializations us ON us.tarelka_user_id = u.id")
+	}
+	if len(cityIDs) > 0 {
+		joins = append(joins, "INNER JOIN user_cities uc ON uc.tarelka_user_id = u.id")
+	}
+
+	whereParts := []string{}
+	args := []interface{}{}
+
+	// Name filter: similar to SearchByName
+	name = strings.TrimSpace(name)
+	if name != "" {
+		pattern := "%" + name + "%"
+		tokens := strings.Fields(name)
+		where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+		args = append(args, pattern)
+		if len(tokens) >= 2 {
+			t1 := "%" + tokens[0] + "%"
+			t2 := "%" + tokens[1] + "%"
+			where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+			args = append(args, t1, t2)
+		}
+		whereParts = append(whereParts, where)
+	}
+
+	// Type filter
+	if accountType != nil {
+		whereParts = append(whereParts, fmt.Sprintf("u.type = $%d", len(args)+1))
+		args = append(args, *accountType)
+	}
+
+	// Status (find_work) filter
+	if status != nil {
+		whereParts = append(whereParts, fmt.Sprintf("u.find_work = $%d", len(args)+1))
+		args = append(args, *status)
+	}
+
+	// Specializations filter (any of provided)
+	if len(specializationIDs) > 0 {
+		whereParts = append(whereParts, fmt.Sprintf("us.specialization_id = ANY($%d::bigint[])", len(args)+1))
+		args = append(args, specializationIDs)
+	}
+
+	// Cities filter (any of provided)
+	if len(cityIDs) > 0 {
+		whereParts = append(whereParts, fmt.Sprintf("uc.city_id = ANY($%d::bigint[])", len(args)+1))
+		args = append(args, cityIDs)
+	}
+
+	whereSQL := ""
+	if len(whereParts) > 0 {
+		whereSQL = "WHERE " + strings.Join(whereParts, " AND ")
+	}
+
+	// Compute positions for limit/offset
+	limPos := len(args) + 1
+	offPos := len(args) + 2
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT ON (u.id)
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		%s
+		%s
+		ORDER BY u.id, u.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, strings.Join(joins, "\n"), whereSQL, limPos, offPos)
+
+	args = append(args, limit, offset)
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u                   model.TarelkaUser
+			namePtr, surnamePtr *string
+			companyName         *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&namePtr, &surnamePtr, &companyName,
+		); err != nil {
+			return nil, err
+		}
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		if namePtr != nil || surnamePtr != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(namePtr), Surname: valueOrEmpty(surnamePtr)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		// Enrich PERSON with specializations and cities
+		if u.Type == model.AccountTypePerson {
+			if specs, err := r.GetSpecializations(ctx, u.ID); err == nil {
+				fu.Specializations = specs
+			}
+			if cities, err := r.GetCities(ctx, u.ID); err == nil {
+				fu.Cities = cities
+			}
 		}
 		result = append(result, fu)
 	}

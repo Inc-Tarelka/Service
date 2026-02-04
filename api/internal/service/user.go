@@ -17,6 +17,8 @@ type UserService interface {
 	SearchUsersByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
 	// Search users by Telegram handle/url
 	SearchUsersByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+	// Advanced filters: name, specialization IDs, type, status (find_work), city IDs
+	SearchUsersByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error)
 	// Presign URL for uploading a user's logo image
 	PresignLogoUpload(ctx context.Context, userID int64, contentType string) (key string, uploadURL string, headers map[string]string, err error)
 	// Confirm upload and set final logo URL
@@ -78,6 +80,17 @@ func (s *userService) SearchUsersByTelegram(ctx context.Context, q string, limit
 		offset = 0
 	}
 	return s.tarelkaUserRepo.SearchByTelegram(ctx, q, limit, offset)
+}
+
+// SearchUsersByFilters delegates to repository
+func (s *userService) SearchUsersByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return s.tarelkaUserRepo.SearchByFilters(ctx, name, specializationIDs, accountType, status, cityIDs, limit, offset)
 }
 
 // PresignLogoUpload generates a presigned URL to upload user's logo to storage
