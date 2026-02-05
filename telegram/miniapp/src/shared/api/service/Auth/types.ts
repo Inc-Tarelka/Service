@@ -15,6 +15,10 @@ export interface RefreshRequest {
   refreshToken: string;
 }
 
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
 export interface RefreshResponse {
   accessToken: string;
   refreshToken: string;

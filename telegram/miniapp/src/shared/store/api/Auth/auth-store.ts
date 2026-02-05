@@ -1,8 +1,9 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
-  clearAccessToken,
+  clearTokens,
   getAccessToken,
+  getRefreshToken,
   loadAccessTokenOnce,
   setAccessToken,
   setRefreshToken,
@@ -227,7 +228,10 @@ export class AuthStore {
 
   logoutAction = async () => {
     try {
-      await logoutRequest();
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        await logoutRequest({ refreshToken });
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -236,7 +240,7 @@ export class AuthStore {
         this.token = null;
         this.clearTempData();
       });
-      clearAccessToken();
+      clearTokens();
     }
   };
 }

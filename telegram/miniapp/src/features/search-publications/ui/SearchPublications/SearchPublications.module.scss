@@ -1,0 +1,16 @@
+.searchRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.search {
+  flex: 1;
+}
+
+.filterBtn {
+  background: transparent;
+  border-color: var(--tertiary-bg-color);
+  color: var(--text-color);
+}

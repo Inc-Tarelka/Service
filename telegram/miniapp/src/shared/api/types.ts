@@ -54,3 +54,10 @@ export interface SuccessResponse {
   success?: boolean;
   data?: any;
 }
+
+export enum SearchPublicationsType {
+  PROJECT = 'project',
+  SERVICE = 'service',
+  NEED = 'need',
+  PROFILE = 'profile',
+}

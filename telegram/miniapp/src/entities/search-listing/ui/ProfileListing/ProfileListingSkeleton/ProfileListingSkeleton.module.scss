@@ -1,0 +1,74 @@
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+%skeleton {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(90deg, 
+    var(--tertiary-bg-color) 25%, 
+    var(--bg-secondary) 50%, 
+    var(--tertiary-bg-color) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+
+.container {
+  background: var(--card-bg);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.image {
+  @extend %skeleton;
+  border-radius: 12px;
+  flex-shrink: 0;
+  height: 80px;
+  width: 80px;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name {
+  @extend %skeleton;
+  height: 20px;
+  width: 60%;
+}
+
+.bio {
+  @extend %skeleton;
+  height: 14px;
+  width: 90%;
+}
+
+.bioShort {
+  @extend %skeleton;
+  height: 14px;
+  width: 70%;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.tag {
+  @extend %skeleton;
+  border-radius: 8px;
+  height: 24px;
+  width: 60px;
+}

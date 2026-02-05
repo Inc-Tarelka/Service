@@ -6,6 +6,7 @@ import {
   ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
@@ -30,8 +31,8 @@ export const loginRequest = async (
 };
 
 // =============================== LOGOUT ===============================
-export const logoutRequest = async (): Promise<void> => {
-  await baseInstanceV1.post(API_URL.logout(), {});
+export const logoutRequest = async (data: LogoutRequest): Promise<void> => {
+  await baseInstanceV1.post(API_URL.logout(), data);
 };
 
 // =============================== REGISTER ===============================

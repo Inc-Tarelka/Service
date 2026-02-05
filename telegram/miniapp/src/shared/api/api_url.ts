@@ -23,6 +23,7 @@ export const API_URL = {
   // Publications
   generate_url_publication: () => '/publications/images/presign',
   post_publication: () => '/publications',
+  search_publications: () => '/publications/search',
 
   // Posts
   posts: () => '/posts',

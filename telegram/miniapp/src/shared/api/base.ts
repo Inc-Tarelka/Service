@@ -6,7 +6,6 @@ import axios, {
 } from 'axios';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
-// Тип для элементов очереди
 interface FailedRequest {
   resolve: (value: unknown) => void;
   reject: (reason?: any) => void;
@@ -16,7 +15,6 @@ interface FailedRequest {
 let cachedToken: string | undefined = undefined;
 let cachedRefreshToken: string | undefined = undefined;
 
-// Флаги для refresh-логики
 let isRefreshing = false;
 let failedQueue: FailedRequest[] = [];
 
@@ -24,7 +22,7 @@ let isServerDown = false;
 let serverDownTimestamp = 0;
 
 /**
- * Обрабатывает очередь запросов после обновления токена
+ * очередь запросов после обновления токена
  */
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -42,7 +40,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 };
 
 /**
- * Загружает токены из CloudStorage (один раз при старте).
+ * (один раз при старте).
  */
 export const loadTokensOnce = async (): Promise<void> => {
   try {
@@ -72,7 +70,6 @@ export const loadTokensOnce = async (): Promise<void> => {
   }
 };
 
-// Для совместимости, если где-то используется старое название
 export const loadAccessTokenOnce = loadTokensOnce;
 
 export const getAccessToken = () => cachedToken;
@@ -129,7 +126,7 @@ export const clearTokens = () => {
   }
 };
 
-export const clearAccessToken = clearTokens; // Alias для обратной совместимости, но чистим всё
+export const clearAccessToken = clearTokens;
 
 export const isServerAvailable = (): boolean => {
   if (!isServerDown) return true;
