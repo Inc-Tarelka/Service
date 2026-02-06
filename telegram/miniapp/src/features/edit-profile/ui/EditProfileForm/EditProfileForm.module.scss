@@ -1,0 +1,61 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background-color: var(--tertiary-bg-color);
+  border: 1px solid var(--card-bg);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 12px; 
+}
+
+.cardTitle {
+  color: var(--text-color);
+  font: var(--font-h2);
+  font-weight: 600;
+  margin: 0 0 4px;
+  padding-left: 4px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  color: var(--text-secondary);
+  font: var(--font-note);
+  margin-left: 12px;
+}
+
+.input {
+  background-color: var(--bg-color) !important;
+  border: none !important;
+  color: var(--text-color) !important;
+  
+  &::placeholder {
+    color: var(--text-secondary) !important;
+  }
+}
+
+.textarea {
+    @extend .input;
+}
+
+.placeholder {
+    color: var(--text-secondary);
+    font: var(--font-body);
+    padding: 10px;
+    text-align: center;
+}
+
+.submitButton {
+    background-color: var(--primary-color);
+    margin-top: 12px; 
+}

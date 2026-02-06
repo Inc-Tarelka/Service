@@ -1,11 +1,12 @@
 import { API_URL } from 'shared/api/api_url';
-import { publicInstance } from 'shared/api/base';
+import { baseInstanceV1, publicInstance } from 'shared/api/base';
 
 import {
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
@@ -30,9 +31,8 @@ export const loginRequest = async (
 };
 
 // =============================== LOGOUT ===============================
-export const logoutRequest = async (refreshToken: string): Promise<void> => {
-  await publicInstance.post(API_URL.logout(), { request: { refreshToken } });
-  await publicInstance.post(API_URL.logout(), { refreshToken });
+export const logoutRequest = async (data: LogoutRequest): Promise<void> => {
+  await baseInstanceV1.post(API_URL.logout(), data);
 };
 
 // =============================== REGISTER ===============================

@@ -1,15 +1,48 @@
 import WebApp from '@twa-dev/sdk';
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
+interface FailedRequest {
+  resolve: (value: unknown) => void;
+  reject: (reason?: any) => void;
+  config: InternalAxiosRequestConfig;
+}
+
 let cachedToken: string | undefined = undefined;
+let cachedRefreshToken: string | undefined = undefined;
+
+let isRefreshing = false;
+let failedQueue: FailedRequest[] = [];
+
 let isServerDown = false;
 let serverDownTimestamp = 0;
 
 /**
- * Загружает токен из CloudStorage (один раз при старте).
+ * очередь запросов после обновления токена
  */
-export const loadAccessTokenOnce = async (): Promise<void> => {
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      if (token) {
+        prom.config.headers.Authorization = `Bearer ${token}`;
+        (prom.config as any)._retry = true;
+      }
+      baseInstanceV1(prom.config).then(prom.resolve).catch(prom.reject);
+    }
+  });
+  failedQueue = [];
+};
+
+/**
+ * (один раз при старте).
+ */
+export const loadTokensOnce = async (): Promise<void> => {
   try {
     if (
       WebApp.CloudStorage &&
@@ -17,24 +50,30 @@ export const loadAccessTokenOnce = async (): Promise<void> => {
       (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
     ) {
       const items: any = await new Promise((resolve, reject) => {
-        WebApp.CloudStorage.getItems(['access_token'], (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        });
+        WebApp.CloudStorage.getItems(
+          ['access_token', 'refresh_token'],
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        );
       });
 
-      const token = items?.['access_token'];
-      if (token && token !== '') {
-        cachedToken = token;
-        return;
-      }
+      const accessToken = items?.['access_token'];
+      const refreshToken = items?.['refresh_token'];
+
+      if (accessToken) cachedToken = accessToken;
+      if (refreshToken) cachedRefreshToken = refreshToken;
     }
   } catch (error) {
-    console.error('Error loading token:', error);
+    console.error('Error loading tokens:', error);
   }
 };
 
+export const loadAccessTokenOnce = loadTokensOnce;
+
 export const getAccessToken = () => cachedToken;
+export const getRefreshToken = () => cachedRefreshToken;
 
 export const setAccessToken = (token: string | undefined) => {
   cachedToken = token;
@@ -46,26 +85,48 @@ export const setAccessToken = (token: string | undefined) => {
   ) {
     WebApp.CloudStorage.setItem('access_token', token, (error) => {
       if (error) {
-        console.error('Error saving token to CloudStorage:', error);
+        console.error('Error saving access token to CloudStorage:', error);
       }
     });
   }
 };
 
-export const clearAccessToken = () => {
+export const setRefreshToken = (token: string | undefined) => {
+  cachedRefreshToken = token;
+
+  if (
+    token &&
+    WebApp.CloudStorage &&
+    (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
+  ) {
+    WebApp.CloudStorage.setItem('refresh_token', token, (error) => {
+      if (error) {
+        console.error('Error saving refresh token to CloudStorage:', error);
+      }
+    });
+  }
+};
+
+export const clearTokens = () => {
   cachedToken = undefined;
+  cachedRefreshToken = undefined;
 
   if (
     WebApp.CloudStorage &&
     (WebApp.version ? parseFloat(WebApp.version) > 6.0 : false)
   ) {
-    WebApp.CloudStorage.removeItem('access_token', (error) => {
-      if (error) {
-        console.error('Error removing token from CloudStorage:', error);
-      }
-    });
+    WebApp.CloudStorage.removeItems(
+      ['access_token', 'refresh_token'],
+      (error) => {
+        if (error) {
+          console.error('Error removing tokens from CloudStorage:', error);
+        }
+      },
+    );
   }
 };
+
+export const clearAccessToken = clearTokens;
 
 export const isServerAvailable = (): boolean => {
   if (!isServerDown) return true;
@@ -103,7 +164,6 @@ function normalizeBaseURL(baseURL: string | undefined): string {
  */
 function createPrivateInstance(): AxiosInstance {
   const instance = axios.create({
-    withCredentials: true,
     baseURL: normalizeBaseURL(import.meta.env.VITE_BASE_URL),
     headers: {
       'Content-Type': 'application/json',
@@ -111,43 +171,84 @@ function createPrivateInstance(): AxiosInstance {
     },
   });
 
+  // ==== Interceptor запросов ====
   instance.interceptors.request.use(
     (config) => {
       if (cachedToken) {
         config.headers.Authorization = `Bearer ${cachedToken}`;
-        console.log(
-          'Request with token:',
-          cachedToken.substring(0, 20) + '...',
-        );
-      } else {
-        delete config.headers.Authorization;
-        console.log('Request without token');
       }
       return config;
     },
     (error) => Promise.reject(error),
   );
 
+  // ==== Interceptor ответов ====
   instance.interceptors.response.use(
-    (response) => {
-      console.log('Response success:', response.status, response.config.url);
-      return response;
-    },
+    (response) => response,
     async (error: AxiosError) => {
-      console.log(
-        'Response error:',
-        error.response?.status,
-        error.config?.url,
-        error.message,
-      );
+      const originalRequest = error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
 
-      if (error.response?.status === 400 || error.response?.status === 401) {
-        console.log('Clearing token due to auth error');
-        clearAccessToken();
-        window.location.href = RoutePath.auth;
+      if (!originalRequest) {
         return Promise.reject(error);
       }
 
+      // 1. Обработка 401 (Unauthorized) - Refresh Token
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          // Если обновление уже идет, добавляем запрос в очередь
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject, config: originalRequest });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const refreshToken = getRefreshToken();
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
+          // Динамический импорт для избежания циклической зависимости
+          const { refreshRequest } = await import(
+            'shared/api/service/Auth/api'
+          );
+
+          const response = await refreshRequest({ refreshToken: refreshToken });
+
+          if (response?.accessToken) {
+            const { accessToken, refreshToken: newRefreshToken } = response;
+
+            // Сохраняем новые токены
+            setAccessToken(accessToken);
+            if (newRefreshToken) {
+              setRefreshToken(newRefreshToken);
+            }
+
+            // Обновляем текущий запрос
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+            // Обрабатываем очередь
+            processQueue(null, accessToken);
+
+            return instance(originalRequest);
+          } else {
+            throw new Error('Invalid response from refresh');
+          }
+        } catch (refreshError) {
+          processQueue(refreshError as Error, null);
+          clearTokens();
+          window.location.href = RoutePath.auth;
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      // 2. Обработка 403 (Server Down / Forbidden)
       if (error.response?.status === 403) {
         console.log('403 Forbidden - server connection pool issue');
 
@@ -161,20 +262,16 @@ function createPrivateInstance(): AxiosInstance {
           console.log(`Retrying request... (${retryCount + 1}/${maxRetries})`);
 
           (error.config as any)['__retryCount'] = retryCount + 1;
-
-          // Exponential backoff
           const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
-          console.log(`Waiting ${delay}ms before retry...`);
 
           await new Promise((resolve) => setTimeout(resolve, delay));
-
           return instance.request(error.config!);
         } else {
-          console.log('Max retries reached for 403 error');
-          const userFriendlyError = new Error(
-            'Сервер временно недоступен. Попробуйте обновить страницу через несколько минут.',
+          return Promise.reject(
+            new Error(
+              'Сервер временно недоступен. Попробуйте обновить страницу через несколько минут.',
+            ),
           );
-          return Promise.reject(userFriendlyError);
         }
       }
 

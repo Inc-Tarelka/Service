@@ -1,4 +1,5 @@
 import { Avatar } from '@mantine/core';
+import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
 
 interface UserAvatarProps {
   src?: string;
@@ -7,5 +8,12 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ src, size = 100, className }: UserAvatarProps) => {
-  return <Avatar src={src} size={size} radius="100%" className={className} />;
+  return (
+    <Avatar
+      src={src || defaultUserSvg}
+      size={size}
+      radius="100%"
+      className={className}
+    />
+  );
 };

@@ -5,6 +5,7 @@ import { UserRole } from '../consts/userRoles';
 
 export const MOCK_USER: User = {
   id: '1',
+  type: 'PERSON',
   username: 'nick_name',
   firstName: 'Иван',
   lastName: 'Иванов',
@@ -44,11 +45,18 @@ export const MOCK_OTHER_USER: User = {
 
 export const MOCK_PUBLICATIONS: Publication[] = Array.from({ length: 9 }).map(
   (_, i) => ({
-    id: String(i),
-    userId: '1',
-    imageUrl: `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`,
-    title: 'Реклама для Яндекс Клауд',
-    likesCount: 25,
+    id: i,
+    name: 'Реклама для Яндекс Клауд',
+    type: 'PROJECT',
+    imageUrls: [
+      `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80`,
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    description: 'Описание проекта...',
+    // userId: '1', // Not in Publication type
+    // title: 'Реклама для Яндекс Клауд',
+    // likesCount: 25,
   }),
 );
 

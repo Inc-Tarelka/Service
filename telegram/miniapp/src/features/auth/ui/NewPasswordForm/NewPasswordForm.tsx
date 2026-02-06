@@ -70,7 +70,6 @@ export const NewPasswordForm = observer(
           return;
         }
 
-        // Автоматически логиним пользователя после смены пароля
         const loginSuccess = await authStore.loginAction({
           username: login,
           password: values.password,

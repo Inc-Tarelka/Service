@@ -15,11 +15,27 @@ const primaryColor: MantineColorsTuple = [
   '#14532d',
 ];
 
-// Глобальные стили для устранения синего выделения на Android
 const globalStyles = `
   * {
     -webkit-tap-highlight-color: transparent !important;
     tap-highlight-color: transparent !important;
+  }
+  
+  :root {
+    --drawer-fulldevice-size: calc(100% - var(--total-navbar-height, 0px));
+  }
+  
+  /* Desktop или устройства без fullscreen: drawer занимает 100% высоты */
+  @media (min-width: 768px), (hover: hover) and (pointer: fine) {
+    :root {
+      --drawer-fulldevice-size: 100%;
+    }
+  }
+  
+  /* Drawer с fulldevice size - применять через classNames={{ content: 'drawer-fulldevice' }} */
+  .drawer-fulldevice {
+    height: var(--drawer-fulldevice-size) !important;
+    max-height: 100% !important;
   }
 `;
 
@@ -64,6 +80,15 @@ export const mantineTheme = createTheme({
     xl: '24px',
   },
 
+  // Размеры шрифтов (соответствие SCSS переменным)
+  fontSizes: {
+    xs: '10px',
+    sm: '12px',
+    md: '14px',
+    lg: '14px', // --font-size-body
+    xl: '16px',
+  },
+
   // Тени
   shadows: {
     xs: '0 1px 2px rgba(0, 0, 0, 0.3)',
@@ -81,8 +106,26 @@ export const mantineTheme = createTheme({
       },
       styles: (_theme: MantineTheme, props: any) => ({
         root: {
-          fontWeight: 500,
-          color: props.variant === 'filled' ? 'var(--bg-color)' : undefined,
+          fontWeight: props.size === 'lg' && 500,
+          ...(props.variant !== 'outline' &&
+            !props.notDark &&
+            !props.disabled && {
+              color: props.c || 'var(--dark-text-color)',
+            }),
+          ...(props.variant === 'filled' &&
+            !props.disabled &&
+            props.bg && {
+              backgroundColor: props.bg,
+              '&:hover': {
+                backgroundColor: props.bg,
+                filter: 'brightness(0.9)',
+              },
+            }),
+          ...(props.disabled && {
+            backgroundColor: 'var(--card-bg) !important',
+            color: 'var(--text-color-secondary) !important',
+            opacity: 0.6,
+          }),
         },
       }),
     },

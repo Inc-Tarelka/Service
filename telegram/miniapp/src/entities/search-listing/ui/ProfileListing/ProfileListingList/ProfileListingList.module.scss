@@ -1,0 +1,18 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  align-items: center;
+  color: var(--text-color-secondary);
+  display: flex;
+  font: var(--font-body);
+  justify-content: center;
+  min-height: 200px;
+  
+  p {
+    margin: 0;
+  }
+}

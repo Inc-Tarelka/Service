@@ -17,7 +17,8 @@
 
 .subtitle {
   color: var(--text-color-secondary);
-  font: var(--font-caption);
+  font: var(--font-body);
+  font-weight: 400;
   line-height: 1.4;
 }
 
@@ -70,20 +71,24 @@
 }
 
 .resendWrapper {
+  line-height: 1.2;
   padding-bottom: 0;
   text-align: left;
 }
 
 .resendText {
   color: var(--text-color-secondary);
-  font: var(--font-caption);
+  font: var(--font-body);
+  font-weight: 400;
   margin: 0 0 4px;
+  text-align: left;
 }
 
 .resendLink {
   color: var(--green);
-  cursor: pointer;
-  font: var(--font-caption);
+  font: var(--font-body);
+  font-weight: 400;
+  text-align: left;
 
   &:active {
     opacity: 0.7;

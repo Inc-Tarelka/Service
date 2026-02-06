@@ -1,0 +1,19 @@
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.empty {
+  align-items: center;
+  color: var(--text-color-secondary);
+  display: flex;
+  font: var(--font-body);
+  grid-column: 1 / -1;
+  justify-content: center;
+  min-height: 200px;
+  
+  p {
+    margin: 0;
+  }
+}

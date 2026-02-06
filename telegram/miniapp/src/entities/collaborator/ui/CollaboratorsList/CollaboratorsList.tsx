@@ -26,7 +26,6 @@ export const CollaboratorsList = observer((props: CollaboratorsListProps) => {
 
   return (
     <>
-      <div className={classes.line}></div>
       <Stack
         gap={16}
         className={classNames(classes.collaboratorsList, {}, [className])}

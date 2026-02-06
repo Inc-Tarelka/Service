@@ -1,0 +1,87 @@
+@import 'app/styles/variables/global';
+
+.pickerContainer {
+  background: var(--tertiary-bg-color);
+  border-radius: 32px;
+  cursor: grab;
+  display: flex;
+  gap: 16px;
+  height: 160px;
+  overflow: hidden;
+  padding: 0 16px;
+  user-select: none;
+
+  *:focus {
+    outline: none;
+  }
+}
+
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.columnLabel {
+  color: var(--text-color-secondary);
+  flex-shrink: 0; /* Prevent shrinking */
+  font: var(--font-caption);
+  padding: 12px 0 8px; /* Fixed padding */
+  text-align: center;
+}
+
+.wheelWrapper {
+  display: flex; /* To ensure container fills height */
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.scrollContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding-block: 40px; /* Replaces scrollPadding divs */
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  z-index: 1; /* Above highlight */
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+.item {
+  align-items: center;
+  color: var(--text-color-secondary);
+  cursor: grab;
+  display: flex;
+  font: var(--font-body);
+  height: 40px;
+  justify-content: center;
+  scroll-snap-align: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.item.selected {
+  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.selectionHighlight {
+  background: rgb(255, 255, 255, 0.05);
+  border-radius: 12px;
+  height: 40px;
+  inset: 0;
+  margin: auto;
+  
+  /* Absolute centering without calc/transform logic dependency */
+  position: absolute;
+  z-index: 0;
+}

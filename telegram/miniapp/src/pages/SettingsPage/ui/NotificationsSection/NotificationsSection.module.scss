@@ -1,0 +1,62 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.header {
+  align-items: center;
+  display: flex;
+}
+
+.backButton {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  cursor: pointer;
+  display: flex;
+  gap: 4px;
+  padding: 0;
+}
+
+.icon {
+  color: var(--accent-color);
+  height: 24px;
+  width: 24px;
+}
+
+.backText {
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  font-weight: 600;
+  margin: 0;
+}
+
+.card {
+  background-color: var(--tertiary-bg-color);
+  border: 1px solid var(--card-bg);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.item {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 8px;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-body);
+}

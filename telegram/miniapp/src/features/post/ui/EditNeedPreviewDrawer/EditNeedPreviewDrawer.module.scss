@@ -1,0 +1,161 @@
+.drawer {
+  background: var(--sheet-bg-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  margin: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--text-color);
+  font: var(--font-caption);
+}
+
+.charCount {
+  color: var(--tertiary-text-color);
+  font: var(--font-caption);
+}
+
+.input {
+  input {
+    background: var(--tertiary-bg-color) !important;
+    border: 2px solid var(--card-bg) !important;
+    border-radius: 24px !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.textarea {
+  textarea {
+    background: var(--tertiary-bg-color) !important;
+    border: 2px solid var(--card-bg) !important;
+    border-radius: 24px !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+    font-size: 16px !important;
+    min-height: 100px !important;
+    padding: 16px !important;
+    resize: none !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.select {
+  input {
+    background: var(--tertiary-bg-color) !important;
+    border: 2px solid var(--card-bg) !important;
+    border-radius: 24px !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.datesContainer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.dateSeparator {
+  color: var(--text-color-secondary);
+  font: var(--font-body);
+  font-size: 16px;
+}
+
+.errorText {
+  color: var(--error-color);
+  font: var(--font-caption);
+  margin-top: 4px;
+}
+
+.budgetInput {
+  input {
+    background: var(--tertiary-bg-color) !important;
+    border: 2px solid var(--card-bg) !important;
+    border-radius: 24px !important;
+    color: var(--text-color) !important;
+    font: var(--font-body) !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+    text-align: left !important;
+
+    &::placeholder {
+      color: var(--tertiary-text-color) !important;
+    }
+  }
+}
+
+.footer {  
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-top: 16px;
+  width: 100%;
+}
+
+.closeButton {
+  border: 1px solid var(--inverted-bg-color) !important; 
+}
+
+.dateDrawer {
+  background: var(--bg-color);
+  padding: 24px 16px;
+}
+
+.dateDrawerTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.dateDrawerFooter {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}

@@ -1,0 +1,60 @@
+.item {
+  aspect-ratio: 1;
+  background: var(--card-bg);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: auto;
+  position: relative;
+  transition: opacity 0.2s ease;
+  width: 100%;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.image {
+  border-radius: 4px;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.numberBadge {
+  align-items: center;
+  background: rgb(0, 0, 0, 0.4);
+  border: 2px solid var(--green);
+  border-radius: 4px;
+  color: var(--text-color);
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  height: 18px;
+  justify-content: center;
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  transition: all 0.15s ease;
+  width: 18px;
+  z-index: 1;
+}
+
+.numberBadge.selected {
+  background: var(--green);
+  color: var(--bg-color);
+}
+
+.item {
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+}
+
+.image {
+  pointer-events: none;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  user-select: none !important;
+}

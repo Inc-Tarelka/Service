@@ -1,8 +1,24 @@
 .mainPage {
-    margin-top: 0;
-    overflow-wrap: break-word;
-    padding: 32px;
-    padding-top: 0;
-    white-space: pre-wrap;
-    word-break: break-all;
+  padding: 0 12px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  margin-top: 12px;
+}
+
+.tabs {
+  padding: 0 !important;
+}
+
+.loading {
+  align-items: center;
+  color: var(--text-color-secondary);
+  display: flex;
+  font: var(--font-body);
+  justify-content: center;
+  min-height: 200px;
 }

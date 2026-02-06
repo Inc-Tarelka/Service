@@ -1,0 +1,21 @@
+.skeleton {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--card-bg) 0%,
+    rgb(255, 255, 255, 0.05) 50%,
+    var(--card-bg) 100%
+  );
+  background-size: 200% 100%;
+  display: block;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}

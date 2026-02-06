@@ -1,0 +1,72 @@
+.carousel {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  touch-action: pan-y;
+  width: 100%;
+}
+
+.imageContainer {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  max-width: 320px;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-y;
+  width: 100%;
+}
+
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.dots {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.dot {
+  background: var(--secondary-card-bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 8px;
+  padding: 0;
+  transition: all 0.2s ease;
+  width: 8px;
+
+  &:hover {
+    background: var(--text-color-secondary);
+  }
+}
+
+.dot.active {
+  background: var(--text-color);
+}
+
+.deleteButton {
+  align-items: center;
+  background: rgb(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 8px;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  height: 32px;
+  justify-content: center;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  transition: all 0.2s ease;
+  width: 32px;
+  z-index: 10;
+
+  &:hover {
+    background: rgb(0, 0, 0, 0.7);
+  }
+}

@@ -1,0 +1,89 @@
+import { ActionIcon, TextInput } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
+import { useStore } from 'app/StoreProvider';
+import { observer } from 'mobx-react-lite';
+import { useEffect, useState } from 'react';
+import type { SearchPublicationsParams } from 'shared/api/service/Publication';
+import { SearchPublicationsType } from 'shared/api/types';
+import FilterIcon from 'shared/assets/icons/filter';
+import SearchIcon from 'shared/assets/icons/search';
+import { SearchFiltersDrawer } from '../SearchFiltersDrawer/SearchFiltersDrawer';
+import s from './SearchPublications.module.scss';
+
+interface SearchPublicationsProps {
+  activeTab: SearchPublicationsType;
+  onSearchComplete?: () => void;
+}
+
+export const SearchPublications = observer((props: SearchPublicationsProps) => {
+  const { activeTab, onSearchComplete } = props;
+  const { searchPublicationStore } = useStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filtersOpened, setFiltersOpened] = useState(false);
+  const [filters, setFilters] = useState<SearchPublicationsParams>({});
+  const [debouncedQuery] = useDebouncedValue(searchQuery, 500);
+
+  useEffect(() => {
+    if (!debouncedQuery || debouncedQuery.length < 3) {
+      searchPublicationStore.reset();
+      return;
+    }
+
+    const params: SearchPublicationsParams = {
+      ...filters,
+      query: debouncedQuery,
+      limit: 20,
+      offset: 0,
+    };
+
+    if (activeTab === SearchPublicationsType.SERVICE) {
+      params.type = 'SERVICE';
+    } else if (
+      activeTab === SearchPublicationsType.PROFILE ||
+      activeTab === SearchPublicationsType.NEED
+    ) {
+      params.type = 'PROJECT';
+    }
+
+    searchPublicationStore.searchPublicationsAction(params);
+    onSearchComplete?.();
+  }, [debouncedQuery, filters, activeTab]);
+
+  const handleApplyFilters = (newFilters: SearchPublicationsParams) => {
+    setFilters(newFilters);
+    setFiltersOpened(false);
+  };
+
+  return (
+    <>
+      <div className={s.searchRow}>
+        <TextInput
+          className={s.search}
+          rightSection={<SearchIcon />}
+          placeholder={'Поиск'}
+          radius="xl"
+          size="lg"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+        />
+        <ActionIcon
+          className={s.filterBtn}
+          variant="outline"
+          size={48}
+          radius={12}
+          onClick={() => setFiltersOpened(true)}
+        >
+          <FilterIcon />
+        </ActionIcon>
+      </div>
+
+      <SearchFiltersDrawer
+        opened={filtersOpened}
+        onClose={() => setFiltersOpened(false)}
+        activeTab={activeTab}
+        currentFilters={filters}
+        onApply={handleApplyFilters}
+      />
+    </>
+  );
+});

@@ -1,0 +1,97 @@
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h1);
+  font-weight: 600;
+  margin: 0;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap:6px;
+}
+
+.card {
+  background-color: var(--tertiary-bg-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+
+  & + .card {
+    margin-top: 12px;
+  }
+}
+
+.item {
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px 8px;
+  text-align: left;
+  transition: opacity 0.2s;
+  width: 100%;
+
+  &:hover {
+    opacity: 0.7;
+  }
+
+  &:active {
+    opacity: 0.5;
+  }
+}
+
+.icon {
+  color: var(--text-color);
+  flex-shrink: 0;
+  height: 20px;
+  width: 20px;
+}
+
+.label {
+  color: var(--text-color);
+  flex: 1;
+  font: var(--font-body);
+  font-weight: 400;
+}
+
+.chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  height: 20px;
+  width: 20px;
+}
+
+
+.chevronDanger {
+  color: var(--red);
+  flex-shrink: 0;
+  height: 20px;
+  width: 20px;
+}
+
+.dangerIcon {
+  color: var(--red);
+  flex-shrink: 0;
+  height: 20px;
+  width: 20px;
+}
+
+.dangerLabel {
+  color: var(--red);
+  flex: 1;
+  font: var(--font-body);
+  font-weight: 400;
+}
+

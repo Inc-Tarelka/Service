@@ -1,10 +1,12 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
-  clearAccessToken,
+  clearTokens,
   getAccessToken,
+  getRefreshToken,
   loadAccessTokenOnce,
   setAccessToken,
+  setRefreshToken,
 } from 'shared/api/base';
 import {
   forgotPasswordRequest,
@@ -144,6 +146,7 @@ export class AuthStore {
       });
 
       setAccessToken(response.accessToken);
+      setRefreshToken(response.refreshToken);
 
       console.log('Token saved:', this.token);
       console.log('isAuth:', this.isAuth);
@@ -165,6 +168,7 @@ export class AuthStore {
       this.isAuth = true;
       this.token = response.accessToken;
       setAccessToken(response.accessToken);
+      setRefreshToken(response.refreshToken);
       return true;
     } catch (error) {
       console.error('Register error:', error);
@@ -224,14 +228,19 @@ export class AuthStore {
 
   logoutAction = async () => {
     try {
-      await logoutRequest('dummy');
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        await logoutRequest({ refreshToken });
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      this.isAuth = false;
-      this.token = null;
-      this.clearTempData();
-      clearAccessToken();
+      runInAction(() => {
+        this.isAuth = false;
+        this.token = null;
+        this.clearTempData();
+      });
+      clearTokens();
     }
   };
 }

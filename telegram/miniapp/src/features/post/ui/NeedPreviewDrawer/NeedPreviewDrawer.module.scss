@@ -1,0 +1,89 @@
+@import 'app/styles/variables/global';
+
+.drawer {
+  background: var(--sheet-bg-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  padding: 16px;
+}
+
+.header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  color: var(--text-color);
+  flex: 1;
+  font: var(--font-h2);
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.closeButtonHeader {
+  background: none;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.description {
+  color: var(--text-color-secondary);
+  font: var(--font-body);
+  font-weight: 400;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.row {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.label {
+  color: var(--text-color-secondary);
+  flex-shrink: 0;
+  font: var(--font-body);
+}
+
+.value {
+  color: var(--text-color);
+  flex: 1;
+  font: var(--font-body);
+  font-weight: 500;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  text-align: right;
+  word-break: break-word;
+}
+
+.footer {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-top: 24px;
+  width: 100%;
+}

@@ -8,7 +8,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
   
-  padding-bottom: calc(var(--TB-padding, 90px) + env(safe-area-inset-bottom));
+
   
   scroll-behavior: smooth;
   
@@ -23,8 +23,8 @@
     padding-top: 0;
   }
 
-  &.noPaddingBottom {
-    padding-bottom: 0;
+  &.defaultPaddingBottom {
+    padding-bottom: calc(var(--TB-padding, 90px) + env(safe-area-inset-bottom));
   }
 
   &.smallPaddingBottom {

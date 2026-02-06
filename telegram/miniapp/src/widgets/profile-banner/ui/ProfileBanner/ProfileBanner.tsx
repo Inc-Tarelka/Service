@@ -1,19 +1,32 @@
-import { ActionIcon, Box, Group, Stack } from '@mantine/core';
+import { ActionIcon, Box, CSSProperties, Group, Stack } from '@mantine/core';
 import { UserAvatar, UserStats } from 'entities/user';
 import { EditProfileButton } from 'features/edit-profile';
 import { User } from 'shared/api/service/User/types';
-import classes from './ProfileBanner.module.scss';
 import ShareIcon from 'shared/assets/icons/share';
+import classes from './ProfileBanner.module.scss';
 
 interface ProfileBannerProps {
   user: User;
   isOwnProfile: boolean;
+  coverImage?: string;
 }
 
-export const ProfileBanner = ({ user, isOwnProfile }: ProfileBannerProps) => {
+export const ProfileBanner = ({
+  user,
+  isOwnProfile,
+  coverImage,
+}: ProfileBannerProps) => {
+  const coverClassName = coverImage
+    ? `${classes.cover} ${classes.withImage}`
+    : classes.cover;
+
+  const coverStyle = coverImage
+    ? ({ '--cover-image': `url(${coverImage})` } as CSSProperties)
+    : undefined;
+
   return (
     <Box className={classes.container}>
-      <div className={classes.cover}>
+      <div className={coverClassName} style={coverStyle}>
         <Group justify="space-between" p="md" className={classes.header}>
           <span className={classes.username}>@{user.username}</span>
 
@@ -46,7 +59,11 @@ export const ProfileBanner = ({ user, isOwnProfile }: ProfileBannerProps) => {
         </Stack>
 
         <Box mt="md" w="100%">
-          <UserStats stats={user.stats} />
+          <UserStats
+            stats={
+              user.stats ?? { collaborations: 0, wantsToWork: 0, projects: 0 }
+            }
+          />
         </Box>
       </Stack>
     </Box>
