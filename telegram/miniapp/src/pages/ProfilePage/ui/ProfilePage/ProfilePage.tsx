@@ -30,18 +30,12 @@ const ProfilePageSkeleton = () => {
 export const ProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const { userStore } = useStore();
-  const [minLoadTime, setMinLoadTime] = useState(true);
 
   useEffect(() => {
     userStore.getProfileAction();
-    const timer = setTimeout(() => {
-      setMinLoadTime(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
   }, [userStore]);
 
-  if (userStore.isLoadingProfile || minLoadTime) {
+  if (userStore.isLoadingProfile) {
     return <ProfilePageSkeleton />;
   }
 

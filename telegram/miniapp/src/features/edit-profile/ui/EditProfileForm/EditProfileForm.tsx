@@ -3,6 +3,9 @@ import { observer } from 'mobx-react-lite';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { editProfileSchema } from '../../model/validation';
 import s from './EditProfileForm.module.scss';
+import { CitySelect } from './CitySelect';
+import { SpecializationSelect } from './SpecializationSelect';
+import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 
 export const EditProfileForm = observer(() => {
   const {
@@ -19,8 +22,6 @@ export const EditProfileForm = observer(() => {
       username: '',
       city: '',
       about: '',
-      education: '',
-      searchStatus: '',
     },
     schema: editProfileSchema,
     onSubmit: async (values) => {
@@ -31,13 +32,12 @@ export const EditProfileForm = observer(() => {
 
   return (
     <div className={s.form}>
-      <div className={s.card}>
-        <h3 className={s.cardTitle}>Личная информация</h3>
+      <div className={s.section}>
+        <h2 className={s.sectionTitle}>Личная информация</h2>
 
         <div className={s.inputGroup}>
           <span className={s.label}>Имя</span>
           <TextInput
-            classNames={{ input: s.input }}
             placeholder="Ваше имя"
             radius="xl"
             size="lg"
@@ -50,7 +50,6 @@ export const EditProfileForm = observer(() => {
         <div className={s.inputGroup}>
           <span className={s.label}>Фамилия</span>
           <TextInput
-            classNames={{ input: s.input }}
             placeholder="Ваша фамилия"
             radius="xl"
             size="lg"
@@ -61,10 +60,9 @@ export const EditProfileForm = observer(() => {
         </div>
 
         <div className={s.inputGroup}>
-          <span className={s.label}>Никнейм</span>
+          <span className={s.label}>Логин</span>
           <TextInput
-            classNames={{ input: s.input }}
-            placeholder="@nickname"
+            placeholder="Введите логин"
             radius="xl"
             size="lg"
             value={values.username}
@@ -74,44 +72,64 @@ export const EditProfileForm = observer(() => {
         </div>
 
         <div className={s.inputGroup}>
-          <span className={s.label}>Город</span>
-          <TextInput
-            classNames={{ input: s.input }}
-            placeholder="Выберите город"
-            radius="xl"
-            size="lg"
+          <CitySelect
             value={values.city}
-            onChange={handleInputChange('city')}
+            onChange={(cityId) => handleChange('city', cityId)}
             error={errors.city}
           />
         </div>
 
         <div className={s.inputGroup}>
-          <span className={s.label}>О себе</span>
+          <div className={s.labelRow}>
+            <span className={s.label}>О себе</span>
+            <span className={s.counter}>{(values.about || '').length}/250</span>
+          </div>
           <Textarea
-            classNames={{ input: s.textarea }}
             placeholder="Расскажите о себе"
-            radius="lg"
+            radius={24}
+            size="lg"
+            autosize
             minRows={3}
-            value={values.about}
+            maxRows={10}
+            maxLength={250}
+            value={values.about || ''}
             onChange={(e) => handleChange('about', e.currentTarget.value)}
             error={errors.about}
           />
         </div>
       </div>
 
-      <div className={s.card}>
-        <h3 className={s.cardTitle}>Специализация</h3>
-        <p className={s.placeholder}>Выбор специализации</p>
-      </div>
+      <div className={s.section}>
+        <h2 className={s.sectionTitle}>Специализация</h2>
+        <SpecializationSelect
+          value={values.specialization}
+          onChange={(specializationId) =>
+            handleChange('specialization', specializationId)
+          }
+          error={errors.specialization}
+        />
 
-      <div className={s.card}>
-        <h3 className={s.cardTitle}>Образование</h3>
         <div className={s.inputGroup}>
-          <span className={s.label}>Учебное заведение</span>
+          <span className={s.label}>Статус по поиску работы</span>
+          <Select
+            placeholder="Выберите статус"
+            data={['Активно ищу', 'Рассматриваю предложения', 'Не ищу']}
+            radius="xl"
+            size="lg"
+            value={values.searchStatus}
+            onChange={(val) => handleChange('searchStatus', val)}
+            error={errors.searchStatus}
+            rightSection={
+              <div style={{ pointerEvents: 'none', display: 'flex' }}>
+                <ChevronDownIcon />
+              </div>
+            }
+          />
+        </div>
+        <div className={s.inputGroup}>
+          <span className={s.label}>Образование</span>
           <TextInput
-            classNames={{ input: s.input }}
-            placeholder="Укажите ВУЗ"
+            placeholder="Укажите ваше образование"
             radius="xl"
             size="lg"
             value={values.education}
@@ -121,30 +139,20 @@ export const EditProfileForm = observer(() => {
         </div>
       </div>
 
-      <div className={s.card}>
-        <h3 className={s.cardTitle}>Статус по поиску работы</h3>
-        <Select
-          classNames={{ input: s.input }}
-          placeholder="Выберите статус"
-          data={['Активно ищу', 'Рассматриваю предложения', 'Не ищу']}
+      <div className={s.footer}>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          fullWidth
           radius="xl"
+          variant="filled"
           size="lg"
-          value={values.searchStatus}
-          onChange={(val) => handleChange('searchStatus', val)}
-          error={errors.searchStatus}
-        />
+          bg="var(--accent-color)"
+          c="var(--bg-color)"
+        >
+          Сохранить
+        </Button>
       </div>
-
-      <Button
-        onClick={handleSubmit}
-        fullWidth
-        size="lg"
-        radius="xl"
-        className={s.submitButton}
-        loading={isSubmitting}
-      >
-        Сохранить
-      </Button>
     </div>
   );
 });

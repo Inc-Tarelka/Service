@@ -8,13 +8,23 @@ export const TermsSection = observer(() => {
     { id: 1, title: 'Пользовательское соглашение', link: '#' },
     { id: 2, title: 'Политика конфиденциальности', link: '#' },
     { id: 3, title: 'Правила сообщества', link: '#' },
+    { id: 4, title: 'Правила сообщества', link: '#' },
+    { id: 5, title: 'Правила сообщества', link: '#' },
+    { id: 6, title: 'Правила сообщества', link: '#' },
+    {
+      id: 7,
+      title:
+        'Правила сообщества Правила сообществаПравила сообществаПравила сообщества',
+      link: '#',
+    },
+    { id: 6, title: 'Правила сообщества', link: '#' },
   ];
 
   return (
     <div className={s.section}>
       <h2 className={s.title}>Условия использования</h2>
 
-      <div className={s.card}>
+      <div className={s.list}>
         {documents.map((doc) => (
           <button key={doc.id} className={s.item}>
             {/* <DocumentIcon className={s.docIcon} /> */}

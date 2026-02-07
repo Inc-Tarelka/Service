@@ -11,3 +11,39 @@
 .fullWidth {
   width: 100%;
 }
+
+.actionItem {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  font: var(--font-body);
+  font-weight: 400;
+  gap: 12px;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+
+  &.danger {
+    color: var(--red);
+  }
+}
+
+.icon {
+  align-items: center;
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+
+  svg {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.label {
+  flex: 1;
+}

@@ -9,12 +9,14 @@ interface ProfileBannerProps {
   user: User;
   isOwnProfile: boolean;
   coverImage?: string;
+  minimal?: boolean;
 }
 
 export const ProfileBanner = ({
   user,
   isOwnProfile,
   coverImage,
+  minimal = false,
 }: ProfileBannerProps) => {
   const coverClassName = coverImage
     ? `${classes.cover} ${classes.withImage}`
@@ -27,19 +29,21 @@ export const ProfileBanner = ({
   return (
     <Box className={classes.container}>
       <div className={coverClassName} style={coverStyle}>
-        <Group justify="space-between" p="md" className={classes.header}>
-          <span className={classes.username}>@{user.username}</span>
+        {!minimal && (
+          <Group justify="space-between" p="md" className={classes.header}>
+            <span className={classes.username}>@{user.username}</span>
 
-          <Group gap="xs">
-            {isOwnProfile ? (
-              <EditProfileButton />
-            ) : (
-              <ActionIcon variant="transparent" c="white">
-                <ShareIcon />
-              </ActionIcon>
-            )}
+            <Group gap="xs">
+              {isOwnProfile ? (
+                <EditProfileButton />
+              ) : (
+                <ActionIcon variant="transparent" c="white">
+                  <ShareIcon />
+                </ActionIcon>
+              )}
+            </Group>
           </Group>
-        </Group>
+        )}
       </div>
 
       <Stack align="center" mt={-50} gap="xs" className={classes.content}>
@@ -49,22 +53,30 @@ export const ProfileBanner = ({
           className={classes.avatar}
         />
 
-        <Stack gap={0} align="center">
-          <span className={classes.name}>
-            {user.firstName} {user.lastName}
-          </span>
-          <span className={classes.profession}>
-            {user.profession}, {user.city}
-          </span>
-        </Stack>
+        {!minimal && (
+          <>
+            <Stack gap={0} align="center">
+              <span className={classes.name}>
+                {user.firstName} {user.lastName}
+              </span>
+              <span className={classes.profession}>
+                {user.profession}, {user.city}
+              </span>
+            </Stack>
 
-        <Box mt="md" w="100%">
-          <UserStats
-            stats={
-              user.stats ?? { collaborations: 0, wantsToWork: 0, projects: 0 }
-            }
-          />
-        </Box>
+            <Box mt="md" w="100%">
+              <UserStats
+                stats={
+                  user.stats ?? {
+                    collaborations: 0,
+                    wantsToWork: 0,
+                    projects: 0,
+                  }
+                }
+              />
+            </Box>
+          </>
+        )}
       </Stack>
     </Box>
   );

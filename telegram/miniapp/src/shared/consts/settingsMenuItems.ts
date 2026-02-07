@@ -1,4 +1,5 @@
-import { SVGProps } from 'react';
+import WebApp from '@twa-dev/sdk';
+import { ComponentType, SVGProps } from 'react';
 import {
   CommentIcon,
   DeleteIcon,
@@ -20,7 +21,7 @@ export type SettingSection =
 export interface MenuItem {
   id: string;
   label: string;
-  icon: React.ComponentType<SVGProps<SVGSVGElement>>;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   section: SettingSection;
   action?: () => void;
   isDanger?: boolean;
@@ -51,7 +52,12 @@ export const menuItems: MenuItem[] = [
     icon: LaptopIcon,
     section: null,
     action: () => {
-      console.log('Add to home screen');
+      const webApp = window.Telegram?.WebApp;
+      if (webApp && 'addToHomeScreen' in webApp) {
+        WebApp.addToHomeScreen();
+      } else {
+        console.log('addToHomeScreen not supported');
+      }
     },
   },
   {
