@@ -215,6 +215,21 @@ definitions:
           $ref: '#/definitions/model.NeedTag'
         type: array
     type: object
+  model.NeedSearchItem:
+    properties:
+      cityName:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      publicationDescription:
+        type: string
+      publicationName:
+        type: string
+    type: object
   model.NeedTag:
     properties:
       id:
@@ -339,12 +354,17 @@ definitions:
     properties:
       authorId:
         type: integer
+      authorTelegramUrl:
+        description: AuthorTelegramURL — ссылка на Telegram автора, если задано
+        type: string
       cityId:
         type: integer
       coAuthors:
         items:
           $ref: '#/definitions/model.TarelkaUser'
         type: array
+      commentsCount:
+        type: integer
       createdAt:
         type: string
       description:
@@ -367,6 +387,9 @@ definitions:
         items:
           $ref: '#/definitions/model.PublicationTag'
         type: array
+      topImageUrl:
+        description: TopImageURL — URL изображения с приоритетом 1, если задано
+        type: string
       type:
         $ref: '#/definitions/model.PublicationType'
     type: object
@@ -1133,6 +1156,71 @@ paths:
         ID публикации)
       tags:
       - publications
+  /publications/needs/search:
+    get:
+      description: Поиск потребностей по городу, названию, тегам публикации, тегам
+        потребности, дате и максимальному бюджету
+      parameters:
+      - description: ID города (need.city_id)
+        in: query
+        name: cityId
+        type: integer
+      - description: Подстрочный поиск по имени потребности (ILIKE)
+        in: query
+        name: name
+        type: string
+      - description: ID тегов публикации через запятую
+        in: query
+        name: publicationTagIds
+        type: string
+      - description: ID тегов потребности через запятую
+        in: query
+        name: needTagIds
+        type: string
+      - description: Дата ISO-8601; попадание в интервал [deadline_start, deadline_end]
+        in: query
+        name: date
+        type: string
+      - description: Максимальный бюджет (<=)
+        in: query
+        name: budgetMax
+        type: integer
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NeedSearchItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск потребностей
+      tags:
+      - needs
   /publications/search:
     get:
       description: Поиск публикаций с фильтрами по типу, городу, статусу поиска работы
@@ -1188,6 +1276,59 @@ paths:
       security:
       - BearerAuth: []
       summary: Поиск публикаций
+      tags:
+      - publications
+  /publications/services/search:
+    get:
+      description: Поиск публикаций типа SERVICE с фильтрами по городу, названию и
+        тегам (множественный выбор)
+      parameters:
+      - description: ID города
+        in: query
+        name: cityId
+        type: integer
+      - description: Поиск по названию публикации (ILIKE)
+        in: query
+        name: name
+        type: string
+      - description: Список ID тегов через запятую
+        in: query
+        name: tagIds
+        type: string
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Publication'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск сервис-публикаций
       tags:
       - publications
   /references/cities:
@@ -1598,6 +1739,72 @@ paths:
       security:
       - BearerAuth: []
       summary: Текущий пользователь
+      tags:
+      - users
+  /users/search/filters:
+    get:
+      description: Фильтрация по имени/компании, специализациям, типу аккаунта, статусу
+        (find_work), городам
+      parameters:
+      - description: Имя/фамилия или название компании
+        in: query
+        name: name
+        type: string
+      - collectionFormat: csv
+        description: ID специализаций (можно несколько)
+        in: query
+        items:
+          type: integer
+        name: specializationIds
+        type: array
+      - description: Тип аккаунта (PERSON | COMPANY)
+        in: query
+        name: type
+        type: string
+      - description: Статус поиска работы (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)
+        in: query
+        name: status
+        type: string
+      - collectionFormat: csv
+        description: ID городов (можно несколько)
+        in: query
+        items:
+          type: integer
+        name: cityIds
+        type: array
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.TarelkaUserFull'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск пользователей по фильтрам
       tags:
       - users
   /users/search/name:

@@ -519,6 +519,104 @@ const docTemplate = `{
                 }
             }
         },
+        "/publications/needs/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Поиск потребностей по городу, названию, тегам публикации, тегам потребности, дате и максимальному бюджету",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "needs"
+                ],
+                "summary": "Поиск потребностей",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID города (need.city_id)",
+                        "name": "cityId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Подстрочный поиск по имени потребности (ILIKE)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID тегов публикации через запятую",
+                        "name": "publicationTagIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID тегов потребности через запятую",
+                        "name": "needTagIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата ISO-8601; попадание в интервал [deadline_start, deadline_end]",
+                        "name": "date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Максимальный бюджет (\u003c=)",
+                        "name": "budgetMax",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NeedSearchItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications/search": {
             "get": {
                 "security": [
@@ -557,6 +655,86 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ID специализации автора",
                         "name": "specializationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Publication"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/services/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Поиск публикаций типа SERVICE с фильтрами по городу, названию и тегам (множественный выбор)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Поиск сервис-публикаций",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID города",
+                        "name": "cityId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Поиск по названию публикации (ILIKE)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Список ID тегов через запятую",
+                        "name": "tagIds",
                         "in": "query"
                     },
                     {
@@ -1055,6 +1233,105 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search/filters": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Фильтрация по имени/компании, специализациям, типу аккаунта, статусу (find_work), городам",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Поиск пользователей по фильтрам",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Имя/фамилия или название компании",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "ID специализаций (можно несколько)",
+                        "name": "specializationIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип аккаунта (PERSON | COMPANY)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус поиска работы (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "ID городов (можно несколько)",
+                        "name": "cityIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TarelkaUserFull"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2017,6 +2294,29 @@ const docTemplate = `{
                 }
             }
         },
+        "model.NeedSearchItem": {
+            "type": "object",
+            "properties": {
+                "cityName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publicationDescription": {
+                    "type": "string"
+                },
+                "publicationName": {
+                    "type": "string"
+                }
+            }
+        },
         "model.NeedTag": {
             "type": "object",
             "properties": {
@@ -2206,6 +2506,10 @@ const docTemplate = `{
                 "authorId": {
                     "type": "integer"
                 },
+                "authorTelegramUrl": {
+                    "description": "AuthorTelegramURL — ссылка на Telegram автора, если задано",
+                    "type": "string"
+                },
                 "cityId": {
                     "type": "integer"
                 },
@@ -2214,6 +2518,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.TarelkaUser"
                     }
+                },
+                "commentsCount": {
+                    "type": "integer"
                 },
                 "createdAt": {
                     "type": "string"
@@ -2247,6 +2554,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.PublicationTag"
                     }
+                },
+                "topImageUrl": {
+                    "description": "TopImageURL — URL изображения с приоритетом 1, если задано",
+                    "type": "string"
                 },
                 "type": {
                     "$ref": "#/definitions/model.PublicationType"
