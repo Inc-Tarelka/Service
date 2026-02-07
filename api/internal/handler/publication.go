@@ -3,6 +3,8 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/Inc-Tarelka/api/internal/service"
@@ -346,10 +348,211 @@ func (h *PublicationHandler) SearchPublications(c *gin.Context) {
 		}
 	}
 
+	// Optional: name substring
+	if n := c.Query("name"); n != "" {
+		filters.Name = &n
+	}
+	// Optional: tagIds as comma-separated list
+	if tagStr := c.Query("tagIds"); tagStr != "" {
+		parts := strings.Split(tagStr, ",")
+		var ids []int64
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if id, err := strconv.ParseInt(p, 10, 64); err == nil {
+				ids = append(ids, id)
+			} else {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_tag_id"})
+				return
+			}
+		}
+		if len(ids) > 0 {
+			filters.TagIDs = ids
+		}
+	}
+
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// SearchServicePublications godoc
+// @Summary Поиск сервис-публикаций
+// @Description Поиск публикаций типа SERVICE с фильтрами по городу, названию и тегам (множественный выбор)
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param cityId query int false "ID города"
+// @Param name query string false "Поиск по названию публикации (ILIKE)"
+// @Param tagIds query string false "Список ID тегов через запятую"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение" default(0)
+// @Success 200 {array} model.Publication
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/services/search [get]
+func (h *PublicationHandler) SearchServicePublications(c *gin.Context) {
+	// require auth
+	if _, exists := c.Get("user_id"); !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	var filters model.PublicationSearchFilters
+	// Force type = SERVICE
+	t := model.PublicationTypeService
+	filters.Type = &t
+
+	if cid := c.Query("cityId"); cid != "" {
+		if id, err := strconv.ParseInt(cid, 10, 64); err == nil {
+			filters.CityID = &id
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_city_id"})
+			return
+		}
+	}
+	if n := c.Query("name"); n != "" {
+		filters.Name = &n
+	}
+	if tagStr := c.Query("tagIds"); tagStr != "" {
+		parts := strings.Split(tagStr, ",")
+		var ids []int64
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if id, err := strconv.ParseInt(p, 10, 64); err == nil {
+				ids = append(ids, id)
+			} else {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_tag_id"})
+				return
+			}
+		}
+		if len(ids) > 0 {
+			filters.TagIDs = ids
+		}
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// SearchNeeds godoc
+// @Summary Поиск потребностей
+// @Description Поиск потребностей по городу, названию, тегам публикации, тегам потребности, дате и максимальному бюджету
+// @Tags needs
+// @Produce json
+// @Security BearerAuth
+// @Param cityId query int false "ID города (need.city_id)"
+// @Param name query string false "Подстрочный поиск по имени потребности (ILIKE)"
+// @Param publicationTagIds query string false "ID тегов публикации через запятую"
+// @Param needTagIds query string false "ID тегов потребности через запятую"
+// @Param date query string false "Дата ISO-8601; попадание в интервал [deadline_start, deadline_end]"
+// @Param budgetMax query int false "Максимальный бюджет (<=)"
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение" default(0)
+// @Success 200 {array} model.NeedSearchItem
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/needs/search [get]
+func (h *PublicationHandler) SearchNeeds(c *gin.Context) {
+	if _, exists := c.Get("user_id"); !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	var filters model.NeedSearchFilters
+	if cid := c.Query("cityId"); cid != "" {
+		if id, err := strconv.ParseInt(cid, 10, 64); err == nil {
+			filters.CityID = &id
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_city_id"})
+			return
+		}
+	}
+	if n := c.Query("name"); n != "" {
+		filters.Name = &n
+	}
+	// publicationTagIds parsing
+	if t := c.Query("publicationTagIds"); t != "" {
+		parts := strings.Split(t, ",")
+		var ids []int64
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if id, err := strconv.ParseInt(p, 10, 64); err == nil {
+				ids = append(ids, id)
+			} else {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_publication_tag_id"})
+				return
+			}
+		}
+		if len(ids) > 0 {
+			filters.PublicationTagIDs = ids
+		}
+	}
+	// needTagIds parsing
+	if t := c.Query("needTagIds"); t != "" {
+		parts := strings.Split(t, ",")
+		var ids []int64
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if id, err := strconv.ParseInt(p, 10, 64); err == nil {
+				ids = append(ids, id)
+			} else {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_need_tag_id"})
+				return
+			}
+		}
+		if len(ids) > 0 {
+			filters.NeedTagIDs = ids
+		}
+	}
+	if d := c.Query("date"); d != "" {
+		// Expect RFC3339 date/time
+		if ts, err := time.Parse(time.RFC3339, d); err == nil {
+			filters.Date = &ts
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_date"})
+			return
+		}
+	}
+	if b := c.Query("budgetMax"); b != "" {
+		if v, err := strconv.ParseInt(b, 10, 64); err == nil {
+			filters.BudgetMax = &v
+		} else {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_budget"})
+			return
+		}
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	res, err := h.svc.SearchNeeds(c.Request.Context(), filters, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return

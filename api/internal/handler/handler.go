@@ -92,6 +92,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				pubs.POST(":id/comments", h.publication.AddComment)
 				pubs.POST(":id/likes", h.publication.LikePublication)
 				pubs.GET("/search", h.publication.SearchPublications)
+				pubs.GET("/services/search", h.publication.SearchServicePublications)
+				pubs.GET("/needs/search", h.publication.SearchNeeds)
 				// Images upload for publications
 				pubs.POST("/images/presign", h.publication.PresignImagesGeneric)
 				pubs.POST(":id/images/presign", h.publication.PresignImagesForPublication)

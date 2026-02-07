@@ -22,6 +22,8 @@ type PublicationService interface {
 	AttachPublicationImages(ctx context.Context, pubID int64, authorID int64, items []model.AttachPublicationImageItem) ([]model.PublicationImage, error)
 	// SearchPublications returns publications filtered by optional params
 	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
+	// SearchNeeds returns needs filtered by optional params
+	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
 }
 
 type publicationService struct {
@@ -164,4 +166,18 @@ func (s *publicationService) SearchPublications(ctx context.Context, f model.Pub
 		return nil, errors.New("invalid_type")
 	}
 	return s.repo.Search(ctx, f, limit, offset)
+}
+
+// SearchNeeds delegates to repository with minimal validation
+func (s *publicationService) SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if f.BudgetMax != nil && *f.BudgetMax < 0 {
+		return nil, errors.New("budget_negative")
+	}
+	return s.repo.SearchNeeds(ctx, f, limit, offset)
 }

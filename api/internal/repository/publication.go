@@ -23,6 +23,8 @@ type PublicationRepository interface {
 	AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error)
 	// Search publications with optional filters
 	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
+	// SearchNeeds returns needs filtered by optional criteria
+	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
 }
 
 type publicationRepository struct {
@@ -309,12 +311,28 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 	// Build dynamic query
 	base := `
 		SELECT 
-			p.id, p.author_id, p.name, p.description, p.type, p.city_id, COALESCE(lc.cnt, 0) AS likes_count, p.created_at
+			p.id,
+			p.author_id,
+			p.name,
+			p.description,
+			p.type,
+			p.city_id,
+			COALESCE(lc.cnt, 0) AS likes_count,
+			COALESCE(cc.cnt, 0) AS comments_count,
+			ti.url AS top_image_url,
+			u.telegram_url AS author_telegram_url,
+			p.created_at
 		FROM publications p
 		JOIN tarelka_users u ON u.id = p.author_id
 		LEFT JOIN LATERAL (
 			SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
 		) lc ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
+		) cc ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+		) ti ON TRUE
 		WHERE 1=1`
 
 	args := []interface{}{}
@@ -330,6 +348,11 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 		args = append(args, *f.CityID)
 		idx++
 	}
+	if f.Name != nil {
+		base += " AND p.name ILIKE $" + strconv.Itoa(idx)
+		args = append(args, "%"+*f.Name+"%")
+		idx++
+	}
 	if f.WorkingStatus != nil {
 		base += " AND u.find_work = $" + strconv.Itoa(idx)
 		args = append(args, *f.WorkingStatus)
@@ -338,6 +361,11 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 	if f.SpecializationID != nil {
 		base += " AND EXISTS (SELECT 1 FROM user_specializations us WHERE us.tarelka_user_id = u.id AND us.specialization_id = $" + strconv.Itoa(idx) + ")"
 		args = append(args, *f.SpecializationID)
+		idx++
+	}
+	if len(f.TagIDs) > 0 {
+		base += " AND EXISTS (SELECT 1 FROM publication_tag_links ptl WHERE ptl.publication_id = p.id AND ptl.tag_id = ANY($" + strconv.Itoa(idx) + "))"
+		args = append(args, f.TagIDs)
 		idx++
 	}
 
@@ -353,10 +381,97 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 	out := make([]model.Publication, 0)
 	for rows.Next() {
 		var p model.Publication
-		if err := rows.Scan(&p.ID, &p.AuthorID, &p.Name, &p.Description, &p.Type, &p.CityID, &p.LikesCount, &p.CreatedAt); err != nil {
+		var topImageURL *string
+		var authorTelegramURL *string
+		if err := rows.Scan(
+			&p.ID,
+			&p.AuthorID,
+			&p.Name,
+			&p.Description,
+			&p.Type,
+			&p.CityID,
+			&p.LikesCount,
+			&p.CommentsCount,
+			&topImageURL,
+			&authorTelegramURL,
+			&p.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
+		p.TopImageURL = topImageURL
+		p.AuthorTelegramURL = authorTelegramURL
 		out = append(out, p)
+	}
+	return out, nil
+}
+
+// SearchNeeds returns needs filtered by optional criteria and enriched with publication and city names
+func (r *publicationRepository) SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error) {
+	base := `
+		SELECT 
+			n.id,
+			n.name,
+			n.description,
+			p.name AS publication_name,
+			p.description AS publication_description,
+			c.name AS city_name
+		FROM needs n
+		JOIN publications p ON p.id = n.publication_id
+		LEFT JOIN cities c ON c.id = n.city_id
+		WHERE 1=1`
+
+	args := []interface{}{}
+	idx := 1
+
+	if f.CityID != nil {
+		base += " AND n.city_id = $" + strconv.Itoa(idx)
+		args = append(args, *f.CityID)
+		idx++
+	}
+	if f.Name != nil {
+		base += " AND n.name ILIKE $" + strconv.Itoa(idx)
+		args = append(args, "%"+*f.Name+"%")
+		idx++
+	}
+	if len(f.PublicationTagIDs) > 0 {
+		base += " AND EXISTS (SELECT 1 FROM publication_tag_links ptl WHERE ptl.publication_id = n.publication_id AND ptl.tag_id = ANY($" + strconv.Itoa(idx) + "))"
+		args = append(args, f.PublicationTagIDs)
+		idx++
+	}
+	if len(f.NeedTagIDs) > 0 {
+		base += " AND EXISTS (SELECT 1 FROM need_tag_links ntl WHERE ntl.need_id = n.id AND ntl.tag_id = ANY($" + strconv.Itoa(idx) + "))"
+		args = append(args, f.NeedTagIDs)
+		idx++
+	}
+	if f.Date != nil {
+		base += " AND (n.deadline_start IS NULL OR n.deadline_start <= $" + strconv.Itoa(idx) + ") AND (n.deadline_end IS NULL OR n.deadline_end >= $" + strconv.Itoa(idx) + ")"
+		args = append(args, *f.Date)
+		idx++
+	}
+	if f.BudgetMax != nil {
+		base += " AND n.budget <= $" + strconv.Itoa(idx)
+		args = append(args, *f.BudgetMax)
+		idx++
+	}
+
+	base += " ORDER BY p.created_at DESC, n.id DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.pool.Query(ctx, base, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]model.NeedSearchItem, 0)
+	for rows.Next() {
+		var item model.NeedSearchItem
+		var cityName *string
+		if err := rows.Scan(&item.ID, &item.Name, &item.Description, &item.PublicationName, &item.PublicationDescription, &cityName); err != nil {
+			return nil, err
+		}
+		item.CityName = cityName
+		out = append(out, item)
 	}
 	return out, nil
 }

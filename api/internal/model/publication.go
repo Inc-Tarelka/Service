@@ -12,18 +12,23 @@ const (
 
 // Publication — сущность поста/публикации
 type Publication struct {
-	ID          int64              `json:"id" db:"id"`
-	AuthorID    int64              `json:"authorId" db:"author_id"`
-	Name        string             `json:"name" db:"name"`
-	Description string             `json:"description" db:"description"`
-	Type        PublicationType    `json:"type" db:"type"`
-	CityID      *int64             `json:"cityId,omitempty" db:"city_id"`
-	Images      []PublicationImage `json:"images,omitempty"`
-	Tags        []PublicationTag   `json:"tags,omitempty"`
-	CoAuthors   []TarelkaUser      `json:"coAuthors,omitempty"`
-	Needs       []Need             `json:"needs,omitempty"`
-	LikesCount  int64              `json:"likesCount,omitempty"`
-	CreatedAt   time.Time          `json:"createdAt" db:"created_at"`
+	ID            int64              `json:"id" db:"id"`
+	AuthorID      int64              `json:"authorId" db:"author_id"`
+	Name          string             `json:"name" db:"name"`
+	Description   string             `json:"description" db:"description"`
+	Type          PublicationType    `json:"type" db:"type"`
+	CityID        *int64             `json:"cityId,omitempty" db:"city_id"`
+	Images        []PublicationImage `json:"images,omitempty"`
+	Tags          []PublicationTag   `json:"tags,omitempty"`
+	CoAuthors     []TarelkaUser      `json:"coAuthors,omitempty"`
+	Needs         []Need             `json:"needs,omitempty"`
+	LikesCount    int64              `json:"likesCount,omitempty"`
+	CommentsCount int64              `json:"commentsCount,omitempty"`
+	// TopImageURL — URL изображения с приоритетом 1, если задано
+	TopImageURL *string `json:"topImageUrl,omitempty"`
+	// AuthorTelegramURL — ссылка на Telegram автора, если задано
+	AuthorTelegramURL *string   `json:"authorTelegramUrl,omitempty" db:"telegram_url"`
+	CreatedAt         time.Time `json:"createdAt" db:"created_at"`
 }
 
 // PublicationSearchFilters — параметры фильтрации для поиска публикаций
@@ -32,10 +37,14 @@ type PublicationSearchFilters struct {
 	Type *PublicationType `json:"type,omitempty"`
 	// CityID — город публикации
 	CityID *int64 `json:"cityId,omitempty"`
+	// Name — поиск по названию публикации (ILIKE)
+	Name *string `json:"name,omitempty"`
 	// WorkingStatus — статус поиска работы автора публикации (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)
 	WorkingStatus *FindWork `json:"workingStatus,omitempty"`
 	// SpecializationID — специализация автора публикации
 	SpecializationID *int64 `json:"specializationId,omitempty"`
+	// TagIDs — фильтрация по тегам публикации (любой из выбранных)
+	TagIDs []int64 `json:"tagIds,omitempty"`
 }
 
 type PublicationImage struct {
@@ -64,6 +73,26 @@ type Need struct {
 type NeedTag struct {
 	ID   int64  `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
+}
+
+// NeedSearchFilters — параметры поиска потребностей
+type NeedSearchFilters struct {
+	CityID            *int64     `json:"cityId,omitempty"`
+	Name              *string    `json:"name,omitempty"`
+	PublicationTagIDs []int64    `json:"publicationTagIds,omitempty"`
+	NeedTagIDs        []int64    `json:"needTagIds,omitempty"`
+	Date              *time.Time `json:"date,omitempty"` // попадание даты в [deadline_start, deadline_end]
+	BudgetMax         *int64     `json:"budgetMax,omitempty"`
+}
+
+// NeedSearchItem — результат поиска потребностей
+type NeedSearchItem struct {
+	ID                     int64   `json:"id"`
+	Name                   string  `json:"name"`
+	Description            string  `json:"description"`
+	PublicationName        string  `json:"publicationName"`
+	PublicationDescription string  `json:"publicationDescription"`
+	CityName               *string `json:"cityName,omitempty"`
 }
 
 type Like struct {
