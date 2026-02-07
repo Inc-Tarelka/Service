@@ -12,13 +12,20 @@ import s from './SearchPublications.module.scss';
 
 interface SearchPublicationsProps {
   activeTab: SearchPublicationsType;
+  initialQuery?: string;
   onSearchComplete?: () => void;
+  onSearchQueryChange?: (query: string) => void;
 }
 
 export const SearchPublications = observer((props: SearchPublicationsProps) => {
-  const { activeTab, onSearchComplete } = props;
+  const {
+    activeTab,
+    initialQuery = '',
+    onSearchComplete,
+    onSearchQueryChange,
+  } = props;
   const { searchPublicationStore } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [filtersOpened, setFiltersOpened] = useState(false);
   const [filters, setFilters] = useState<SearchPublicationsParams>({});
   const [debouncedQuery] = useDebouncedValue(searchQuery, 500);
@@ -64,7 +71,11 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
           radius="xl"
           size="lg"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+          onChange={(e) => {
+            const newQuery = e.currentTarget.value;
+            setSearchQuery(newQuery);
+            onSearchQueryChange?.(newQuery);
+          }}
         />
         <ActionIcon
           className={s.filterBtn}

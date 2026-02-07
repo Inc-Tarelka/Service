@@ -29,7 +29,7 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
         }}
       />
       <div className={s.content}>
-        <h3 className={s.name}>{author?.username || 'Аноним'}</h3>
+        <h3 className={s.name}>{author?.username || ''}</h3>
         <p className={s.bio}>{author?.bio || publication.description}</p>
         {tags}
       </div>

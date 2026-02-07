@@ -14,7 +14,7 @@ export const tabs: TabProps[] = [
     icon: <PlusIcon />,
   },
   {
-    path: RoutePath.user_profile,
+    path: RoutePath.notifications,
     icon: <NotificationIcon />,
   },
   {

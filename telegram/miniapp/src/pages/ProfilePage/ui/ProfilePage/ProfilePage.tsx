@@ -5,6 +5,7 @@ import { PublicationsList } from 'entities/publication';
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
+import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { Skeleton } from 'shared/ui/Skeleton';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
@@ -30,6 +31,8 @@ const ProfilePageSkeleton = () => {
 export const ProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const { userStore } = useStore();
+
+  useBackToSearch();
 
   useEffect(() => {
     userStore.getProfileAction();

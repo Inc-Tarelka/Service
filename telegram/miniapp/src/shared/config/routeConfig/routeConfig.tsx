@@ -2,6 +2,7 @@ import { AuthPage } from 'pages/AuthPage';
 import { CollaboratorsPage } from 'pages/CollaboratorsPage';
 import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
+import { NotificationsPage } from 'pages/NotificationsPage';
 import { PostPage } from 'pages/PostPage';
 import { ProfilePage } from 'pages/ProfilePage';
 import { SettingsPage } from 'pages/SettingsPage';
@@ -23,6 +24,7 @@ export enum AppRoutes {
   COLLABORATORS = 'collaborators',
   POST = 'post',
   SETTINGS = 'settings',
+  NOTIFICATIONS = 'notifications',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   NOT_FOUND = 'not_found',
 }
@@ -36,6 +38,7 @@ export const RoutePath: Record<AppRoutes, string> = {
   [AppRoutes.COLLABORATORS]: '/collaborators',
   [AppRoutes.POST]: '/post',
   [AppRoutes.SETTINGS]: '/settings', // /settings?section=profile|security|notifications|terms
+  [AppRoutes.NOTIFICATIONS]: '/notifications',
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: '*',
 };
@@ -82,6 +85,10 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
     hideNavbar: true,
     hideLayout: true,
     element: <SettingsPage />,
+  },
+  [AppRoutes.NOTIFICATIONS]: {
+    path: RoutePath.notifications,
+    element: <NotificationsPage />,
   },
   // ДОЛЖНО БЫТЬ ПОСЛЕДНИМ
   [AppRoutes.NOT_FOUND]: {
