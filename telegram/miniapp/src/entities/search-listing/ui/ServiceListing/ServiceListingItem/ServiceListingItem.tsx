@@ -1,42 +1,54 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
+import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
+import EyeOpenIcon from 'shared/assets/icons/EyeOpen';
 import LikeIcon from 'shared/assets/icons/like';
 import s from './ServiceListingItem.module.scss';
 
 interface ServiceListingItemProps {
-  publication: SearchPublication;
+  service: SearchServiceItem;
   onClick?: (id: number) => void;
 }
 
 export const ServiceListingItem = (props: ServiceListingItemProps) => {
-  const { publication, onClick } = props;
-  const mainImage = publication.images?.[0]?.url;
+  const { service, onClick } = props;
+  const mainImage = service.images?.[0]?.url;
+
+  const author = service.coAuthors?.[0] || { username: 'Автор' };
+
   return (
-    <div className={s.container} onClick={() => onClick?.(publication.id)}>
-      <div
-        className={s.image}
-        style={{
-          backgroundImage: mainImage ? `url(${mainImage})` : undefined,
-        }}
-      />
-      <div className={s.content}>
-        <h3 className={s.title}>{publication.name}</h3>
-        {publication.description && (
-          <p className={s.description}>{publication.description}</p>
-        )}
-        <div className={s.footer}>
-          {publication.tags?.length > 0 && (
-            <div className={s.tags}>
-              {publication.tags.slice(0, 2).map((tag) => (
-                <span key={tag.id} className={s.tag}>
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-          <span className={s.likes}>
-            <LikeIcon ClassNames={s.icon} /> {publication.likesCount}
-          </span>
+    <div
+      className={s.container}
+      onClick={() => onClick?.(service.id)}
+      style={{
+        backgroundImage: mainImage ? `url(${mainImage})` : undefined,
+      }}
+    >
+      <div className={s.overlay} />
+
+      <div className={s.badges}>
+        <div className={s.badge}>
+          <LikeIcon ClassNames={s.icon} />
+          <span>{service.likesCount}</span>
         </div>
+        <div className={s.badge}>
+          <EyeOpenIcon />
+          <span>{service.viewsCount || 0}</span>
+        </div>
+      </div>
+
+      <div className={s.content}>
+        <div className={s.userInfo}>
+          <div className={s.authorBlock}>
+            <span className={s.authorName}>{author.username}</span>
+            <span className={s.username}>@{author.username}</span>
+          </div>
+          <span className={s.city}>{service.cityId}</span>
+        </div>
+
+        <h3 className={s.title}>{service.name}</h3>
+
+        {service.description && (
+          <p className={s.description}>{service.description}</p>
+        )}
       </div>
     </div>
   );

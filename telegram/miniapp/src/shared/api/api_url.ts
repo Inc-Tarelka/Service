@@ -24,6 +24,8 @@ export const API_URL = {
   generate_url_publication: () => '/publications/images/presign',
   post_publication: () => '/publications',
   search_publications: () => '/publications/search',
+  search_publication_needs: () => '/publications/needs/search',
+  search_publication_services: () => '/publications/services/search',
 
   // Posts
   posts: () => '/posts',
@@ -32,4 +34,5 @@ export const API_URL = {
   // User
   delete_account: () => '/users/me',
   me: () => '/users/me',
+  search_users: () => '/users/search/filters',
 };

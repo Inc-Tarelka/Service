@@ -24,37 +24,22 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
     onSearchComplete,
     onSearchQueryChange,
   } = props;
-  const { searchPublicationStore } = useStore();
+  const { searchInteractionsStore } = useStore();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [filtersOpened, setFiltersOpened] = useState(false);
   const [filters, setFilters] = useState<SearchPublicationsParams>({});
   const [debouncedQuery] = useDebouncedValue(searchQuery, 500);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 3) {
-      searchPublicationStore.reset();
-      return;
-    }
-
-    const params: SearchPublicationsParams = {
-      ...filters,
-      query: debouncedQuery,
-      limit: 20,
-      offset: 0,
-    };
-
-    if (activeTab === SearchPublicationsType.SERVICE) {
-      params.type = 'SERVICE';
-    } else if (
-      activeTab === SearchPublicationsType.PROFILE ||
-      activeTab === SearchPublicationsType.NEED
-    ) {
-      params.type = 'PROJECT';
-    }
-
-    searchPublicationStore.searchPublicationsAction(params);
+    searchInteractionsStore.performSearch(activeTab, debouncedQuery, filters);
     onSearchComplete?.();
-  }, [debouncedQuery, filters, activeTab]);
+  }, [
+    debouncedQuery,
+    filters,
+    activeTab,
+    searchInteractionsStore,
+    onSearchComplete,
+  ]);
 
   const handleApplyFilters = (newFilters: SearchPublicationsParams) => {
     setFilters(newFilters);

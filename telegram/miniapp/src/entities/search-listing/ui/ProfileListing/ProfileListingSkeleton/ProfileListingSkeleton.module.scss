@@ -1,74 +1,75 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 36px;
+  width: 100%;
+}
+
+@mixin shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgb(255, 255, 255, 0.05) 0%,
+    rgb(255, 255, 255, 0.2) 50%,
+    rgb(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+}
+
 @keyframes shimmer {
   0% {
-    background-position: -200% 0;
+    background-position: 200% 0;
   }
 
   100% {
-    background-position: 200% 0;
+    background-position: -200% 0;
   }
 }
 
-%skeleton {
-  animation: shimmer 1.5s infinite;
-  background: linear-gradient(90deg, 
-    var(--tertiary-bg-color) 25%, 
-    var(--bg-secondary) 50%, 
-    var(--tertiary-bg-color) 75%
-  );
-  background-size: 200% 100%;
-  border-radius: 8px;
-}
-
-.container {
-  background: var(--card-bg);
-  border-radius: 16px;
+.header {
+  align-items: center;
   display: flex;
   gap: 12px;
-  padding: 12px;
 }
 
-.image {
-  @extend %skeleton;
-  border-radius: 12px;
-  flex-shrink: 0;
-  height: 80px;
-  width: 80px;
+.avatar {
+  @include shimmer;
+  border-radius: 50%;
+  height: 48px;
+  width: 48px;
 }
 
-.content {
+.info {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .name {
-  @extend %skeleton;
-  height: 20px;
-  width: 60%;
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  width: 120px;
 }
 
-.bio {
-  @extend %skeleton;
-  height: 14px;
-  width: 90%;
+.details {
+  @include shimmer;
+  border-radius: 4px;
+  height: 12px;
+  width: 180px;
 }
 
-.bioShort {
-  @extend %skeleton;
-  height: 14px;
-  width: 70%;
-}
-
-.tags {
+.projects {
   display: flex;
-  gap: 6px;
-  margin-top: auto;
+  gap: 4px;
+  overflow-x: hidden;
 }
 
-.tag {
-  @extend %skeleton;
-  border-radius: 8px;
-  height: 24px;
-  width: 60px;
+.projectImage {
+  @include shimmer;
+  border-radius: 12px;
+  flex-shrink: 0;
+  height: 120px;
+  width: 160px;
 }

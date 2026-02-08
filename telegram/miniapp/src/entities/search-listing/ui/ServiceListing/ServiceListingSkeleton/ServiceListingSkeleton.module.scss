@@ -1,80 +1,100 @@
+.container {
+  background: var(--tertiary-bg-color);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+  justify-content: flex-end;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+@mixin shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgb(255, 255, 255, 0.05) 0%,
+    rgb(255, 255, 255, 0.2) 50%,
+    rgb(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+}
+
 @keyframes shimmer {
   0% {
-    background-position: -200% 0;
+    background-position: 200% 0;
   }
 
   100% {
-    background-position: 200% 0;
+    background-position: -200% 0;
   }
-}
-
-%skeleton {
-  animation: shimmer 1.5s infinite;
-  background: linear-gradient(90deg, 
-    var(--tertiary-bg-color) 25%, 
-    var(--bg-secondary) 50%, 
-    var(--tertiary-bg-color) 75%
-  );
-  background-size: 200% 100%;
-  border-radius: 8px;
-}
-
-.container {
-  background: var(--card-bg);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.image {
-  @extend %skeleton;
-  border-radius: 0;
-  height: 160px;
-  width: 100%;
 }
 
 .content {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
+  padding: 16px;
+  position: relative;
+  width: 100%;
+  z-index: 2;
 }
 
 .title {
-  @extend %skeleton;
-  height: 20px;
-  width: 80%;
+  @include shimmer;
+  border-radius: 4px;
+  height: 24px;
+  width: 70%;
 }
 
 .description {
-  @extend %skeleton;
-  height: 14px;
-  width: 100%;
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  width: 90%;
 }
 
-.footer {
+.descriptionShort {
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  width: 60%;
+}
+
+.userInfo {
   align-items: center;
   display: flex;
   justify-content: space-between;
-  margin-top: auto;
+  margin-bottom: 8px;
+  width: 100%;
 }
 
-.tags {
+.author {
+  @include shimmer;
+  border-radius: 4px;
+  height: 14px;
+  width: 100px;
+}
+
+.city {
+  @include shimmer;
+  border-radius: 4px;
+  height: 14px;
+  width: 60px;
+}
+
+.badges {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  left: 12px;
+  position: absolute;
+  top: 12px;
 }
 
-.tag {
-  @extend %skeleton;
-  height: 20px;
+.badge {
+  @include shimmer;
+  border-radius: 12px;
+  height: 24px;
   width: 50px;
-}
-
-.likes {
-  @extend %skeleton;
-  height: 20px;
-  width: 30px;
 }

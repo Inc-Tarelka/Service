@@ -1,0 +1,187 @@
+.drawer {
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.iconBtn {
+  backdrop-filter: blur(8px);
+  background: rgb(28, 28, 28, 0.6);
+  border: none;
+  color: var(--inverted-bg-color);
+  
+  &:hover {
+    background: rgb(28, 28, 28, 0.8);
+  }
+}
+
+.imageSection {
+  height: 360px;
+  position: relative;
+  width: 100%;
+}
+
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.overlay {
+  background: linear-gradient(
+    180deg,
+    rgb(0, 0, 0, 0.6) 0%,
+    rgb(0, 0, 0, 0) 30%,
+    rgb(0, 0, 0, 0) 70%,
+    rgb(0, 0, 0, 0.8) 100%
+  );
+  height: 100%;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.stats {
+  bottom: 16px;
+  display: flex;
+  gap: 8px;
+  left: 16px;
+  position: absolute;
+}
+
+.badge {
+  align-items: center;
+  backdrop-filter: blur(8px);
+  background: rgb(28, 28, 28, 0.6);
+  border-radius: 12px;
+  color: var(--inverted-bg-color);
+  display: flex;
+  font: var(--font-caption);
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.content {
+  background: var(--bg-color);
+  border-radius: 24px 24px 0 0;
+  margin-top: -24px;
+  padding: 24px 16px;
+  position: relative;
+  z-index: 5;
+}
+
+.date {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  margin-bottom: 8px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.description {
+  color: var(--text-color);
+  font: var(--font-body);
+  line-height: 1.5;
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.label {
+  color: var(--text-color-secondary);
+  font: var(--font-body);
+}
+
+.value {
+  color: var(--text-color);
+  font: var(--font-body);
+  text-align: right;
+}
+
+.section {
+  margin-top: 24px;
+}
+
+.sectionTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.teamList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teamMember {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.avatar {
+  background: var(--tertiary-bg-color);
+  border-radius: 50%;
+  height: 48px;
+  width: 48px;
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberName {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.memberRole {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+}
+
+.needsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.icon {
+    height: 16px;
+    width: 16px;
+
+    path {
+        fill: var(--inverted-bg-color);
+    }
+}

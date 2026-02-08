@@ -4,12 +4,16 @@ import {
   ServiceListingList,
 } from 'entities/search-listing';
 import { observer } from 'mobx-react-lite';
-import { SearchPublication } from 'shared/api/service/Publication';
+import { SearchNeedItem } from 'shared/api/service/PublicationNeedsSearch';
+import { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
+import { SearchUser } from 'shared/api/service/UserSearch';
 import { SearchPublicationsType } from 'shared/api/types';
 
 interface ListingContentProps {
   activeTab: SearchPublicationsType;
-  publications: SearchPublication[];
+  needs?: SearchNeedItem[];
+  services?: SearchServiceItem[];
+  users?: SearchUser[];
   isLoading: boolean;
   isLoaded: boolean;
   onItemClick: (id: number) => void;
@@ -18,7 +22,9 @@ interface ListingContentProps {
 export const ListingContent = observer(
   ({
     activeTab,
-    publications,
+    needs = [],
+    services = [],
+    users = [],
     isLoading,
     isLoaded,
     onItemClick,
@@ -31,7 +37,7 @@ export const ListingContent = observer(
       case SearchPublicationsType.PROFILE:
         return (
           <ProfileListingList
-            publications={publications}
+            users={users}
             onItemClick={onItemClick}
             isLoading={isLoading}
           />
@@ -39,7 +45,7 @@ export const ListingContent = observer(
       case SearchPublicationsType.SERVICE:
         return (
           <ServiceListingList
-            publications={publications}
+            services={services}
             onItemClick={onItemClick}
             isLoading={isLoading}
           />
@@ -47,7 +53,7 @@ export const ListingContent = observer(
       case SearchPublicationsType.NEED:
         return (
           <NeedListingList
-            publications={publications}
+            needs={needs}
             onItemClick={onItemClick}
             isLoading={isLoading}
           />

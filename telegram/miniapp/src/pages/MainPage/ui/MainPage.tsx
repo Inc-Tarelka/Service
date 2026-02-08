@@ -1,4 +1,5 @@
 import { useStore } from 'app/StoreProvider';
+import { ServiceListingDetails } from 'entities/search-listing';
 import { ResponseToNeedDrawer } from 'features/respond-to-need';
 import { SearchPublications } from 'features/search-publications';
 import { NeedDetailsDrawer } from 'features/view-need';
@@ -14,9 +15,14 @@ import { useNavigationLogic } from '../lib/useNavigationLogic';
 import s from './MainPage.module.scss';
 
 export const MainPage = observer(() => {
-  const { searchPublicationStore } = useStore();
+  const {
+    searchPublicationStore,
+    searchNeedsStore,
+    searchServicesStore,
+    searchUsersStore,
+  } = useStore();
   const [searchParams] = useSearchParams();
-  const { handleDataNavigation } = useNavigationLogic();
+  const { handleDataNavigation, handleUserNavigation } = useNavigationLogic();
   const queryFromUrl = searchParams.get('query') || '';
   const tabFromUrl =
     (searchParams.get('tab') as SearchPublicationsType) ||
@@ -28,8 +34,32 @@ export const MainPage = observer(() => {
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
 
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
+    null,
+  );
+
   const publications = searchPublicationStore.publications;
-  const isLoading = searchPublicationStore.isLoading;
+  const needs = searchNeedsStore.needs;
+  const services = searchServicesStore.services;
+  const users = searchUsersStore.users;
+
+  const isLoading =
+    activeTab === SearchPublicationsType.NEED
+      ? searchNeedsStore.isLoading
+      : activeTab === SearchPublicationsType.SERVICE
+        ? searchServicesStore.isLoading
+        : activeTab === SearchPublicationsType.PROFILE
+          ? searchUsersStore.isLoading
+          : searchPublicationStore.isLoading;
+
+  const isLoaded =
+    activeTab === SearchPublicationsType.NEED
+      ? searchNeedsStore.isLoaded
+      : activeTab === SearchPublicationsType.SERVICE
+        ? searchServicesStore.isLoaded
+        : activeTab === SearchPublicationsType.PROFILE
+          ? searchUsersStore.isLoaded
+          : searchPublicationStore.isLoaded;
 
   const mockNeedData = {
     title: 'Требуется дизайнер UI/UX',
@@ -43,6 +73,10 @@ export const MainPage = observer(() => {
   const onItemClick = (id: number) => {
     if (activeTab === SearchPublicationsType.NEED) {
       setIsNeedDetailsOpen(true);
+    } else if (activeTab === SearchPublicationsType.SERVICE) {
+      setSelectedServiceId(id);
+    } else if (activeTab === SearchPublicationsType.PROFILE) {
+      handleUserNavigation(id, searchQuery);
     } else {
       handleDataNavigation(id, activeTab, publications, searchQuery);
     }
@@ -58,8 +92,14 @@ export const MainPage = observer(() => {
     setIsNeedDetailsOpen(true);
   };
 
+  const selectedService = services.find((s) => s.id === selectedServiceId);
+
   return (
-    <Page className={classNames(s.mainPage, {}, [])}>
+    <Page
+      key={activeTab}
+      className={classNames(s.mainPage, {}, [])}
+      scrollKey={`main-page-${activeTab}`}
+    >
       <div className={s.header}>
         <SearchPublications
           activeTab={activeTab}
@@ -80,9 +120,11 @@ export const MainPage = observer(() => {
       <div className={s.content}>
         <ListingContent
           activeTab={activeTab}
-          publications={publications}
+          needs={needs}
+          services={services}
+          users={users}
           isLoading={isLoading}
-          isLoaded={searchPublicationStore.isLoaded}
+          isLoaded={isLoaded}
           onItemClick={onItemClick}
         />
       </div>
@@ -99,6 +141,16 @@ export const MainPage = observer(() => {
         onClose={() => setIsResponseDrawerOpen(false)}
         onBack={handleBackToNeedDetails}
       />
+
+      {selectedService && (
+        <ServiceListingDetails
+          service={selectedService}
+          onClose={() => setSelectedServiceId(null)}
+          onNeedClick={(id) =>
+            console.log('Need clicked from service details:', id)
+          }
+        />
+      )}
     </Page>
   );
 });
