@@ -1,82 +1,161 @@
 .container {
   background-color: var(--tertiary-bg-color);
-  background-position: center;
-  background-size: cover;
-  border-radius: 20px;
+  border-radius: 24px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 320px;
-  justify-content: flex-end;
+  min-height: 310px;
   overflow: hidden;
   position: relative;
-  transition: transform 0.2s;
+  width: 100%;
 
-  &:active {
-    transform: scale(0.98);
-  }
 }
 
-.overlay {
-  background: linear-gradient(
-    180deg,
-    rgb(0, 0, 0, 0) 0%,
-    rgb(0, 0, 0, 0.6) 50%,
-    rgb(0, 0, 0, 0.9) 100%
-  );
-  bottom: 0;
-  height: 60%;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  z-index: 1;
+.imageSection {
+  aspect-ratio: 4 / 3;
+  background-color: var(--tertiary-bg-color); 
+  border-radius: 24px;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
 .badges {
   display: flex;
-  gap: 8px;
-  left: 12px;
+  gap: 4px;
+  left: 8px; 
+  pointer-events: auto; 
   position: absolute;
-  top: 12px;
-  z-index: 2;
+  top: 8px;
+  z-index: 20;
 }
+
 
 .badge {
   align-items: center;
-  backdrop-filter: blur(8px);
-  background: rgb(28, 28, 28, 0.6);
-  border-radius: 12px;
-  color: var(--inverted-bg-color);
+  background: var(--tertiary-bg-color); 
+  border: 1px solid rgb(255, 255, 255, 0.1);
+  border-radius: 32px; 
+  color: #fff;
   display: flex;
-  font: var(--font-caption);
-  gap: 4px;
-  padding: 4px 8px;
+  font-family: var(--font-caption);
+  gap: 0; 
+  height: 36px;
+  justify-content: center;
+  min-width: 64px;
+  padding: 0 8px;
 }
 
-.authorName {
-  color: var(--inverted-bg-color);
-  font: var(--font-caption);
-  font-weight: 500;
-}
-
-.title {
-  color: var(--inverted-bg-color);
-  font: var(--font-body);
-  font-weight: 600;
-  line-height: 1.2;
-  margin: 0;
+.count {
+  font-family: var(--font-caption);
+  font-weight: 400;
+  margin-left: 0;
+  max-width: 0;
+  opacity: 0;
   overflow: hidden;
-  text-align: left;
-  text-overflow: ellipsis;
+  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.2s ease, 
+              margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
 
+.countVisible {
+  margin-left: 6px;
+  max-width: 40px; /* Sufficient for 99+ (approx 3 chars) */
+  opacity: 1;
+}
+
+
+
 .icon {
-  height: 14px;
-  width: 14px;
+  height: 20px;
+  transition: fill 0.2s;
+  width: 20px;
   
-  path {
-    fill: var(--inverted-bg-color);
+  &.filled {
+    path {
+      fill: var(--text-color);
+      stroke: var(--text-color);
+    }
   }
 }
+
+
+
+
+
+.infoSection {
+  background-color: var(--tertiary-bg-color);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; 
+  padding: 12px 16px 16px; 
+}
+
+.authorRow {
+  align-items: flex-start; 
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px; 
+}
+
+.authorData {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+}
+
+.authorName {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.authorUsername {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+}
+
+.city {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.textSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; 
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 600;
+  margin: 0;
+}
+
+.description {
+  -webkit-box-orient: vertical;
+  color: var(--text-color-secondary);
+  display: -webkit-box;
+  font: var(--font-body);
+  font-weight: 400;
+  -webkit-line-clamp: 2;
+  line-clamp: 2; 
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+

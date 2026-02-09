@@ -19,10 +19,11 @@ export class SearchInteractionsStore {
     query: string,
     filters: SearchPublicationsParams,
   ) => {
-    if (!query || query.length < 3) {
-      this.rootStore.searchPublicationStore.reset();
-      return;
-    }
+    // Query limit check removed to allow default search results
+    // if (!query || query.length < 3) {
+    //   this.rootStore.searchPublicationStore.reset();
+    //   return;
+    // }
 
     if (activeTab === SearchPublicationsType.NEED) {
       const needsParams: SearchNeedsParams = {

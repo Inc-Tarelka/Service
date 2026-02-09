@@ -107,6 +107,7 @@ export const MainPage = observer(() => {
           onSearchQueryChange={(query) => setSearchQuery(query)}
         />
         <TabsSwitcher
+          hideMask={true}
           tabs={[
             { label: 'Профили', value: SearchPublicationsType.PROFILE },
             { label: 'Услуги', value: SearchPublicationsType.SERVICE },

@@ -121,7 +121,6 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
         classNames={{ content: 'drawer-fulldevice' }}
         styles={{
           content: {
-            background: 'var(--sheet-bg-color)',
             borderRadius: '32px 32px 0 0',
           },
           body: { padding: 0 },

@@ -1,10 +1,8 @@
 .container {
   background: var(--tertiary-bg-color);
-  border-radius: 20px;
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
-  height: 320px;
-  justify-content: flex-end;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -31,70 +29,74 @@
   }
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+.imageSection {
+  @include shimmer;
+  aspect-ratio: 4 / 3;
+  border-radius: 24px;
   position: relative;
   width: 100%;
-  z-index: 2;
 }
 
-.title {
-  @include shimmer;
-  border-radius: 4px;
-  height: 24px;
-  width: 70%;
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
 }
 
-.description {
-  @include shimmer;
-  border-radius: 4px;
-  height: 16px;
-  width: 90%;
-}
-
-.descriptionShort {
-  @include shimmer;
-  border-radius: 4px;
-  height: 16px;
-  width: 60%;
-}
-
-.userInfo {
+.authorRow {
   align-items: center;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  width: 100%;
+  margin-bottom: 12px;
 }
 
-.author {
+.authorData {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.authorName {
   @include shimmer;
   border-radius: 4px;
   height: 14px;
   width: 100px;
 }
 
+.authorUsername {
+  @include shimmer;
+  border-radius: 4px;
+  height: 12px;
+  width: 80px;
+}
+
 .city {
   @include shimmer;
   border-radius: 4px;
   height: 14px;
-  width: 60px;
+  width: 80px;
 }
 
-.badges {
-  display: flex;
-  gap: 8px;
-  left: 12px;
-  position: absolute;
-  top: 12px;
-}
-
-.badge {
+.title {
   @include shimmer;
-  border-radius: 12px;
-  height: 24px;
-  width: 50px;
+  border-radius: 4px;
+  height: 20px;
+  margin-bottom: 8px;
+  width: 80%;
 }
+
+.description {
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+.descriptionShort {
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  width: 70%;
+}
+

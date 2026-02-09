@@ -42,7 +42,6 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
       size="md"
       withCloseButton={false}
       styles={{
-        content: { background: 'var(--sheet-bg-color)' },
         body: { padding: 0, height: '100%' },
       }}
     >

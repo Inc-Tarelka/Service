@@ -14,6 +14,7 @@ interface PageProps {
   noPaddingBottom?: boolean;
   smallPaddingBottom?: boolean;
   scrollKey?: string;
+  disableScrollRecovery?: boolean;
   onScrollEnd?: () => void;
 }
 
@@ -24,6 +25,7 @@ export const Page = observer((props: PageProps) => {
     noPaddingBottom,
     smallPaddingBottom,
     scrollKey,
+    disableScrollRecovery,
     onScrollEnd,
   } = props;
   const { isDesktop } = useViewport();
@@ -34,17 +36,19 @@ export const Page = observer((props: PageProps) => {
   const finalScrollKey = scrollKey || pathname;
 
   useInitialEffect(() => {
-    if (wrapperRef.current) {
+    if (wrapperRef.current && !disableScrollRecovery) {
       wrapperRef.current.scrollTop =
         scrollRecoveryStore.getScroll(finalScrollKey);
     }
   });
 
   const onScroll = useThrottle((e: UIEvent<HTMLDivElement>) => {
-    scrollRecoveryStore.setScrollPosition(
-      finalScrollKey,
-      e.currentTarget.scrollTop,
-    );
+    if (!disableScrollRecovery) {
+      scrollRecoveryStore.setScrollPosition(
+        finalScrollKey,
+        e.currentTarget.scrollTop,
+      );
+    }
 
     if (onScrollEnd) {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;

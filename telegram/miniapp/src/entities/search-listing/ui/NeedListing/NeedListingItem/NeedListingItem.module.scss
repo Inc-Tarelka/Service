@@ -1,6 +1,7 @@
 .container {
-  background: var(--card-bg);
-  border-radius: 16px;
+  background: linear-gradient(180deg, rgb(171, 219, 159, 0) 0%, rgb(171, 219, 159, 0.1) 100%), #181818;
+  border: 1px solid #282828;
+  border-radius: 32px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -9,14 +10,12 @@
   padding: 16px;
   transition: background 0.2s;
 
-  &:hover {
-    background: var(--card-bg-hover);
-  }
-
   &:active {
     opacity: 0.8;
   }
 }
+
+
 
 .title {
   color: var(--text-color);

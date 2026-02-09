@@ -25,17 +25,20 @@ const globalStyles = `
     --drawer-fulldevice-size: calc(100% - var(--total-navbar-height, 0px));
   }
   
-  /* Desktop или устройства без fullscreen: drawer занимает 100% высоты */
   @media (min-width: 768px), (hover: hover) and (pointer: fine) {
     :root {
       --drawer-fulldevice-size: 100%;
     }
   }
   
-  /* Drawer с fulldevice size - применять через classNames={{ content: 'drawer-fulldevice' }} */
   .drawer-fulldevice {
     height: var(--drawer-fulldevice-size) !important;
     max-height: 100% !important;
+  }
+  
+
+  [data-mantine-color-scheme] .mantine-Paper-root.mantine-Drawer-content {
+    background: radial-gradient(ellipse 400px 160px at top right,  #abdb9f33 10%, #181818 70%), #181818 !important;
   }
 `;
 
@@ -151,7 +154,7 @@ export const mantineTheme = createTheme({
         input: {
           color: 'var(--text-color)',
           background: 'var(--tertiary-bg-color)',
-          border: '2px solid var(--card-bg)',
+          border: '1px solid var(--card-bg)',
         },
       },
     },
@@ -187,9 +190,9 @@ export const mantineTheme = createTheme({
         },
         size: 'auto',
       },
-      styles: {
+      styles: () => ({
         content: {
-          backgroundColor: '#1E1E1E',
+          background: '#181818',
           borderTopLeftRadius: '32px',
           borderTopRightRadius: '32px',
           boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
@@ -201,7 +204,7 @@ export const mantineTheme = createTheme({
           padding: '24px 20px',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
         },
-      },
+      }),
     },
 
     Tooltip: {

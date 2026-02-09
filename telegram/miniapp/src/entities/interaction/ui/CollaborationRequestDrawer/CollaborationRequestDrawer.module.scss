@@ -1,7 +1,9 @@
 .title {
   color: var(--text-color);
-  font: var(--font-h2);
+  font: var(--font-h1);
+  font-weight: 600;
   margin: 0;
+
 }
 
 .sectionTitle {
@@ -12,7 +14,7 @@
 }
 
 .card {
-  background-color: var(--card-bg);
+  border: 1px solid var(--card-bg);
   border-radius: 24px;
   padding: 12px;
 }
@@ -60,8 +62,19 @@
 
 .comment {
   color: var(--text-color);
-  font: var(--font-caption);
+  font: var(--font-body);
   font-weight: 400;
   line-height: 1.4;
   margin: 0;
+}
+
+.footer {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.deleteButton {
+  flex: 1;
 }

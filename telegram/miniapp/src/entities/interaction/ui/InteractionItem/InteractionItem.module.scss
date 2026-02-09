@@ -1,12 +1,13 @@
 .card {
-  background-color: var(--card-bg);
+  background: linear-gradient(180deg, rgb(171, 219, 159, 0) 0%, rgb(171, 219, 159, 0.1) 100%), #181818;
+  border: 1px solid #282828;
   border-radius: 32px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-height: 120px;
-  padding: 20px;
+  padding: 16px;
   position: relative;
   width: 100%;
 }
@@ -33,7 +34,7 @@
   font: var(--font-body);
   font-weight: 400;
   -webkit-line-clamp: 3;
-  line-clamp: 3;
+  line-clamp: 4;
   line-height: 1.4;
   margin: 0;
   overflow: hidden;

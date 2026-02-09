@@ -70,6 +70,8 @@ export const UserProfilePage = observer(() => {
 
       <Box className={classes.tabsSection}>
         <TabsSwitcher
+          fullWidth={true}
+          hideMask={true}
           className={classes.tabsSwitcher}
           activeTab={activeTab}
           onTabChange={setActiveTab}

@@ -9,7 +9,6 @@ export const DRAWER_SIZES: Record<SearchPublicationsType, number | string> = {
 
 export const DRAWER_STYLES = {
   content: {
-    background: 'var(--sheet-bg-color)',
     borderRadius: '32px 32px 0 0',
   },
   body: { padding: 0, paddingBottom: 0, height: '100%' },

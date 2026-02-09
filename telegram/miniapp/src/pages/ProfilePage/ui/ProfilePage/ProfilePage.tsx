@@ -49,7 +49,7 @@ export const ProfilePage = observer(() => {
   }
 
   return (
-    <Page className={classes.profilePage}>
+    <Page className={classes.profilePage} disableScrollRecovery>
       <ProfileBanner
         user={user}
         isOwnProfile={true}

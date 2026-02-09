@@ -1,6 +1,7 @@
-import { Box, Button, Drawer, Stack, Text } from '@mantine/core';
+import { ActionIcon, Box, Button, Drawer, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
 import { Interaction } from 'shared/api/service/Interaction/types';
+import XIcon from 'shared/assets/icons/x';
 import { ActionsDrawer } from '../ActionsDrawer/ActionsDrawer';
 import classes from './OfferDetailsDrawer.module.scss';
 
@@ -37,29 +38,23 @@ export const OfferDetailsDrawer = ({
         radius={40}
       >
         <Stack gap={30}>
-          <Text color="white" className={classes.title}>
-            Отклик на потребность
-          </Text>
+          <h1 className={classes.title}>Отклик на потребность</h1>
 
           <Stack gap={16}>
             <Box>
-              <Text color="white" className={classes.sectionTitle}>
-                Потребность
-              </Text>
+              <h2 className={classes.sectionTitle}>Потребность</h2>
               <Box className={classes.card}>
                 <Text color="white" className={classes.cardTitle}>
                   {interaction.needDetails?.title}
                 </Text>
-                <Text className={classes.cardDescription}>
+                <Text className={classes.cardDescriptionNeed}>
                   {interaction.needDetails?.description}
                 </Text>
               </Box>
             </Box>
 
             <Box>
-              <Text color="white" className={classes.sectionTitle}>
-                Привязанная услуга
-              </Text>
+              <h2 className={classes.sectionTitle}>Привязанная услуга</h2>
               <Box className={classes.card}>
                 <Box className={classes.serviceContent}>
                   {interaction.serviceDetails?.imageUrl && (
@@ -83,9 +78,7 @@ export const OfferDetailsDrawer = ({
 
             {interaction.comment && (
               <Box>
-                <Text color="white" className={classes.sectionTitle}>
-                  Комментарий
-                </Text>
+                <h2 className={classes.sectionTitle}>Комментарий</h2>
                 <Text color="white" className={classes.comment}>
                   {interaction.comment}
                 </Text>
@@ -93,15 +86,26 @@ export const OfferDetailsDrawer = ({
             )}
           </Stack>
 
-          <Button
-            variant="outline"
-            fullWidth
-            radius="xl"
-            size="lg"
-            onClick={() => setDeleteDrawerOpen(true)}
-          >
-            Удалить
-          </Button>
+          <div className={classes.footer}>
+            <ActionIcon
+              onClick={onClose}
+              variant="outline"
+              size={48}
+              radius={40}
+            >
+              <XIcon />
+            </ActionIcon>
+            <Button
+              className={classes.deleteButton}
+              variant="outline"
+              fullWidth
+              radius="xl"
+              size="lg"
+              onClick={() => setDeleteDrawerOpen(true)}
+            >
+              Удалить
+            </Button>
+          </div>
         </Stack>
       </Drawer>
 
@@ -109,6 +113,7 @@ export const OfferDetailsDrawer = ({
         opened={isDeleteDrawerOpen}
         onClose={() => setDeleteDrawerOpen(false)}
         onDelete={handleDelete}
+        fullWidth
         title="Вы уверены, что хотите удалить отклик?"
       />
     </>

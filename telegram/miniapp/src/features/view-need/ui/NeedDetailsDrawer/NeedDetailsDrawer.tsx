@@ -24,22 +24,11 @@ export const NeedDetailsDrawer = (props: NeedDetailsDrawerProps) => {
       onClose={onClose}
       position="bottom"
       size="md"
-      withCloseButton={false}
-      styles={{
-        content: { background: 'var(--sheet-bg-color)' },
-        body: { padding: 0, height: '100%' },
-      }}
+      withCloseButton={true}
     >
       <div className={classes.drawer}>
         <div className={classes.header}>
           <Text className={classes.title}>{needData.title}</Text>
-          <button
-            type="button"
-            className={classes.closeButtonHeader}
-            onClick={onClose}
-          >
-            <XIcon />
-          </button>
         </div>
 
         <div className={classes.content}>

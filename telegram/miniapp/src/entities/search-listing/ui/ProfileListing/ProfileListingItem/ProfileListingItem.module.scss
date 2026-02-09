@@ -46,7 +46,7 @@
 }
 
 .details {
-  color: var(--text-color-secondary);
+  color: var(--text-color);
   font: var(--font-caption);
   margin: 0;
 }
@@ -55,7 +55,6 @@
   display: flex;
   gap: 4px;
   overflow-x: auto;
-  padding-bottom: 4px; // Hide scrollbar if needed or for spacing
   
   &::-webkit-scrollbar {
     display: none;

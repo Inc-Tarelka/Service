@@ -14,6 +14,8 @@ interface TabsSwitcherProps<T extends string> {
   onTabChange?: (tab: T) => void;
   children?: ReactNode;
   className?: string;
+  fullWidth?: boolean;
+  hideMask?: boolean;
 }
 
 export const TabsSwitcher = <T extends string>({
@@ -22,6 +24,8 @@ export const TabsSwitcher = <T extends string>({
   onTabChange,
   children,
   className,
+  fullWidth,
+  hideMask,
 }: TabsSwitcherProps<T>) => {
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
   const currentTab = activeTab !== undefined ? activeTab : internalTab;
@@ -36,34 +40,45 @@ export const TabsSwitcher = <T extends string>({
     }
     onTabChange?.(newTab);
 
-    const buttonElement = event.currentTarget;
-    const wrapperElement = tabsWrapperRef.current;
+    // Scroll logic only if NOT fullWidth (since fullWidth assumes fit)
+    if (!fullWidth) {
+      const buttonElement = event.currentTarget;
+      const wrapperElement = tabsWrapperRef.current;
 
-    if (buttonElement && wrapperElement) {
-      const buttonRect = buttonElement.getBoundingClientRect();
-      const wrapperRect = wrapperElement.getBoundingClientRect();
+      if (buttonElement && wrapperElement) {
+        const buttonRect = buttonElement.getBoundingClientRect();
+        const wrapperRect = wrapperElement.getBoundingClientRect();
 
-      const isFullyVisible =
-        buttonRect.left >= wrapperRect.left &&
-        buttonRect.right <= wrapperRect.right;
+        const isFullyVisible =
+          buttonRect.left >= wrapperRect.left &&
+          buttonRect.right <= wrapperRect.right;
 
-      if (!isFullyVisible) {
-        const scrollLeft =
-          buttonElement.offsetLeft -
-          wrapperElement.offsetLeft -
-          (wrapperRect.width - buttonRect.width) / 2;
+        if (!isFullyVisible) {
+          const scrollLeft =
+            buttonElement.offsetLeft -
+            wrapperElement.offsetLeft -
+            (wrapperRect.width - buttonRect.width) / 2;
 
-        wrapperElement.scrollTo({
-          left: scrollLeft,
-          behavior: 'smooth',
-        });
+          wrapperElement.scrollTo({
+            left: scrollLeft,
+            behavior: 'smooth',
+          });
+        }
       }
     }
   };
 
   return (
-    <Box className={clsx(classes.container, className)}>
-      <div className={classes.tabsWrapper} ref={tabsWrapperRef}>
+    <Box
+      className={clsx(classes.container, className, {
+        [classes.fullWidth]: fullWidth,
+        [classes.noMask]: hideMask,
+      })}
+    >
+      <div
+        className={clsx(classes.tabsWrapper, { [classes.noMask]: hideMask })}
+        ref={tabsWrapperRef}
+      >
         <div className={classes.tabsList}>
           {tabs.map((tabItem) => (
             <button
