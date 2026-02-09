@@ -24,14 +24,23 @@ export const NeedDetailsDrawer = (props: NeedDetailsDrawerProps) => {
       onClose={onClose}
       position="bottom"
       size="md"
-      withCloseButton={true}
+      withCloseButton={false}
+      padding={24}
+      radius={40}
+      styles={{
+        body: {
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      }}
     >
       <div className={classes.drawer}>
-        <div className={classes.header}>
-          <Text className={classes.title}>{needData.title}</Text>
-        </div>
-
         <div className={classes.content}>
+          <div className={classes.header}>
+            <Text className={classes.title}>{needData.title}</Text>
+          </div>
+
           <div className={classes.description}>{needData.description}</div>
 
           {needData.tags && (
