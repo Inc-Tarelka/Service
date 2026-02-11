@@ -417,7 +417,8 @@ func (r *publicationRepository) SearchNeeds(ctx context.Context, f model.NeedSea
 			c.name AS city_name
 		FROM needs n
 		JOIN publications p ON p.id = n.publication_id
-		LEFT JOIN cities c ON c.id = n.city_id
+		-- Return city name from need.city_id if present, otherwise fallback to publication.city_id
+		LEFT JOIN cities c ON c.id = COALESCE(n.city_id, p.city_id)
 		WHERE 1=1`
 
 	args := []interface{}{}
