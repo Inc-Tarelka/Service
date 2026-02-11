@@ -509,6 +509,12 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 			where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
 			args = append(args, t1, t2)
 		}
+		// Also match by Telegram URL/handle when provided in 'name'
+		// Normalize: strip leading '@' for handle to match stored urls like https://t.me/<handle>
+		tgPattern := "%" + strings.TrimPrefix(name, "@") + "%"
+		pos := len(args) + 1
+		where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
+		args = append(args, tgPattern)
 		whereParts = append(whereParts, where)
 	}
 

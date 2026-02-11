@@ -137,7 +137,7 @@ func (h *UserHandler) SearchUsersByTelegram(c *gin.Context) {
 
 // SearchUsersByFilters godoc
 // @Summary Поиск пользователей по фильтрам
-// @Description Фильтрация по имени/компании, специализациям, типу аккаунта, статусу (find_work), городам
+// @Description Фильтрация по имени/компании или Telegram (передается в поле name), специализациям, типу аккаунта, статусу (find_work), городам
 // @Tags users
 // @Produce json
 // @Security BearerAuth
