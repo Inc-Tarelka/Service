@@ -1743,8 +1743,8 @@ paths:
       - users
   /users/search/filters:
     get:
-      description: Фильтрация по имени/компании, специализациям, типу аккаунта, статусу
-        (find_work), городам
+      description: Фильтрация по имени/компании или Telegram (передается в поле name),
+        специализациям, типу аккаунта, статусу (find_work), городам
       parameters:
       - description: Имя/фамилия или название компании
         in: query

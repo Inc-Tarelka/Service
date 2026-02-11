@@ -1257,7 +1257,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Фильтрация по имени/компании, специализациям, типу аккаунта, статусу (find_work), городам",
+                "description": "Фильтрация по имени/компании или Telegram (передается в поле name), специализациям, типу аккаунта, статусу (find_work), городам",
                 "produces": [
                     "application/json"
                 ],
