@@ -13,6 +13,7 @@ type Services struct {
 	Reference   ReferenceService
 	Storage     StorageService
 	Publication PublicationService
+	Activity    ActivityService
 }
 
 // Deps зависимости для создания сервисов
@@ -30,6 +31,7 @@ type Deps struct {
 
 // NewServices создаёт все сервисы
 func NewServices(deps Deps) *Services {
+	activitySvc := NewActivityService(deps.Repos.Activity)
 	return &Services{
 		Auth: NewAuthService(
 			deps.Repos.TgUser,
@@ -46,6 +48,7 @@ func NewServices(deps Deps) *Services {
 		User:        NewUserService(deps.Repos.TarelkaUser, deps.Storage),
 		Reference:   NewReferenceService(deps.Repos.Reference),
 		Storage:     deps.Storage,
-		Publication: NewPublicationService(deps.Repos.Publication, deps.Storage),
+		Publication: NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),
+		Activity:    activitySvc,
 	}
 }

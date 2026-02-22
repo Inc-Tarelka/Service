@@ -27,12 +27,13 @@ type PublicationService interface {
 }
 
 type publicationService struct {
-	repo    repository.PublicationRepository
-	storage StorageService
+	repo            repository.PublicationRepository
+	storage         StorageService
+	activityService ActivityService
 }
 
-func NewPublicationService(repo repository.PublicationRepository, storage StorageService) PublicationService {
-	return &publicationService{repo: repo, storage: storage}
+func NewPublicationService(repo repository.PublicationRepository, storage StorageService, activitySvc ActivityService) PublicationService {
+	return &publicationService{repo: repo, storage: storage, activityService: activitySvc}
 }
 
 func (s *publicationService) CreatePublication(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error) {
@@ -55,7 +56,15 @@ func (s *publicationService) CreatePublication(ctx context.Context, authorID int
 			return 0, errors.New("budget_negative")
 		}
 	}
-	return s.repo.Create(ctx, authorID, req)
+	pubID, err := s.repo.Create(ctx, authorID, req)
+	if err != nil {
+		return 0, err
+	}
+	// Log activity, but don't fail the main flow if analytics logging fails
+	if s.activityService != nil {
+		_ = s.activityService.Log(ctx, authorID, model.ActivityTypeCreatePublication)
+	}
+	return pubID, nil
 }
 
 func (s *publicationService) UpdatePublication(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error {
@@ -84,11 +93,24 @@ func (s *publicationService) AddComment(ctx context.Context, pubID int64, author
 	if content == "" {
 		return nil, errors.New("content_required")
 	}
-	return s.repo.AddComment(ctx, pubID, authorID, content)
+	comment, err := s.repo.AddComment(ctx, pubID, authorID, content)
+	if err != nil {
+		return nil, err
+	}
+	if s.activityService != nil {
+		_ = s.activityService.Log(ctx, authorID, model.ActivityTypeComment)
+	}
+	return comment, nil
 }
 
 func (s *publicationService) LikePublication(ctx context.Context, pubID int64, authorID int64) error {
-	return s.repo.AddLike(ctx, pubID, authorID)
+	if err := s.repo.AddLike(ctx, pubID, authorID); err != nil {
+		return err
+	}
+	if s.activityService != nil {
+		_ = s.activityService.Log(ctx, authorID, model.ActivityTypeLike)
+	}
+	return nil
 }
 
 // PresignPublicationImages generates presigned URLs for uploading multiple images.

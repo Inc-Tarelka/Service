@@ -11,6 +11,7 @@ type Repositories struct {
 	Reference   ReferenceRepository
 	Token       TokenRepository
 	Publication PublicationRepository
+	Activity    ActivityRepository
 }
 
 // NewRepositories создаёт все репозитории
@@ -21,5 +22,6 @@ func NewRepositories(pool *pgxpool.Pool) *Repositories {
 		Reference:   NewReferenceRepository(pool),
 		Token:       NewTokenRepository(pool),
 		Publication: NewPublicationRepository(pool),
+		Activity:    NewActivityRepository(pool),
 	}
 }
