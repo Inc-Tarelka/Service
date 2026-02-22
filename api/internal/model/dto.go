@@ -38,6 +38,19 @@ type RegisterResponse struct {
 	UserID       int64  `json:"userId"`
 }
 
+// PreRegisterRequest - предварительный шаг регистрации (stage 0)
+// Создаёт базовую учётку с username/phone/password и initData без проверки кода телефона и без выдачи токенов.
+type PreRegisterRequest struct {
+	InitData string      `json:"initData" binding:"required"`
+	Account  AccountData `json:"account" binding:"required"`
+}
+
+// PreRegisterResponse - ответ на предварительную регистрацию
+// Возвращает ID созданного пользователя, чтобы фронт мог ссылаться на него при следующих шагах.
+type PreRegisterResponse struct {
+	UserID int64 `json:"userId"`
+}
+
 // RefreshRequest - запрос на обновление токена
 type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken" binding:"required"`

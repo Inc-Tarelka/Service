@@ -309,6 +309,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/pre-register": {
+            "post": {
+                "description": "Создаёт черновой аккаунт (stage 0) по initData и данным аккаунта без проверки кода телефона и без выдачи токенов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Предварительная регистрация через Telegram",
+                "parameters": [
+                    {
+                        "description": "Данные предварительной регистрации",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PreRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.PreRegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "description": "Обновление access token с помощью refresh token",
@@ -2427,6 +2479,29 @@ const docTemplate = `{
                 }
             }
         },
+        "model.PreRegisterRequest": {
+            "type": "object",
+            "required": [
+                "account",
+                "initData"
+            ],
+            "properties": {
+                "account": {
+                    "$ref": "#/definitions/model.AccountData"
+                },
+                "initData": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PreRegisterResponse": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "model.PresignPublicationImagesRequest": {
             "type": "object",
             "required": [
@@ -2765,6 +2840,13 @@ const docTemplate = `{
                     "description": "Short bio / about me",
                     "type": "string"
                 },
+                "conversation": {
+                    "type": "integer"
+                },
+                "conversation_updated_at": {
+                    "description": "ConversationUpdatedAt — when conversation stage was last changed",
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2822,6 +2904,13 @@ const docTemplate = `{
                 },
                 "company": {
                     "$ref": "#/definitions/model.TarelkaCompany"
+                },
+                "conversation": {
+                    "type": "integer"
+                },
+                "conversation_updated_at": {
+                    "description": "ConversationUpdatedAt — when conversation stage was last changed",
+                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"

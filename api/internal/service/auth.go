@@ -43,7 +43,10 @@ const (
 )
 
 type AuthService interface {
+	// RegisterViaTelegram завершает регистрацию через Telegram Mini App (stage 1/2)
 	RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error)
+	// PreRegister создаёт базового пользователя (stage 0) по initData и учётным данным
+	PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error)
 	Login(ctx context.Context, req *model.LoginRequest) (*model.LoginResponse, error)
 	RefreshTokens(ctx context.Context, refreshToken string) (*model.RefreshResponse, error)
 	ValidateAccessToken(token string) (*model.JWTClaims, error)
@@ -99,9 +102,17 @@ func NewAuthService(
 	}
 }
 
-// RegisterViaTelegram регистрация через Telegram Mini App
-func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
-	// 1. Валидация initData
+// PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
+// На этом шаге:
+//   - валидируем initData и получаем telegramID
+//   - проверяем уникальность username
+//   - создаём или находим tg_user
+//   - хэшируем пароль
+//   - создаём tarelka_user с conversation = 0 без подтипа и связей
+//
+// Токены здесь НЕ выдаются.
+func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error) {
+	// 1. Валидация initData и извлечение telegramID
 	telegramID, err := s.validateInitData(req.InitData)
 	if err != nil {
 		return nil, err
@@ -116,25 +127,57 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, ErrUserExists
 	}
 
-	// 3. Проверка телефона: формат и верификация через Telegram Gateway
+	// 3. Базовая валидация и нормализация телефона (без проверки кода)
+	var phonePtr *string
 	if req.Account.Phone != "" {
 		if !isValidPhone(req.Account.Phone) {
 			return nil, fmt.Errorf("invalid phone format")
 		}
-		ok, phoneFromGateway, err := s.verifyPhoneWithGateway(ctx, req.PhoneVerification.RequestID, req.PhoneVerification.Code)
-		if err != nil {
-			return nil, fmt.Errorf("phone verification error: %w", err)
-		}
-		if !ok {
-			return nil, fmt.Errorf("phone not verified")
-		}
-		// Сравнить номер из gateway с указанным телефоном (нормализация)
-		if normalizePhone(phoneFromGateway) != normalizePhone(req.Account.Phone) {
-			return nil, fmt.Errorf("phone mismatch")
-		}
+		norm := normalizePhone(req.Account.Phone)
+		phonePtr = &norm
 	}
 
-	// 4. Проверка существования справочников
+	// 4. Найти или создать tg_user
+	tgUser, err := s.tgUserRepo.FindOrCreate(ctx, telegramID)
+	if err != nil {
+		return nil, fmt.Errorf("find or create tg user: %w", err)
+	}
+
+	// 5. Хэширование пароля
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Account.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+
+	// 6. Создание tarelka_user с conversation = 0
+	user := &model.TarelkaUser{
+		TgUserID:     tgUser.TelegramID,
+		Type:         req.Account.Type,
+		Username:     req.Account.Username,
+		Phone:        phonePtr,
+		PasswordHash: string(passwordHash),
+		Conversation: 0,
+	}
+
+	user, err = s.tarelkaUserRepo.Create(ctx, user)
+	if err != nil {
+		return nil, fmt.Errorf("create tarelka user (pre-register): %w", err)
+	}
+
+	return &model.PreRegisterResponse{UserID: user.ID}, nil
+}
+
+// RegisterViaTelegram регистрация через Telegram Mini App
+
+func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
+	// 1. Валидация initData
+	telegramID, err := s.validateInitData(req.InitData)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Проверка существования справочников
+	var exists bool
 	if len(req.SpecializationIDs) > 0 {
 		exists, err = s.referenceRepo.SpecializationsExist(ctx, req.SpecializationIDs)
 		if err != nil || !exists {
@@ -156,39 +199,30 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		}
 	}
 
-	// 5. Найти или создать tg_user
-	tgUser, err := s.tgUserRepo.FindOrCreate(ctx, telegramID)
+	// 4. Найти существующего пользователя после pre-register
+	tarelkaUser, err := s.tarelkaUserRepo.FindByUsername(ctx, req.Account.Username)
 	if err != nil {
-		return nil, fmt.Errorf("find or create tg user: %w", err)
+		return nil, fmt.Errorf("find preregistered user: %w", err)
 	}
 
-	// 6. Хэширование пароля
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Account.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+	// Дополнительная защита: убеждаемся, что пользователь привязан к тому же Telegram ID
+	if tarelkaUser.TgUserID != telegramID {
+		return nil, fmt.Errorf("invalid_initData_for_username")
 	}
 
-	// 7. Создание tarelka_user
-	tarelkaUser := &model.TarelkaUser{
-		TgUserID: tgUser.TelegramID,
-		Type:     req.Account.Type,
-		Username: req.Account.Username,
-		Phone: func(p string) *string {
-			if p == "" {
-				return nil
-			}
-			v := normalizePhone(p)
-			return &v
-		}(req.Account.Phone),
-		PasswordHash: string(passwordHash),
+	// Обновляем телефон (он к этому моменту уже прошёл проверку через шлюз)
+	if req.Account.Phone != "" {
+		normalized := normalizePhone(req.Account.Phone)
+		tarelkaUser.Phone = &normalized
 	}
 
-	tarelkaUser, err = s.tarelkaUserRepo.Create(ctx, tarelkaUser)
-	if err != nil {
-		return nil, fmt.Errorf("create tarelka user: %w", err)
+	// 5. Определяем целевой stage по профилю
+	stage := 1
+	if strings.TrimSpace(req.Account.Name) != "" && strings.TrimSpace(req.Account.Surname) != "" {
+		stage = 2
 	}
 
-	// 8. Создание subtype
+	// 6. Создание subtype на основе уже существующего tarelka_user
 	switch req.Account.Type {
 	case model.AccountTypePerson:
 		person := &model.TarelkaPerson{
@@ -211,7 +245,7 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, ErrInvalidAccountType
 	}
 
-	// 9. Создание связей
+	// 7. Создание связей
 	if err := s.tarelkaUserRepo.AddSpecializations(ctx, tarelkaUser.ID, req.SpecializationIDs); err != nil {
 		return nil, fmt.Errorf("add specializations: %w", err)
 	}
@@ -222,7 +256,12 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, fmt.Errorf("add cities: %w", err)
 	}
 
-	// 10. Генерация токенов
+	// 8. Обновляем стадию conversation: 1 или 2 в зависимости от профиля
+	if err := s.tarelkaUserRepo.UpdateConversation(ctx, tarelkaUser.ID, stage); err != nil {
+		return nil, fmt.Errorf("update conversation: %w", err)
+	}
+
+	// 9. Генерация токенов
 	tokens, err := s.generateTokenPair(ctx, tarelkaUser.ID, tarelkaUser.Type)
 	if err != nil {
 		return nil, fmt.Errorf("generate tokens: %w", err)

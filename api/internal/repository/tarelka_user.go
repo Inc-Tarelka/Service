@@ -27,6 +27,8 @@ type TarelkaUserRepository interface {
 	UpdatePasswordHash(ctx context.Context, userID int64, newHash string) error
 	UpdateLogoURL(ctx context.Context, userID int64, url string) error
 	UpdateWallpaperURL(ctx context.Context, userID int64, url string) error
+	// UpdateConversation bumps user's conversation stage to at least the given value
+	UpdateConversation(ctx context.Context, userID int64, stage int) error
 	// UpdateProfile updates profile fields (bio, find_work, education). Pass nil for fields that shouldn't be changed.
 	UpdateProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error
 	// Delete user and related rows
@@ -69,9 +71,9 @@ func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 
 func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error) {
 	query := `
-		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
 	`
 
 	err := r.pool.QueryRow(ctx, query,
@@ -82,6 +84,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		user.PasswordHash,
 		user.LogoURL,
 		user.TelegramURL,
+		user.Conversation,
 	).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -91,6 +94,8 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -101,7 +106,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 
 func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
 		FROM tarelka_users WHERE id = $1
 	`
 
@@ -115,6 +120,8 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -128,7 +135,7 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 
 func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username string) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
 		FROM tarelka_users WHERE username = $1
 	`
 
@@ -142,6 +149,8 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -382,7 +391,7 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 	offPos := len(args) + 2
 	query := fmt.Sprintf(`
 		SELECT 
-			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
 			p.name, p.surname, c.company_name
 		FROM tarelka_users u
 		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
@@ -407,7 +416,7 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 			companyName   *string
 		)
 		if err := rows.Scan(
-			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
 			&name, &surname, &companyName,
 		); err != nil {
 			return nil, err
@@ -437,7 +446,7 @@ func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, 
 	pattern := "%" + handle + "%"
 	query := `
 		SELECT 
-			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
 			p.name, p.surname, c.company_name
 		FROM tarelka_users u
 		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
@@ -461,7 +470,7 @@ func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, 
 			companyName   *string
 		)
 		if err := rows.Scan(
-			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
 			&name, &surname, &companyName,
 		); err != nil {
 			return nil, err
@@ -553,7 +562,7 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (u.id)
-			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.created_at,
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
 			p.name, p.surname, c.company_name
 		FROM tarelka_users u
 		%s
@@ -577,7 +586,7 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 			companyName         *string
 		)
 		if err := rows.Scan(
-			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.CreatedAt,
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
 			&namePtr, &surnamePtr, &companyName,
 		); err != nil {
 			return nil, err
@@ -641,6 +650,20 @@ func (r *tarelkaUserRepository) UpdateLogoURL(ctx context.Context, userID int64,
 func (r *tarelkaUserRepository) UpdateWallpaperURL(ctx context.Context, userID int64, url string) error {
 	query := `UPDATE tarelka_users SET wallpaper_url = $1 WHERE id = $2`
 	cmd, err := r.pool.Exec(ctx, query, url, userID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateConversation обновляет стадию conversation пользователя, не понижая её.
+// Использует GREATEST, чтобы гарантировать монотонный рост стадии.
+func (r *tarelkaUserRepository) UpdateConversation(ctx context.Context, userID int64, stage int) error {
+	query := `UPDATE tarelka_users SET conversation = GREATEST(conversation, $1), conversation_updated_at = NOW() WHERE id = $2`
+	cmd, err := r.pool.Exec(ctx, query, stage, userID)
 	if err != nil {
 		return err
 	}

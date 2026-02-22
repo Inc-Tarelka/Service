@@ -303,6 +303,21 @@ definitions:
       verificationRequestId:
         type: string
     type: object
+  model.PreRegisterRequest:
+    properties:
+      account:
+        $ref: '#/definitions/model.AccountData'
+      initData:
+        type: string
+    required:
+    - account
+    - initData
+    type: object
+  model.PreRegisterResponse:
+    properties:
+      userId:
+        type: integer
+    type: object
   model.PresignPublicationImagesRequest:
     properties:
       files:
@@ -524,6 +539,11 @@ definitions:
       bio:
         description: Short bio / about me
         type: string
+      conversation:
+        type: integer
+      conversation_updated_at:
+        description: ConversationUpdatedAt — when conversation stage was last changed
+        type: string
       created_at:
         type: string
       education:
@@ -562,6 +582,11 @@ definitions:
         type: array
       company:
         $ref: '#/definitions/model.TarelkaCompany'
+      conversation:
+        type: integer
+      conversation_updated_at:
+        description: ConversationUpdatedAt — when conversation stage was last changed
+        type: string
       created_at:
         type: string
       directions:
@@ -826,6 +851,41 @@ paths:
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       summary: Проверка кода телефона (ранний шаг)
+      tags:
+      - auth
+  /auth/pre-register:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт черновой аккаунт (stage 0) по initData и данным аккаунта
+        без проверки кода телефона и без выдачи токенов
+      parameters:
+      - description: Данные предварительной регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PreRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.PreRegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Предварительная регистрация через Telegram
       tags:
       - auth
   /auth/refresh:

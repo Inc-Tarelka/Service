@@ -144,6 +144,8 @@ func (s *userService) ConfirmWallpaperUpload(ctx context.Context, userID int64, 
 	if err := s.tarelkaUserRepo.UpdateWallpaperURL(ctx, userID, wallpaperURL); err != nil {
 		return "", err
 	}
+	// Any successful wallpaper update is treated as a meaningful profile change
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
 	return wallpaperURL, nil
 }
 
@@ -155,12 +157,22 @@ func (s *userService) SetWallpaperURLFromExternal(ctx context.Context, userID in
 	if !strings.HasPrefix(url, "https://") {
 		return fmt.Errorf("url must be https")
 	}
-	return s.tarelkaUserRepo.UpdateWallpaperURL(ctx, userID, url)
+	if err := s.tarelkaUserRepo.UpdateWallpaperURL(ctx, userID, url); err != nil {
+		return err
+	}
+	// Treat external wallpaper URL as profile enrichment
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
+	return nil
 }
 
 // UpdateUserProfile updates bio/find_work/education
 func (s *userService) UpdateUserProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error {
-	return s.tarelkaUserRepo.UpdateProfile(ctx, userID, bio, findWork, education)
+	if err := s.tarelkaUserRepo.UpdateProfile(ctx, userID, bio, findWork, education); err != nil {
+		return err
+	}
+	// Variant A (simple): any profile update is considered a signal to move to stage 2
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
+	return nil
 }
 
 // DeleteUser deletes user account and related data
@@ -186,6 +198,8 @@ func (s *userService) ConfirmLogoUpload(ctx context.Context, userID int64, key s
 	if err := s.tarelkaUserRepo.UpdateLogoURL(ctx, userID, logoURL); err != nil {
 		return "", err
 	}
+	// Logo upload is a strong signal of profile completion
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
 	return logoURL, nil
 }
 
@@ -200,7 +214,12 @@ func (s *userService) SetLogoURLFromExternal(ctx context.Context, userID int64, 
 	}
 	// Optional: domain allowlist (e.g., t.me, telegram.org)
 	// For now, accept any https; can be tightened later.
-	return s.tarelkaUserRepo.UpdateLogoURL(ctx, userID, url)
+	if err := s.tarelkaUserRepo.UpdateLogoURL(ctx, userID, url); err != nil {
+		return err
+	}
+	// Setting external logo also indicates profile enrichment
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
+	return nil
 }
 
 // mimeExtFromContentType provides a conservative file extension from MIME type

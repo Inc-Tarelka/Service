@@ -41,6 +41,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		// Auth routes (public)
 		auth := api.Group("/auth")
 		{
+			auth.POST("/pre-register", h.auth.PreRegister)
 			auth.POST("/telegram/register", h.auth.RegisterViaTelegram)
 			auth.POST("/login", h.auth.Login)
 			auth.POST("/refresh", h.auth.Refresh)
