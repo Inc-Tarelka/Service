@@ -44,7 +44,7 @@ export const ProfileFilters = observer(
             }
             placeholder="Выберите специализацию"
             data={specializationsData}
-            radius={24}
+            radius={16}
             size="lg"
             searchable
             clearable
@@ -94,7 +94,7 @@ export const ProfileFilters = observer(
             }
             placeholder="Выберите статус"
             data={WORKING_STATUS_OPTIONS}
-            radius={24}
+            radius={16}
             size="lg"
             clearable
           />

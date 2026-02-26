@@ -22,7 +22,7 @@ export const ProfileListingList = (props: ProfileListingListProps) => {
     );
   }
 
-  if (users.length === 0) {
+  if (!users || users.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>

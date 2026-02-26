@@ -149,7 +149,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Введите название"
-                radius={24}
+                radius={16}
                 size="lg"
               />
             </div>
@@ -169,7 +169,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                   setDescription(value);
                 }}
                 placeholder="Опишите вакансию или потребность в услуге"
-                radius={24}
+                radius={16}
                 size="lg"
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 autosize
@@ -191,7 +191,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
-                radius={24}
+                radius={16}
                 size="lg"
                 searchable
                 clearable={false}
@@ -252,7 +252,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                     <RubIcon />
                   </span>
                 }
-                radius={24}
+                radius={16}
                 size="lg"
               />
             </div>
@@ -263,7 +263,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
               onClick={onClose}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <ArrowLeftIcon />
             </ActionIcon>
@@ -291,7 +291,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
               onClick={onDelete}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <TrashIcon />
             </ActionIcon>

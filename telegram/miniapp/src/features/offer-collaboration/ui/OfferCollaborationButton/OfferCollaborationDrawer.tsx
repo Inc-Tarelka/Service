@@ -78,7 +78,7 @@ export const OfferCollaborationDrawer = ({
               input: {
                 border: '2px solid var(--card-bg)',
                 backgroundColor: 'var(--tertiary-bg-color)',
-                borderRadius: '24px',
+                borderRadius: '16px',
                 color: 'var(--text-color)',
                 padding: '16px',
                 fontSize: '16px',
@@ -92,7 +92,7 @@ export const OfferCollaborationDrawer = ({
             onClick={onClose}
             variant="outline"
             size={48}
-            radius="40"
+            radius="16"
             styles={{
               root: {
                 border: '1px solid var(--inverted-bg-color)',

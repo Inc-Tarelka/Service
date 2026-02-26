@@ -80,7 +80,7 @@ export const mantineTheme = createTheme({
     sm: '8px',
     md: '12px',
     lg: '16px',
-    xl: '24px',
+    xl: '16px',
   },
 
   // Размеры шрифтов (соответствие SCSS переменным)

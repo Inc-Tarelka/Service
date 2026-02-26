@@ -83,7 +83,7 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
         </div>
 
         <div className={classes.footer}>
-          <ActionIcon variant="outline" size={48} radius="40" onClick={onClose}>
+          <ActionIcon variant="outline" size={48} radius="16" onClick={onClose}>
             <XIcon />
           </ActionIcon>
           <Button
@@ -97,7 +97,7 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
           >
             Закрыть потребность
           </Button>
-          <ActionIcon variant="outline" size={48} radius="40" onClick={onEdit}>
+          <ActionIcon variant="outline" size={48} radius="16" onClick={onEdit}>
             <EditIcon />
           </ActionIcon>
         </div>

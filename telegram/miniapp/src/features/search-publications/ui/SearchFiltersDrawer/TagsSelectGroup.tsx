@@ -30,7 +30,7 @@ export const TagsSelectGroup = ({
         }
         placeholder="Выберите из списка"
         data={availableTags}
-        radius={24}
+        radius={16}
         size="lg"
         searchable
         clearable={false}

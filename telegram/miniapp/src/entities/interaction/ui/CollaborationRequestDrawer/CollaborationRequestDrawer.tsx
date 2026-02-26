@@ -114,7 +114,7 @@ export const CollaborationRequestDrawer = ({
               onClick={onClose}
               variant="outline"
               size={48}
-              radius={40}
+              radius={16}
             >
               <XIcon />
             </ActionIcon>

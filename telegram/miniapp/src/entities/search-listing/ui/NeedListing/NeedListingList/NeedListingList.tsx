@@ -22,7 +22,7 @@ export const NeedListingList = (props: NeedListingListProps) => {
     );
   }
 
-  if (needs.length === 0) {
+  if (!needs || needs.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>

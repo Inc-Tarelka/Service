@@ -66,7 +66,7 @@ export const NeedDetailsDrawer = (props: NeedDetailsDrawerProps) => {
         </div>
 
         <div className={classes.footer}>
-          <ActionIcon variant="outline" size={48} radius="40" onClick={onClose}>
+          <ActionIcon variant="outline" size={48} radius="16" onClick={onClose}>
             <XIcon />
           </ActionIcon>
           <Button

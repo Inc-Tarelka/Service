@@ -366,7 +366,7 @@ export const PostPage = observer(() => {
             onClick={handleCloseGallerySheet}
             variant="outline"
             size={48}
-            radius="40"
+            radius="16"
           >
             <XIcon />
           </ActionIcon>

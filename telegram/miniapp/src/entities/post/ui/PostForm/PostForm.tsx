@@ -82,7 +82,7 @@ export const PostForm = observer((props: PostFormProps) => {
           value={values.title}
           onChange={(e) => onChange('title', e.target.value)}
           placeholder="Введите название"
-          radius={40}
+          radius={16}
           size="lg"
         />
       </div>
@@ -102,7 +102,7 @@ export const PostForm = observer((props: PostFormProps) => {
             onChange('description', value);
           }}
           placeholder="Опишите свой проект или услугу"
-          radius={24}
+          radius={16}
           size="lg"
           maxLength={MAX_DESCRIPTION_LENGTH}
           autosize
@@ -147,7 +147,7 @@ export const PostForm = observer((props: PostFormProps) => {
           nothingFoundMessage={
             tagsLoading ? <SpecializationsListSkeleton /> : 'Ничего не найдено'
           }
-          radius={40}
+          radius={16}
           size="lg"
           searchable
           clearable={false}
@@ -176,7 +176,7 @@ export const PostForm = observer((props: PostFormProps) => {
               'Ничего не найдено'
             )
           }
-          radius={40}
+          radius={16}
           size="lg"
           searchable
           filter={({ options, search }) => {

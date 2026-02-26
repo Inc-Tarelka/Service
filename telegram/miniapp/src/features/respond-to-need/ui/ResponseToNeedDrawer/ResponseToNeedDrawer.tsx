@@ -101,7 +101,7 @@ export const ResponseToNeedDrawer = ({
             onClick={handleBack}
             variant="outline"
             size={48}
-            radius="40"
+            radius="16"
           >
             <ArrowLeftIcon />
           </ActionIcon>

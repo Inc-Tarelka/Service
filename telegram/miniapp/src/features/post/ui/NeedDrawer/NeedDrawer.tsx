@@ -141,7 +141,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 value={values.title}
                 onChange={handleInputChange('title')}
                 placeholder="Введите название"
-                radius={24}
+                radius={16}
                 size="lg"
                 error={errors.title}
               />
@@ -164,7 +164,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                   handleChange('description', value);
                 }}
                 placeholder="Опишите вакансию или потребность в услуге"
-                radius={24}
+                radius={16}
                 size="lg"
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 autosize
@@ -187,7 +187,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
-                radius={24}
+                radius={16}
                 size="lg"
                 searchable
                 clearable={false}
@@ -252,7 +252,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                     <RubIcon />
                   </span>
                 }
-                radius={24}
+                radius={16}
                 size="lg"
                 error={errors.budget}
               />
@@ -264,7 +264,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               onClick={onClose}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <XIcon />
             </ActionIcon>

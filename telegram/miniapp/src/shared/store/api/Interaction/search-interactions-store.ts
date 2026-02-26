@@ -19,12 +19,6 @@ export class SearchInteractionsStore {
     query: string,
     filters: SearchPublicationsParams,
   ) => {
-    // Query limit check removed to allow default search results
-    // if (!query || query.length < 3) {
-    //   this.rootStore.searchPublicationStore.reset();
-    //   return;
-    // }
-
     if (activeTab === SearchPublicationsType.NEED) {
       const needsParams: SearchNeedsParams = {
         name: query,
@@ -47,7 +41,7 @@ export class SearchInteractionsStore {
       this.rootStore.searchServicesStore.searchServicesAction(serviceParams);
     } else if (activeTab === SearchPublicationsType.PROFILE) {
       const userParams: SearchUsersParams = {
-        query: query,
+        name: query,
         cityId: filters.cityId,
         limit: 20,
         offset: 0,

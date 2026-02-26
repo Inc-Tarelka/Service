@@ -1,5 +1,5 @@
 export interface SearchUsersParams {
-  query?: string;
+  name?: string;
   cityId?: number;
   specializationId?: number;
   limit?: number;

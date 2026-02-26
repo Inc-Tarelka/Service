@@ -22,7 +22,7 @@ export const ServiceListingList = (props: ServiceListingListProps) => {
     );
   }
 
-  if (services.length === 0) {
+  if (!services || services.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>
