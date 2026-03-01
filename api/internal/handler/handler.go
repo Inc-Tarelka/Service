@@ -89,6 +89,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			pubs := protected.Group("/publications")
 			{
 				pubs.POST("", h.publication.CreatePublication)
+				pubs.GET(":id", h.publication.GetPublication)
 				pubs.PUT(":id", h.publication.UpdatePublication)
 				pubs.POST(":id/comments", h.publication.AddComment)
 				pubs.POST(":id/likes", h.publication.LikePublication)

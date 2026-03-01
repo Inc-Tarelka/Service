@@ -19,6 +19,45 @@ func NewPublicationHandler(svc service.PublicationService) *PublicationHandler {
 	return &PublicationHandler{svc: svc}
 }
 
+// GetPublication godoc
+// @Summary Получить публикацию по ID
+// @Description Возвращает детали публикации с лайками, комментариями, автором, соавторами и потребностями
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Success 200 {object} model.Publication
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id} [get]
+func (h *PublicationHandler) GetPublication(c *gin.Context) {
+	if _, exists := c.Get("user_id"); !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	pub, err := h.svc.GetPublication(c.Request.Context(), id)
+	if err != nil {
+		if err.Error() == "publication not found" {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, pub)
+}
+
 // CreatePublication godoc
 // @Summary Создать публикацию
 // @Tags publications

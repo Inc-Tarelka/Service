@@ -24,6 +24,8 @@ type PublicationService interface {
 	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional params
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
+	// GetPublication returns single publication by id
+	GetPublication(ctx context.Context, id int64) (*model.Publication, error)
 }
 
 type publicationService struct {
@@ -174,6 +176,11 @@ func (s *publicationService) AttachPublicationImages(ctx context.Context, pubID 
 		imgs = append(imgs, model.PublicationImage{URL: url, Position: pos})
 	}
 	return s.repo.AddImages(ctx, pubID, authorID, imgs)
+}
+
+// GetPublication fetches single publication by id via repository.
+func (s *publicationService) GetPublication(ctx context.Context, id int64) (*model.Publication, error) {
+	return s.repo.GetByID(ctx, id)
 }
 
 // SearchPublications delegates to repository with minimal validation

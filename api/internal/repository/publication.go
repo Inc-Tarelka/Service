@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Inc-Tarelka/api/internal/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,6 +26,8 @@ type PublicationRepository interface {
 	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional criteria
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
+	// GetByID returns a single publication by id with details
+	GetByID(ctx context.Context, id int64) (*model.Publication, error)
 }
 
 type publicationRepository struct {
@@ -33,6 +36,67 @@ type publicationRepository struct {
 
 func NewPublicationRepository(pool *pgxpool.Pool) PublicationRepository {
 	return &publicationRepository{pool: pool}
+}
+
+// GetByID returns a single publication by id with aggregated likes/comments and top image.
+func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.Publication, error) {
+	row := r.pool.QueryRow(ctx, `
+		SELECT 
+			p.id,
+			p.author_id,
+			u.first_name,
+			u.last_name,
+			p.name,
+			p.description,
+			p.type,
+			p.city_id,
+			COALESCE(lc.cnt, 0) AS likes_count,
+			COALESCE(cc.cnt, 0) AS comments_count,
+			ti.url AS top_image_url,
+			u.telegram_url AS author_telegram_url,
+			p.created_at
+		FROM publications p
+		JOIN tarelka_users u ON u.id = p.author_id
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
+		) lc ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
+		) cc ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+		) ti ON TRUE
+		WHERE p.id = $1
+	`, id)
+
+	var p model.Publication
+	var topImageURL *string
+	var authorTelegramURL *string
+
+	if err := row.Scan(
+		&p.ID,
+		&p.AuthorID,
+		&p.AuthorFirstName,
+		&p.AuthorLastName,
+		&p.Name,
+		&p.Description,
+		&p.Type,
+		&p.CityID,
+		&p.LikesCount,
+		&p.CommentsCount,
+		&topImageURL,
+		&authorTelegramURL,
+		&p.CreatedAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrPublicationNotFound
+		}
+		return nil, err
+	}
+
+	p.TopImageURL = topImageURL
+	p.AuthorTelegramURL = authorTelegramURL
+	return &p, nil
 }
 
 func (r *publicationRepository) Create(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error) {

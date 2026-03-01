@@ -367,8 +367,12 @@ definitions:
     type: object
   model.Publication:
     properties:
+      authorFirstName:
+        type: string
       authorId:
         type: integer
+      authorLastName:
+        type: string
       authorTelegramUrl:
         description: AuthorTelegramURL — ссылка на Telegram автора, если задано
         type: string
@@ -990,6 +994,43 @@ paths:
       tags:
       - publications
   /publications/{id}:
+    get:
+      description: Возвращает детали публикации с лайками, комментариями, автором,
+        соавторами и потребностями
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Publication'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить публикацию по ID
+      tags:
+      - publications
     put:
       parameters:
       - description: ID публикации

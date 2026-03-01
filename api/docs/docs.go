@@ -836,6 +836,62 @@ const docTemplate = `{
             }
         },
         "/publications/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает детали публикации с лайками, комментариями, автором, соавторами и потребностями",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Получить публикацию по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Publication"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -2578,8 +2634,14 @@ const docTemplate = `{
         "model.Publication": {
             "type": "object",
             "properties": {
+                "authorFirstName": {
+                    "type": "string"
+                },
                 "authorId": {
                     "type": "integer"
+                },
+                "authorLastName": {
+                    "type": "string"
                 },
                 "authorTelegramUrl": {
                     "description": "AuthorTelegramURL — ссылка на Telegram автора, если задано",
