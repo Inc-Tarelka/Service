@@ -44,8 +44,8 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 		SELECT 
 			p.id,
 			p.author_id,
-			u.name,
-			u.surname,
+			tp.name,
+			tp.surname,
 			p.name,
 			p.description,
 			p.type,
@@ -57,6 +57,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 			p.created_at
 		FROM publications p
 		JOIN tarelka_users u ON u.id = p.author_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
 		LEFT JOIN LATERAL (
 			SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
 		) lc ON TRUE
