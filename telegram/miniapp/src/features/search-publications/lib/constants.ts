@@ -5,6 +5,7 @@ export const DRAWER_SIZES: Record<SearchPublicationsType, number | string> = {
   [SearchPublicationsType.SERVICE]: 320,
   [SearchPublicationsType.NEED]: '90%',
   [SearchPublicationsType.PROJECT]: 480,
+  [SearchPublicationsType.ALL]: 480,
 };
 
 export const DRAWER_STYLES = {

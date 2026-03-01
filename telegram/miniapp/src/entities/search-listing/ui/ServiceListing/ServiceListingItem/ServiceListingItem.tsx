@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
-import EyeOpenIcon from 'shared/assets/icons/EyeOpen';
 import LikeIcon from 'shared/assets/icons/like';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import s from './ServiceListingItem.module.scss';
@@ -61,14 +60,6 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
               {formatCount(likesCount)}
             </span>
           </div>
-          <div className={s.badge}>
-            <EyeOpenIcon />
-            {service.viewsCount && service.viewsCount > 0 ? (
-              <span className={`${s.count} ${s.countVisible}`}>
-                {formatCount(service.viewsCount)}
-              </span>
-            ) : null}
-          </div>
         </div>
       </div>
 
@@ -80,7 +71,18 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
             </span>
             <span className={s.authorUsername}>@{username}</span>
           </div>
-          <span className={s.city}>{cityName}</span>
+          <div className={s.locationAndTags}>
+            <span className={s.city}>{cityName}</span>
+            {service.tags && service.tags.length > 0 && (
+              <div className={s.tagsList}>
+                {service.tags.map((tag) => (
+                  <span key={tag.id} className={s.tagItem}>
+                    #{tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={s.textSection}>

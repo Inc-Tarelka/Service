@@ -1,4 +1,4 @@
-export default function LikeIcon({ ClassNames }: { ClassNames: string }) {
+export default function LikeIcon({ ClassNames }: { ClassNames?: string }) {
   return (
     <svg
       width="24"

@@ -1,10 +1,11 @@
 import { Button, Drawer, Stack, Text } from '@mantine/core';
+import { ReactNode } from 'react';
 import classNames from 'shared/library/ClassNames/classNames';
 import s from './ActionsDrawer.module.scss';
 
 export interface ActionItem {
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   onClick: () => void;
   variant?: 'default' | 'danger';
 }
@@ -14,8 +15,10 @@ interface ActionsDrawerProps {
   onClose: () => void;
   onDelete?: () => void;
   title?: string;
+  noTitle?: boolean;
   fullWidth?: boolean;
   actions?: ActionItem[];
+  size?: number | string;
 }
 
 export const ActionsDrawer = (props: ActionsDrawerProps) => {
@@ -24,8 +27,10 @@ export const ActionsDrawer = (props: ActionsDrawerProps) => {
     onClose,
     onDelete,
     title = 'Вы уверены?',
+    noTitle,
     fullWidth,
     actions,
+    size,
   } = props;
   const handleDelete = () => {
     onDelete?.();
@@ -37,23 +42,35 @@ export const ActionsDrawer = (props: ActionsDrawerProps) => {
       opened={opened}
       onClose={onClose}
       position="bottom"
-      size={actions ? 180 : 230}
+      size={
+        size !== undefined
+          ? size
+          : actions
+            ? noTitle
+              ? 130
+              : 180
+            : noTitle
+              ? 180
+              : 230
+      }
       withCloseButton={false}
       padding={24}
       radius={40}
     >
       <Stack gap={24}>
-        <Text
-          className={classNames(
-            s.title,
-            {
-              [s.fullWidth]: fullWidth,
-            },
-            [],
-          )}
-        >
-          {title}
-        </Text>
+        {!noTitle && (
+          <Text
+            className={classNames(
+              s.title,
+              {
+                [s.fullWidth]: fullWidth,
+              },
+              [],
+            )}
+          >
+            {title}
+          </Text>
+        )}
 
         {actions ? (
           <Stack gap={24}>

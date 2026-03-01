@@ -300,7 +300,7 @@ export const PostPage = observer(() => {
             onChange={(e) => postStore.setSearchQuery(e.target.value)}
             placeholder="Поиск"
             rightSection={<SearchIcon className={classes.searchIcon} />}
-            radius={40}
+            radius={16}
             size="lg"
             classNames={{ input: classes.searchInput }}
           />
@@ -346,7 +346,7 @@ export const PostPage = observer(() => {
         withCloseButton={false}
         classNames={{
           body: classes.gallerySheetBody,
-          content: classes.gallerySheetContent,
+          content: 'drawer-fulldevice',
         }}
       >
         {galleryStore.photos.length > 0 && (

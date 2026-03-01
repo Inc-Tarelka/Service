@@ -13,16 +13,35 @@
   &:active {
     opacity: 0.8;
   }
+
+  &.compact {
+    height: auto;
+    min-height: 110px;
+  }
+}
+
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .title {
   color: var(--text-color);
+  flex: 1;
   font: var(--font-body);
   font-weight: 600;
   margin: 0;
   overflow: hidden;
+  padding-right: 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chevron {
+  color: var(--text-color-secondary);
+  flex-shrink: 0;
 }
 
 .description {

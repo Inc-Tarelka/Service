@@ -48,15 +48,15 @@ export interface SearchServiceItem {
   id: number;
   name: string;
   description: string;
-  images: ServiceImage[];
+  images?: ServiceImage[];
   tags: ServiceTag[];
   likesCount: number;
   commentsCount: number;
-  viewsCount?: number; // Added based on screenshot
+  viewsCount?: number;
   createdAt: string;
   type: 'PROJECT' | 'SERVICE';
   authorId: number;
-  authorTelegramUrl: string;
+  authorTelegramUrl?: string;
   cityId: number;
   coAuthors: ServiceAuthor[];
   needs: ServiceNeed[];

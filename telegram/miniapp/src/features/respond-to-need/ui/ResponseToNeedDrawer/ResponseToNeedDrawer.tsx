@@ -44,80 +44,73 @@ export const ResponseToNeedDrawer = ({
       withCloseButton={false}
       padding={24}
       radius={40}
-      styles={{
-        body: {
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-        },
+      classNames={{
+        body: classes.body,
+        content: 'drawer-fulldevice',
       }}
     >
-      <div className={classes.container}>
-        <div className={classes.content}>
-          <Text color="white" className={classes.title}>
-            Отклик на потребность
-          </Text>
+      <div className={classes.scrollArea}>
+        <Text color="white" className={classes.title}>
+          Отклик на потребность
+        </Text>
 
-          <Stack gap={16}>
-            <div>
+        <Stack gap={16}>
+          <div>
+            <h2 className={classes.sectionTitle}>Привязанная услуга</h2>
+            <Button
+              variant="outline"
+              fullWidth
+              radius="xl"
+              size="lg"
+              leftSection={<span style={{ fontSize: '20px' }}>+</span>}
+            >
+              Добавить
+            </Button>
+          </div>
+
+          <div>
+            <div className={classes.commentHeader}>
               <Text color="white" className={classes.sectionTitle}>
-                Привязанная услуга
+                Комментарий
               </Text>
-              <Button
-                variant="outline"
-                fullWidth
-                radius="xl"
-                size="lg"
-                leftSection={<span style={{ fontSize: '20px' }}>+</span>}
-              >
-                Добавить
-              </Button>
+              <Text className={classes.commentCounter}>
+                {comment.length}/{maxCommentLength}
+              </Text>
             </div>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.currentTarget.value)}
+              maxLength={maxCommentLength}
+              className={classes.textarea}
+              minRows={6}
+              maxRows={12}
+              autosize
+            />
+          </div>
+        </Stack>
+      </div>
 
-            <div>
-              <div className={classes.commentHeader}>
-                <Text color="white" className={classes.sectionTitle}>
-                  Комментарий
-                </Text>
-                <Text className={classes.commentCounter}>
-                  {comment.length}/{maxCommentLength}
-                </Text>
-              </div>
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.currentTarget.value)}
-                maxLength={maxCommentLength}
-                className={classes.textarea}
-                minRows={6}
-                maxRows={12}
-                autosize
-              />
-            </div>
-          </Stack>
-        </div>
-
-        <div className={classes.footer}>
-          <ActionIcon
-            onClick={handleBack}
-            variant="outline"
-            size={48}
-            radius="16"
-          >
-            <ArrowLeftIcon />
-          </ActionIcon>
-          <Button
-            className={classes.submitButton}
-            onClick={handleSubmit}
-            radius="xl"
-            variant="filled"
-            fullWidth
-            size="lg"
-            bg="var(--accent-color)"
-            c="var(--bg-color)"
-          >
-            Отправить
-          </Button>
-        </div>
+      <div className={classes.footer}>
+        <ActionIcon
+          onClick={handleBack}
+          variant="outline"
+          size={48}
+          radius="16"
+        >
+          <ArrowLeftIcon />
+        </ActionIcon>
+        <Button
+          className={classes.submitButton}
+          onClick={handleSubmit}
+          radius="xl"
+          variant="filled"
+          fullWidth
+          size="lg"
+          bg="var(--accent-color)"
+          c="var(--bg-color)"
+        >
+          Отправить
+        </Button>
       </div>
     </Drawer>
   );

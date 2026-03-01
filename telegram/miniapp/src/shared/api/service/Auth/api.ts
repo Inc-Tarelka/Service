@@ -7,6 +7,8 @@ import {
   LoginRequest,
   LoginResponse,
   LogoutRequest,
+  PreRegisterRequest,
+  PreRegisterResponse,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
@@ -36,8 +38,28 @@ export const logoutRequest = async (data: LogoutRequest): Promise<void> => {
 };
 
 // =============================== REGISTER ===============================
+export const preRegisterRequest = async (
+  data: PreRegisterRequest,
+): Promise<PreRegisterResponse> => {
+  const response = await publicInstance.post<PreRegisterResponse>(
+    API_URL.pre_register(),
+    data,
+  );
+  return response.data;
+};
+
 export const registerRequest = async (
   data: RegisterRequest,
+): Promise<RegisterResponse> => {
+  const response = await publicInstance.post<RegisterResponse>(
+    API_URL.telegram_register(),
+    data,
+  );
+  return response.data;
+};
+
+export const telegramRegisterRequest = async (
+  data: import('./types').TelegramRegisterRequest,
 ): Promise<RegisterResponse> => {
   const response = await publicInstance.post<RegisterResponse>(
     API_URL.telegram_register(),

@@ -60,4 +60,5 @@ export enum SearchPublicationsType {
   SERVICE = 'service',
   NEED = 'need',
   PROFILE = 'profile',
+  ALL = 'all',
 }

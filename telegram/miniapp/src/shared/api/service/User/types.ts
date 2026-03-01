@@ -60,6 +60,7 @@ export interface User {
   tags?: string[];
   status?: string;
   specialization?: string;
+  conversation?: number;
 }
 
 export interface DeleteAccountResponse {

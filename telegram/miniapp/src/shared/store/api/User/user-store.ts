@@ -1,7 +1,11 @@
 import { AxiosResponse } from 'axios';
 import { makeAutoObservable } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
-import { deleteAccount, getProfile } from 'shared/api/service/User/api';
+import {
+  deleteAccount,
+  getProfile,
+  updateProfile,
+} from 'shared/api/service/User/api';
 import { DeleteAccountResponse, User } from 'shared/api/service/User/types';
 import {
   MOCK_INTERACTIONS,
@@ -19,6 +23,8 @@ export class UserStore {
   deleteAccountData?: IPromiseBasedObservable<
     AxiosResponse<DeleteAccountResponse>
   >;
+
+  updateProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
 
   getProfileAction = async () => {
     try {
@@ -38,8 +44,29 @@ export class UserStore {
     }
   };
 
+  updateProfileAction = async (
+    data: Partial<User>,
+    userId?: number,
+  ): Promise<boolean> => {
+    try {
+      this.updateProfileData = fromPromise<AxiosResponse<User>>(
+        updateProfile(data, userId),
+      );
+      await this.updateProfileData;
+      await this.getProfileAction();
+      return true;
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      return false;
+    }
+  };
+
   get isLoadingProfile() {
     return this.profileData?.state === 'pending';
+  }
+
+  get isUpdatingProfile() {
+    return this.updateProfileData?.state === 'pending';
   }
 
   get profileError() {

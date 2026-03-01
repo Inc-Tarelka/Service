@@ -11,8 +11,11 @@ export const getUserById = async (id: string) =>
   await baseInstanceV1.get<User>(API_URL.user(id));
 
 // =============================== UPDATE PROFILE ===============================
-export const updateProfile = async (data: Partial<User>) =>
-  await baseInstanceV1.post<User>(API_URL.profile(), data);
+export const updateProfile = async (data: Partial<User>, userId?: number) =>
+  await baseInstanceV1.patch<User>(
+    userId ? API_URL.user(userId) : API_URL.profile(),
+    data,
+  );
 
 // =============================== DELETE ACCOUNT ===============================
 export const deleteAccount = async () =>

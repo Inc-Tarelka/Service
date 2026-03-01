@@ -3,9 +3,9 @@ import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
 import { useStore } from 'app/StoreProvider';
+import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
@@ -37,22 +37,29 @@ export const RegisterForm = observer(
       },
       schema: registerSchema,
       onSubmit: async (values) => {
-        const success = await verificationStore.sendCode(values.phone);
+        const success = await authStore.preRegisterAndSendCodeAction({
+          initData: WebApp.initData || '',
+          account: {
+            type: AccountType.PERSON,
+            username: values.login,
+            phone: values.phone,
+            password: values.password,
+          },
+        });
+
         if (success) {
           authStore.setTempData({
             phone: values.phone,
             login: values.login,
             password: values.password,
-            verificationRequestId: verificationStore.requestId || '',
+            accountType: AccountType.PERSON,
           });
-
-          console.log('RegisterForm saved to tempData:', authStore.tempData);
 
           onSuccess({
             phone: values.phone,
             login: values.login,
             password: values.password,
-            verificationRequestId: verificationStore.requestId,
+            verificationRequestId: authStore.tempData.verificationRequestId,
           });
         }
       },

@@ -2,6 +2,7 @@ export const API_URL = {
   // Auth
   login: () => '/auth/login',
   logout: () => '/auth/logout',
+  pre_register: () => '/auth/pre-register',
   telegram_register: () => '/auth/telegram/register',
   verify_code: () => '/auth/phone/verify',
   send_phone: () => '/auth/phone/send',

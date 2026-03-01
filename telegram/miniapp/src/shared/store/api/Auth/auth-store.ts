@@ -12,28 +12,34 @@ import {
   forgotPasswordRequest,
   loginRequest,
   logoutRequest,
+  preRegisterRequest,
   registerRequest,
   resetPasswordRequest,
   sendPhoneVerificationRequest,
+  telegramRegisterRequest,
   verifyCodeRequest,
 } from 'shared/api/service/Auth/api';
-import {
+import type {
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
+  PreRegisterRequest,
+  PreRegisterResponse,
   RegisterRequest,
   RegisterResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   SendPhoneVerificationRequest,
   SendPhoneVerificationResponse,
+  TelegramRegisterRequest,
   VerifyCodeRequest,
   VerifyCodeResponse,
 } from 'shared/api/service/Auth/types';
 
 export class AuthStore {
   loginData?: IPromiseBasedObservable<LoginResponse>;
+  preRegisterData?: IPromiseBasedObservable<PreRegisterResponse>;
   registerData?: IPromiseBasedObservable<RegisterResponse>;
   phoneVerificationData?: IPromiseBasedObservable<SendPhoneVerificationResponse>;
   codeVerificationData?: IPromiseBasedObservable<VerifyCodeResponse>;
@@ -47,6 +53,8 @@ export class AuthStore {
     phone?: string;
     login?: string;
     password?: string;
+    accountType?: string;
+    userId?: number;
     verificationRequestId?: string;
     verificationCode?: string;
     verificationToken?: string;
@@ -131,14 +139,13 @@ export class AuthStore {
   }
 
   // ================= ACTIONS =================
+
   loginAction = async (data: LoginRequest): Promise<boolean> => {
     try {
-      console.log('loginAction called with:', data);
       const promise = loginRequest(data);
       this.loginData = fromPromise(promise);
 
       const response = await promise;
-      console.log('loginAction response:', response);
 
       runInAction(() => {
         this.isAuth = true;
@@ -148,12 +155,74 @@ export class AuthStore {
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
 
-      console.log('Token saved:', this.token);
-      console.log('isAuth:', this.isAuth);
-
       return true;
     } catch (error) {
       console.error('Login error:', error);
+      return false;
+    }
+  };
+
+  preRegisterAction = async (
+    data: PreRegisterRequest,
+  ): Promise<number | null> => {
+    try {
+      const promise = preRegisterRequest(data);
+      this.preRegisterData = fromPromise(promise);
+
+      const response = await promise;
+      return response.userId;
+    } catch (error) {
+      console.error('Pre-register error:', error);
+      return null;
+    }
+  };
+
+  // Composite action: pre-register + send SMS in one step
+  preRegisterAndSendCodeAction = async (params: {
+    initData: string;
+    account: PreRegisterRequest['account'];
+  }): Promise<boolean> => {
+    try {
+      const userId = await this.preRegisterAction({
+        initData: params.initData,
+        account: params.account,
+      });
+      if (userId === null) return false;
+
+      this.setTempData({ userId });
+
+      const sendPromise = sendPhoneVerificationRequest({
+        PhoneNumber: params.account.phone,
+      });
+      this.phoneVerificationData = fromPromise(sendPromise);
+      const sendResponse = await sendPromise;
+
+      this.setTempData({ verificationRequestId: sendResponse.requestId });
+      return true;
+    } catch (error) {
+      console.error('Pre-register flow error:', error);
+      return false;
+    }
+  };
+
+  telegramRegistrationAction = async (
+    data: TelegramRegisterRequest,
+  ): Promise<boolean> => {
+    try {
+      const promise = telegramRegisterRequest(data);
+      this.registerData = fromPromise(promise);
+
+      const response = await promise;
+
+      runInAction(() => {
+        this.isAuth = true;
+        this.token = response.accessToken;
+      });
+      setAccessToken(response.accessToken);
+      setRefreshToken(response.refreshToken);
+      return true;
+    } catch (error) {
+      console.error('Telegram register error:', error);
       return false;
     }
   };
@@ -165,8 +234,10 @@ export class AuthStore {
 
       const response = await promise;
 
-      this.isAuth = true;
-      this.token = response.accessToken;
+      runInAction(() => {
+        this.isAuth = true;
+        this.token = response.accessToken;
+      });
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
       return true;
@@ -180,7 +251,8 @@ export class AuthStore {
     try {
       const promise = sendPhoneVerificationRequest(data);
       this.phoneVerificationData = fromPromise(promise);
-      await promise;
+      const response = await promise;
+      this.setTempData({ verificationRequestId: response.requestId });
     } catch (error) {
       console.error('Send phone verification error:', error);
     }

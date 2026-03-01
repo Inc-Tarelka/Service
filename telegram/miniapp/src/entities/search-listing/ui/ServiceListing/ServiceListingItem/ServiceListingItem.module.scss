@@ -42,6 +42,7 @@
   align-items: center;
   background: var(--tertiary-bg-color); 
   border: 1px solid rgb(255, 255, 255, 0.1);
+  border: 1px solid var(--card-bg);
   border-radius: 32px; 
   color: #fff;
   display: flex;
@@ -124,12 +125,31 @@
   font-weight: 400;
 }
 
+.locationAndTags {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .city {
   color: var(--text-color-secondary);
   font: var(--font-caption);
   font-weight: 400;
-  margin-left: auto;
   white-space: nowrap;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.tagItem {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
 }
 
 .textSection {

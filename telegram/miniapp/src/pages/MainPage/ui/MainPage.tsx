@@ -1,11 +1,10 @@
 import { useStore } from 'app/StoreProvider';
-import { ServiceListingDetails } from 'entities/search-listing';
 import { ResponseToNeedDrawer } from 'features/respond-to-need';
 import { SearchPublications } from 'features/search-publications';
 import { NeedDetailsDrawer } from 'features/view-need';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SearchPublicationsType } from 'shared/api/types';
 import classNames from 'shared/library/ClassNames/classNames';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher/TabsSwitcher';
@@ -28,15 +27,12 @@ export const MainPage = observer(() => {
     (searchParams.get('tab') as SearchPublicationsType) ||
     SearchPublicationsType.PROFILE;
 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] =
     useState<SearchPublicationsType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState(queryFromUrl);
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
-
-  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
-    null,
-  );
 
   const publications = searchPublicationStore.publications;
   const needs = searchNeedsStore.needs;
@@ -74,7 +70,15 @@ export const MainPage = observer(() => {
     if (activeTab === SearchPublicationsType.NEED) {
       setIsNeedDetailsOpen(true);
     } else if (activeTab === SearchPublicationsType.SERVICE) {
-      setSelectedServiceId(id);
+      const searchState = new URLSearchParams();
+      if (searchQuery) searchState.set('query', searchQuery);
+      searchState.set('tab', SearchPublicationsType.SERVICE);
+      const selectedService =
+        services.find((s) => s.id === id) ||
+        publications.find((p) => p.id === id);
+      navigate(`/service/${id}?${searchState.toString()}`, {
+        state: { service: selectedService },
+      });
     } else if (activeTab === SearchPublicationsType.PROFILE) {
       handleUserNavigation(id, searchQuery);
     } else {
@@ -91,8 +95,6 @@ export const MainPage = observer(() => {
     setIsResponseDrawerOpen(false);
     setIsNeedDetailsOpen(true);
   };
-
-  const selectedService = services.find((s) => s.id === selectedServiceId);
 
   return (
     <Page
@@ -112,6 +114,7 @@ export const MainPage = observer(() => {
             { label: 'Профили', value: SearchPublicationsType.PROFILE },
             { label: 'Услуги', value: SearchPublicationsType.SERVICE },
             { label: 'Потребности', value: SearchPublicationsType.NEED },
+            { label: 'Все', value: SearchPublicationsType.ALL },
           ]}
           activeTab={activeTab}
           className={s.tabs}
@@ -142,16 +145,6 @@ export const MainPage = observer(() => {
         onClose={() => setIsResponseDrawerOpen(false)}
         onBack={handleBackToNeedDetails}
       />
-
-      {selectedService && (
-        <ServiceListingDetails
-          service={selectedService}
-          onClose={() => setSelectedServiceId(null)}
-          onNeedClick={(id) =>
-            console.log('Need clicked from service details:', id)
-          }
-        />
-      )}
     </Page>
   );
 });
