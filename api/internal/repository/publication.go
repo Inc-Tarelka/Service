@@ -44,8 +44,8 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 		SELECT 
 			p.id,
 			p.author_id,
-			u.first_name,
-			u.last_name,
+			u.name,
+			u.surname,
 			p.name,
 			p.description,
 			p.type,
