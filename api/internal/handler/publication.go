@@ -19,6 +19,13 @@ func NewPublicationHandler(svc service.PublicationService) *PublicationHandler {
 	return &PublicationHandler{svc: svc}
 }
 
+// GetPublicationResponse is detailed response for a single publication including team and needs
+type GetPublicationResponse struct {
+	Publication *model.Publication            `json:"publication"`
+	Team        []model.PublicationTeamMember `json:"team"`
+	Needs       []model.Need                  `json:"needs"`
+}
+
 // GetPublication godoc
 // @Summary Получить публикацию по ID
 // @Description Возвращает детали публикации с лайками, комментариями, автором, соавторами и потребностями
@@ -26,7 +33,7 @@ func NewPublicationHandler(svc service.PublicationService) *PublicationHandler {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "ID публикации"
-// @Success 200 {object} model.Publication
+// @Success 200 {object} handler.GetPublicationResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 401 {object} model.ErrorResponse
 // @Failure 404 {object} model.ErrorResponse
@@ -45,7 +52,7 @@ func (h *PublicationHandler) GetPublication(c *gin.Context) {
 		return
 	}
 
-	pub, err := h.svc.GetPublication(c.Request.Context(), id)
+	pub, team, needs, err := h.svc.GetPublication(c.Request.Context(), id)
 	if err != nil {
 		if err.Error() == "publication not found" {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
@@ -55,7 +62,11 @@ func (h *PublicationHandler) GetPublication(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, pub)
+	c.JSON(http.StatusOK, GetPublicationResponse{
+		Publication: pub,
+		Team:        team,
+		Needs:       needs,
+	})
 }
 
 // CreatePublication godoc

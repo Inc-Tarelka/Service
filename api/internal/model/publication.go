@@ -33,6 +33,17 @@ type Publication struct {
 	CreatedAt         time.Time `json:"createdAt" db:"created_at"`
 }
 
+// PublicationTeamMember описывает участника команды публикации (автор или соавтор)
+type PublicationTeamMember struct {
+	UserID         int64   `json:"userId"`
+	AvatarURL      *string `json:"avatarUrl,omitempty"`
+	FirstName      string  `json:"firstName"`
+	LastName       string  `json:"lastName"`
+	Specialization *string `json:"specialization,omitempty"`
+	CityName       *string `json:"cityName,omitempty"`
+	IsAuthor       bool    `json:"isAuthor"`
+}
+
 // PublicationSearchFilters — параметры фильтрации для поиска публикаций
 type PublicationSearchFilters struct {
 	// Type — тип публикации (PROJECT | SERVICE)

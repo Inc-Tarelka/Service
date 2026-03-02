@@ -863,7 +863,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Publication"
+                            "$ref": "#/definitions/handler.GetPublicationResponse"
                         }
                     },
                     "400": {
@@ -2074,6 +2074,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.GetPublicationResponse": {
+            "type": "object",
+            "properties": {
+                "needs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Need"
+                    }
+                },
+                "publication": {
+                    "$ref": "#/definitions/model.Publication"
+                },
+                "team": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationTeamMember"
+                    }
+                }
+            }
+        },
         "model.AccountData": {
             "type": "object",
             "required": [
@@ -2723,6 +2743,32 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.PublicationTeamMember": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "cityName": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "specialization": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },

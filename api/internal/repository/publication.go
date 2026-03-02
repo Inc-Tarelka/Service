@@ -27,7 +27,7 @@ type PublicationRepository interface {
 	// SearchNeeds returns needs filtered by optional criteria
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
 	// GetByID returns a single publication by id with details
-	GetByID(ctx context.Context, id int64) (*model.Publication, error)
+	GetByID(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
 }
 
 type publicationRepository struct {
@@ -39,7 +39,7 @@ func NewPublicationRepository(pool *pgxpool.Pool) PublicationRepository {
 }
 
 // GetByID returns a single publication by id with aggregated likes/comments and top image.
-func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.Publication, error) {
+func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error) {
 	row := r.pool.QueryRow(ctx, `
 		SELECT 
 			p.id,
@@ -90,14 +90,128 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 		&p.CreatedAt,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrPublicationNotFound
+			return nil, nil, nil, ErrPublicationNotFound
 		}
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	p.TopImageURL = topImageURL
 	p.AuthorTelegramURL = authorTelegramURL
-	return &p, nil
+
+	// Load team: author + co-authors with specialization and city
+	team := make([]model.PublicationTeamMember, 0)
+
+	teamRows, err := r.pool.Query(ctx, `
+		WITH author AS (
+			SELECT 
+				u.id AS user_id,
+				tp.name,
+				tp.surname,
+				u.logo_url,
+				(
+					SELECT s.name
+					FROM user_specializations us
+					JOIN specializations s ON s.id = us.specialization_id
+					WHERE us.tarelka_user_id = u.id
+					ORDER BY us.specialization_id
+					LIMIT 1
+				) AS specialization,
+				(
+					SELECT c.name
+					FROM user_cities uc
+					JOIN cities c ON c.id = uc.city_id
+					WHERE uc.tarelka_user_id = u.id
+					ORDER BY uc.city_id
+					LIMIT 1
+				) AS city_name,
+				TRUE AS is_author
+			FROM publications p
+			JOIN tarelka_users u ON u.id = p.author_id
+			LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+			WHERE p.id = $1
+		),
+		coauthors AS (
+			SELECT 
+				u.id AS user_id,
+				tp.name,
+				tp.surname,
+				u.logo_url,
+				(
+					SELECT s.name
+					FROM user_specializations us
+					JOIN specializations s ON s.id = us.specialization_id
+					WHERE us.tarelka_user_id = u.id
+					ORDER BY us.specialization_id
+					LIMIT 1
+				) AS specialization,
+				(
+					SELECT c.name
+					FROM user_cities uc
+					JOIN cities c ON c.id = uc.city_id
+					WHERE uc.tarelka_user_id = u.id
+					ORDER BY uc.city_id
+					LIMIT 1
+				) AS city_name,
+				FALSE AS is_author
+			FROM publication_co_authors pca
+			JOIN tarelka_users u ON u.id = pca.user_id
+			LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+			WHERE pca.publication_id = $1
+		)
+		SELECT * FROM author
+		UNION ALL
+		SELECT * FROM coauthors
+	`, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer teamRows.Close()
+
+	for teamRows.Next() {
+		var m model.PublicationTeamMember
+		var avatarURL *string
+		var spec *string
+		var cityName *string
+		if err := teamRows.Scan(&m.UserID, &m.FirstName, &m.LastName, &avatarURL, &spec, &cityName, &m.IsAuthor); err != nil {
+			return nil, nil, nil, err
+		}
+		m.AvatarURL = avatarURL
+		m.Specialization = spec
+		m.CityName = cityName
+		team = append(team, m)
+	}
+
+	// Load needs for this publication
+	needRows, err := r.pool.Query(ctx, `
+		SELECT id, publication_id, name, description, budget, deadline_start, deadline_end, city_id
+		FROM needs
+		WHERE publication_id = $1
+		ORDER BY id
+	`, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer needRows.Close()
+
+	needs := make([]model.Need, 0)
+	for needRows.Next() {
+		var n model.Need
+		if err := needRows.Scan(
+			&n.ID,
+			&n.PublicationID,
+			&n.Name,
+			&n.Description,
+			&n.Budget,
+			&n.DeadlineStart,
+			&n.DeadlineEnd,
+			&n.CityID,
+		); err != nil {
+			return nil, nil, nil, err
+		}
+		needs = append(needs, n)
+	}
+
+	return &p, team, needs, nil
 }
 
 func (r *publicationRepository) Create(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error) {

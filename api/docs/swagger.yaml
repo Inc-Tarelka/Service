@@ -1,5 +1,18 @@
 basePath: /api/v1
 definitions:
+  handler.GetPublicationResponse:
+    properties:
+      needs:
+        items:
+          $ref: '#/definitions/model.Need'
+        type: array
+      publication:
+        $ref: '#/definitions/model.Publication'
+      team:
+        items:
+          $ref: '#/definitions/model.PublicationTeamMember'
+        type: array
+    type: object
   model.AccountData:
     properties:
       companyName:
@@ -427,6 +440,23 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  model.PublicationTeamMember:
+    properties:
+      avatarUrl:
+        type: string
+      cityName:
+        type: string
+      firstName:
+        type: string
+      isAuthor:
+        type: boolean
+      lastName:
+        type: string
+      specialization:
+        type: string
+      userId:
+        type: integer
     type: object
   model.PublicationType:
     enum:
@@ -1009,7 +1039,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Publication'
+            $ref: '#/definitions/handler.GetPublicationResponse'
         "400":
           description: Bad Request
           schema:
