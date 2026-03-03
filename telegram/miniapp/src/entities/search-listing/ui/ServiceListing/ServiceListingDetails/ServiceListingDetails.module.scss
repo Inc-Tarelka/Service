@@ -7,7 +7,6 @@
 }
 
 .imageSection {
-  aspect-ratio: 4 / 3;
   background-color: var(--bg-color);
   flex-shrink: 0;
   position: relative;
@@ -74,7 +73,7 @@
   background: var(--tertiary-bg-color);
   border: 1px solid var(--card-bg);
   border-radius: 32px;
-  color: #fff;
+  color: var(--inverted-bg-color);
   display: flex;
   font-family: var(--font-caption);
   gap: 0;

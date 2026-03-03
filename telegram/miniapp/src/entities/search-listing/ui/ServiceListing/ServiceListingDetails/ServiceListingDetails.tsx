@@ -69,7 +69,6 @@ export const ServiceListingDetails = observer(
         ? service.coAuthors
         : MOCK_SERVICE_DETAIL.coAuthors;
 
-    // Add dummy images to match user's request "Добавь еще пару изображений"
     const images =
       service.images && service.images.length > 0
         ? [
@@ -211,13 +210,8 @@ export const ServiceListingDetails = observer(
           opened={actionsDrawerOpened}
           onClose={closeActions}
           noTitle
-          size={180}
+          size={130}
           actions={[
-            {
-              label: 'Поделиться',
-              icon: <ShareIcon />,
-              onClick: () => {},
-            },
             {
               label: 'Редактировать',
               icon: <EditIcon />,

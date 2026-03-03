@@ -8,7 +8,6 @@
 }
 
 .imageContainer {
-  aspect-ratio: 1 / 1;
   overflow: hidden;
   position: relative;
   touch-action: pan-y;
@@ -16,8 +15,8 @@
 }
 
 .image {
-  height: 100%;
-  object-fit: cover;
+  display: block;
+  height: auto;
   width: 100%;
 }
 

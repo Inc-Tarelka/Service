@@ -10,8 +10,12 @@
   margin-top: 0;
   padding-top: 12px;
   position: sticky;
-  top: 0;
+  top: var(--total-navbar-height);
   z-index: 100;
+
+  &.desktop {
+    top: 0;
+  }
 }
 
 .tabs {

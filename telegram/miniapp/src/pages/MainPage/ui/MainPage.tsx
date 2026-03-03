@@ -12,6 +12,7 @@ import { Page } from 'widgets/Page/ui/Page';
 import { ListingContent } from '../lib/ListingContent';
 import { useNavigationLogic } from '../lib/useNavigationLogic';
 import s from './MainPage.module.scss';
+import { useViewport } from 'shared/hooks/useViewport';
 
 export const MainPage = observer(() => {
   const {
@@ -21,6 +22,7 @@ export const MainPage = observer(() => {
     searchUsersStore,
   } = useStore();
   const [searchParams] = useSearchParams();
+  const { isDesktop } = useViewport();
   const { handleDataNavigation, handleUserNavigation } = useNavigationLogic();
   const queryFromUrl = searchParams.get('query') || '';
   const tabFromUrl =
@@ -102,7 +104,7 @@ export const MainPage = observer(() => {
       className={classNames(s.mainPage, {}, [])}
       scrollKey={`main-page-${activeTab}`}
     >
-      <div className={s.header}>
+      <div className={classNames(s.header, { [s.desktop]: isDesktop }, [])}>
         <SearchPublications
           activeTab={activeTab}
           initialQuery={queryFromUrl}

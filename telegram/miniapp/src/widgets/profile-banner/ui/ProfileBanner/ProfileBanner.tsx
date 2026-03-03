@@ -12,12 +12,8 @@ interface ProfileBannerProps {
   minimal?: boolean;
 }
 
-export const ProfileBanner = ({
-  user,
-  isOwnProfile,
-  coverImage,
-  minimal = false,
-}: ProfileBannerProps) => {
+export const ProfileBanner = (props: ProfileBannerProps) => {
+  const { user, isOwnProfile, coverImage, minimal = false } = props;
   const coverClassName = coverImage
     ? `${classes.cover} ${classes.withImage}`
     : classes.cover;

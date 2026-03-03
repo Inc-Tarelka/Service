@@ -66,7 +66,7 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
           className={s.filterBtn}
           variant="outline"
           size={48}
-          radius={12}
+          radius={16}
           onClick={() => setFiltersOpened(true)}
         >
           <FilterIcon />

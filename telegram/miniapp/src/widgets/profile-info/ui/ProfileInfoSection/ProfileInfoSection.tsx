@@ -2,7 +2,7 @@ import { Box, Stack } from '@mantine/core';
 import { User } from 'shared/api/service/User/types';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
 import { Badge } from 'shared/ui/Badge';
-import classes from './ProfileInfoSection.module.scss';
+import s from './ProfileInfoSection.module.scss';
 
 interface ProfileInfoSectionProps {
   user?: User;
@@ -31,27 +31,27 @@ export const ProfileInfoSection = ({
   };
 
   return (
-    <Box className={classes.container}>
+    <Box className={s.container}>
       <Stack gap={24}>
         <Stack gap={8}>
-          <h4 className={classes.title}>О себе</h4>
-          <p className={classes.about}>{user.about}</p>
+          <h4 className={s.title}>О себе</h4>
+          <p className={s.about}>{user.about}</p>
         </Stack>
 
         <Stack gap={12}>{user.tags?.map(renderTag)}</Stack>
 
-        <div className={classes.grid}>
-          <span className={classes.label}>Город</span>
-          <span className={classes.value}>{user.city}</span>
+        <div className={s.grid}>
+          <span className={s.label}>Город</span>
+          <span className={s.value}>{user.city}</span>
 
-          <span className={classes.label}>Статус</span>
-          <span className={classes.value}>{user.status}</span>
+          <span className={s.label}>Статус</span>
+          <span className={s.value}>{user.status}</span>
 
-          <span className={classes.label}>Образование</span>
-          <span className={classes.value}>{user.education}</span>
+          <span className={s.label}>Образование</span>
+          <span className={s.value}>{user.education}</span>
 
-          <span className={classes.label}>Специализация</span>
-          <span className={classes.value}>{user.specialization}</span>
+          <span className={s.label}>Специализация</span>
+          <span className={s.value}>{user.specialization}</span>
         </div>
       </Stack>
     </Box>

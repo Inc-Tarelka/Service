@@ -61,6 +61,7 @@ export const ProfilePage = observer(() => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS}
+          contentPaddingTop={16}
         >
           {activeTab === 'publications' && (
             <PublicationsList publications={userStore.publications} />

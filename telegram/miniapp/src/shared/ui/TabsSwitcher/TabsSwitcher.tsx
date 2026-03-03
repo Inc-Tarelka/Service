@@ -16,17 +16,20 @@ interface TabsSwitcherProps<T extends string> {
   className?: string;
   fullWidth?: boolean;
   hideMask?: boolean;
+  contentPaddingTop?: number | string;
 }
 
-export const TabsSwitcher = <T extends string>({
-  tabs,
-  activeTab,
-  onTabChange,
-  children,
-  className,
-  fullWidth,
-  hideMask,
-}: TabsSwitcherProps<T>) => {
+export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
+  const {
+    tabs,
+    activeTab,
+    onTabChange,
+    children,
+    className,
+    fullWidth,
+    hideMask,
+    contentPaddingTop,
+  } = props;
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
   const currentTab = activeTab !== undefined ? activeTab : internalTab;
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
@@ -40,7 +43,6 @@ export const TabsSwitcher = <T extends string>({
     }
     onTabChange?.(newTab);
 
-    // Scroll logic only if NOT fullWidth (since fullWidth assumes fit)
     if (!fullWidth) {
       const buttonElement = event.currentTarget;
       const wrapperElement = tabsWrapperRef.current;
@@ -94,7 +96,9 @@ export const TabsSwitcher = <T extends string>({
           ))}
         </div>
       </div>
-      <Box className={classes.content}>{children}</Box>
+      <Box className={classes.content} pt={contentPaddingTop}>
+        {children}
+      </Box>
     </Box>
   );
 };

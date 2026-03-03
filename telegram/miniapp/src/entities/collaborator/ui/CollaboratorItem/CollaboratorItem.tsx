@@ -25,7 +25,7 @@ export const CollaboratorItem = ({
           <Text className={classes.cardDescription}>
             @{collaborator.username}
           </Text>
-          <Text color="white" className={classes.cardDescription}>
+          <Text color="white" className={classes.info}>
             {collaborator.profession}, {collaborator.city}
           </Text>
         </Box>

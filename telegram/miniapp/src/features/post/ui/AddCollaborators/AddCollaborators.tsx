@@ -29,7 +29,7 @@ export const AddCollaborators = (props: AddCollaboratorsProps) => {
   return (
     <div className={classes.section}>
       <div className={classes.header}>
-        <span className={classes.title}>Соавторы</span>
+        <span className={classes.title}>Сокомандники</span>
         <span className={classes.subtitle}>
           Они будут отображаться в публикации после подтверждения с их стороны.
         </span>
