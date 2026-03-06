@@ -2694,6 +2694,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.PublicationImage"
                     }
                 },
+                "isLiked": {
+                    "description": "IsLiked показывает, поставил ли текущий пользователь лайк этой публикации",
+                    "type": "boolean"
+                },
                 "likesCount": {
                     "type": "integer"
                 },

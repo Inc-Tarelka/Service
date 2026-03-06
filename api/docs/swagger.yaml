@@ -407,6 +407,10 @@ definitions:
         items:
           $ref: '#/definitions/model.PublicationImage'
         type: array
+      isLiked:
+        description: IsLiked показывает, поставил ли текущий пользователь лайк этой
+          публикации
+        type: boolean
       likesCount:
         type: integer
       name:
