@@ -26,6 +26,8 @@ type Publication struct {
 	Needs           []Need             `json:"needs"`
 	LikesCount      int64              `json:"likesCount"`
 	CommentsCount   int64              `json:"commentsCount"`
+	// IsLiked показывает, поставил ли текущий пользователь лайк этой публикации
+	IsLiked bool `json:"isLiked"`
 	// TopImageURL — URL изображения с приоритетом 1, если задано
 	TopImageURL *string `json:"topImageUrl"`
 	// AuthorTelegramURL — ссылка на Telegram автора, если задано

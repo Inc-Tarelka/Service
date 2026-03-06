@@ -40,10 +40,12 @@ type GetPublicationResponse struct {
 // @Failure 500 {object} model.ErrorResponse
 // @Router /publications/{id} [get]
 func (h *PublicationHandler) GetPublication(c *gin.Context) {
-	if _, exists := c.Get("user_id"); !exists {
+	uid, exists := c.Get("user_id")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
 		return
 	}
+	userID := uid.(int64)
 
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -52,7 +54,7 @@ func (h *PublicationHandler) GetPublication(c *gin.Context) {
 		return
 	}
 
-	pub, team, needs, err := h.svc.GetPublication(c.Request.Context(), id)
+	pub, team, needs, err := h.svc.GetPublication(c.Request.Context(), id, &userID)
 	if err != nil {
 		if err.Error() == "publication not found" {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
@@ -208,11 +210,12 @@ func (h *PublicationHandler) LikePublication(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.LikePublication(c.Request.Context(), pubID, authorID); err != nil {
+	isLiked, err := h.svc.LikePublication(c.Request.Context(), pubID, authorID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
+	c.JSON(http.StatusOK, gin.H{"success": true, "isLiked": isLiked})
 }
 
 // PresignImagesGeneric godoc
@@ -348,10 +351,12 @@ func (h *PublicationHandler) AttachImagesToPublication(c *gin.Context) {
 // @Router /publications/search [get]
 func (h *PublicationHandler) SearchPublications(c *gin.Context) {
 	// auth required as all publications endpoints are under protected group
-	if _, exists := c.Get("user_id"); !exists {
+	uid, exists := c.Get("user_id")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
 		return
 	}
+	userID := uid.(int64)
 
 	var filters model.PublicationSearchFilters
 
@@ -426,7 +431,7 @@ func (h *PublicationHandler) SearchPublications(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset)
+	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset, &userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
@@ -452,10 +457,12 @@ func (h *PublicationHandler) SearchPublications(c *gin.Context) {
 // @Router /publications/services/search [get]
 func (h *PublicationHandler) SearchServicePublications(c *gin.Context) {
 	// require auth
-	if _, exists := c.Get("user_id"); !exists {
+	uid, exists := c.Get("user_id")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
 		return
 	}
+	userID := uid.(int64)
 
 	var filters model.PublicationSearchFilters
 	// Force type = SERVICE
@@ -496,7 +503,7 @@ func (h *PublicationHandler) SearchServicePublications(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset)
+	res, err := h.svc.SearchPublications(c.Request.Context(), filters, limit, offset, &userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return

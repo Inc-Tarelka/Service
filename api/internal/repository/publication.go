@@ -19,15 +19,16 @@ type PublicationRepository interface {
 	Create(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	Update(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
-	AddLike(ctx context.Context, pubID int64, authorID int64) error
+	// ToggleLike ставит лайк, если его нет, и убирает, если он уже есть; возвращает итоговое состояние isLiked
+	ToggleLike(ctx context.Context, pubID int64, authorID int64) (bool, error)
 	// AddImages attaches images to an existing publication and returns created rows
 	AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error)
-	// Search publications with optional filters
-	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
+	// Search publications with optional filters; userID используется для вычисления поля IsLiked
+	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional criteria
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
-	// GetByID returns a single publication by id with details
-	GetByID(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
+	// GetByID returns a single publication by id with details; userID используется для вычисления поля IsLiked
+	GetByID(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
 }
 
 type publicationRepository struct {
@@ -39,40 +40,82 @@ func NewPublicationRepository(pool *pgxpool.Pool) PublicationRepository {
 }
 
 // GetByID returns a single publication by id with aggregated likes/comments and top image.
-func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error) {
-	row := r.pool.QueryRow(ctx, `
-		SELECT 
-			p.id,
-			p.author_id,
-			tp.name,
-			tp.surname,
-			p.name,
-			p.description,
-			p.type,
-			p.city_id,
-			COALESCE(lc.cnt, 0) AS likes_count,
-			COALESCE(cc.cnt, 0) AS comments_count,
-			ti.url AS top_image_url,
-			u.telegram_url AS author_telegram_url,
-			p.created_at
-		FROM publications p
-		JOIN tarelka_users u ON u.id = p.author_id
-		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
-		LEFT JOIN LATERAL (
-			SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
-		) lc ON TRUE
-		LEFT JOIN LATERAL (
-			SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
-		) cc ON TRUE
-		LEFT JOIN LATERAL (
-			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
-		) ti ON TRUE
-		WHERE p.id = $1
-	`, id)
+// Если userID не nil, дополнительно рассчитывается IsLiked для текущего пользователя.
+func (r *publicationRepository) GetByID(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error) {
+	var row pgx.Row
+	if userID != nil {
+		row = r.pool.QueryRow(ctx, `
+			SELECT 
+				p.id,
+				p.author_id,
+				tp.name,
+				tp.surname,
+				p.name,
+				p.description,
+				p.type,
+				p.city_id,
+				COALESCE(lc.cnt, 0) AS likes_count,
+				COALESCE(cc.cnt, 0) AS comments_count,
+				ti.url AS top_image_url,
+				u.telegram_url AS author_telegram_url,
+				p.created_at,
+				COALESCE(ul.is_liked, FALSE) AS is_liked
+			FROM publications p
+			JOIN tarelka_users u ON u.id = p.author_id
+			LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+			LEFT JOIN LATERAL (
+				SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
+			) lc ON TRUE
+			LEFT JOIN LATERAL (
+				SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
+			) cc ON TRUE
+			LEFT JOIN LATERAL (
+				SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+			) ti ON TRUE
+			LEFT JOIN LATERAL (
+				SELECT TRUE AS is_liked
+				FROM publication_likes pl
+				WHERE pl.publication_id = p.id AND pl.author_id = $2
+				LIMIT 1
+			) ul ON TRUE
+			WHERE p.id = $1`, id, *userID)
+	} else {
+		// Если пользователь не передан, считаем, что лайк не поставлен
+		row = r.pool.QueryRow(ctx, `
+			SELECT 
+				p.id,
+				p.author_id,
+				tp.name,
+				tp.surname,
+				p.name,
+				p.description,
+				p.type,
+				p.city_id,
+				COALESCE(lc.cnt, 0) AS likes_count,
+				COALESCE(cc.cnt, 0) AS comments_count,
+				ti.url AS top_image_url,
+				u.telegram_url AS author_telegram_url,
+				p.created_at,
+				FALSE AS is_liked
+			FROM publications p
+			JOIN tarelka_users u ON u.id = p.author_id
+			LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+			LEFT JOIN LATERAL (
+				SELECT COUNT(*)::BIGINT AS cnt FROM publication_likes pl WHERE pl.publication_id = p.id
+			) lc ON TRUE
+			LEFT JOIN LATERAL (
+				SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
+			) cc ON TRUE
+			LEFT JOIN LATERAL (
+				SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+			) ti ON TRUE
+			WHERE p.id = $1`, id)
+	}
 
 	var p model.Publication
 	var topImageURL *string
 	var authorTelegramURL *string
+	var isLiked bool
 
 	if err := row.Scan(
 		&p.ID,
@@ -88,6 +131,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 		&topImageURL,
 		&authorTelegramURL,
 		&p.CreatedAt,
+		&isLiked,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil, nil, ErrPublicationNotFound
@@ -97,6 +141,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64) (*model.P
 
 	p.TopImageURL = topImageURL
 	p.AuthorTelegramURL = authorTelegramURL
+	p.IsLiked = isLiked
 
 	// Load team: author + co-authors with specialization and city
 	team := make([]model.PublicationTeamMember, 0)
@@ -438,12 +483,46 @@ func (r *publicationRepository) AddComment(ctx context.Context, pubID int64, aut
 	return &c, nil
 }
 
-func (r *publicationRepository) AddLike(ctx context.Context, pubID int64, authorID int64) error {
-	_, err := r.pool.Exec(ctx,
-		`INSERT INTO publication_likes (publication_id, author_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+// ToggleLike ставит лайк, если его нет, и убирает, если он уже есть.
+// Возвращает итоговое состояние isLiked (true, если лайк установлен после операции).
+func (r *publicationRepository) ToggleLike(ctx context.Context, pubID int64, authorID int64) (bool, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var exists bool
+	if err := tx.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM publication_likes WHERE publication_id = $1 AND author_id = $2)`,
 		pubID, authorID,
-	)
-	return err
+	).Scan(&exists); err != nil {
+		return false, err
+	}
+
+	if exists {
+		if _, err := tx.Exec(ctx,
+			`DELETE FROM publication_likes WHERE publication_id = $1 AND author_id = $2`,
+			pubID, authorID,
+		); err != nil {
+			return false, err
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO publication_likes (publication_id, author_id) VALUES ($1, $2)`,
+		pubID, authorID,
+	); err != nil {
+		return false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, authorID int64, imgs []model.PublicationImage) ([]model.PublicationImage, error) {
@@ -486,7 +565,7 @@ func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, auth
 }
 
 // Search returns publications filtered by optional criteria.
-func (r *publicationRepository) Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error) {
+func (r *publicationRepository) Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error) {
 	// Build dynamic query
 	base := `
 		SELECT 
@@ -500,7 +579,8 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 			COALESCE(cc.cnt, 0) AS comments_count,
 			ti.url AS top_image_url,
 			u.telegram_url AS author_telegram_url,
-			p.created_at
+			p.created_at,
+			COALESCE(ul.is_liked, FALSE) AS is_liked
 		FROM publications p
 		JOIN tarelka_users u ON u.id = p.author_id
 		LEFT JOIN LATERAL (
@@ -512,10 +592,25 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 		LEFT JOIN LATERAL (
 			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
 		) ti ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT TRUE AS is_liked
+			FROM publication_likes pl
+			WHERE pl.publication_id = p.id AND pl.author_id = $1
+			LIMIT 1
+		) ul ON TRUE
 		WHERE 1=1`
 
 	args := []interface{}{}
 	idx := 1
+
+	if userID != nil {
+		args = append(args, *userID)
+		idx++
+	} else {
+		// Если userID не передан, заполним плейсхолдер фиктивным значением и не будем использовать его в фильтрах
+		args = append(args, int64(0))
+		idx++
+	}
 
 	if f.Type != nil {
 		base += " AND p.type = $" + strconv.Itoa(idx)
@@ -562,6 +657,7 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 		var p model.Publication
 		var topImageURL *string
 		var authorTelegramURL *string
+		var isLiked bool
 		if err := rows.Scan(
 			&p.ID,
 			&p.AuthorID,
@@ -574,11 +670,13 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 			&topImageURL,
 			&authorTelegramURL,
 			&p.CreatedAt,
+			&isLiked,
 		); err != nil {
 			return nil, err
 		}
 		p.TopImageURL = topImageURL
 		p.AuthorTelegramURL = authorTelegramURL
+		p.IsLiked = isLiked
 		out = append(out, p)
 	}
 	return out, nil

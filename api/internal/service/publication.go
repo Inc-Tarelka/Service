@@ -15,17 +15,18 @@ type PublicationService interface {
 	CreatePublication(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	UpdatePublication(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
-	LikePublication(ctx context.Context, pubID int64, authorID int64) error
+	// LikePublication теперь реализует toggle-логику и возвращает итоговое значение isLiked
+	LikePublication(ctx context.Context, pubID int64, authorID int64) (bool, error)
 	// PresignPublicationImages generates presigned PUT URLs for uploading images (optionally into a specific publication folder)
 	PresignPublicationImages(ctx context.Context, authorID int64, pubID *int64, files []model.FileUploadSpec) ([]model.PresignUploadItem, error)
 	// AttachPublicationImages confirms uploads and attaches them to a publication
 	AttachPublicationImages(ctx context.Context, pubID int64, authorID int64, items []model.AttachPublicationImageItem) ([]model.PublicationImage, error)
-	// SearchPublications returns publications filtered by optional params
-	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error)
+	// SearchPublications returns publications filtered by optional params; userID нужен для поля IsLiked
+	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional params
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
-	// GetPublication returns single publication by id
-	GetPublication(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
+	// GetPublication returns single publication by id; userID нужен для поля IsLiked
+	GetPublication(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
 }
 
 type publicationService struct {
@@ -105,14 +106,15 @@ func (s *publicationService) AddComment(ctx context.Context, pubID int64, author
 	return comment, nil
 }
 
-func (s *publicationService) LikePublication(ctx context.Context, pubID int64, authorID int64) error {
-	if err := s.repo.AddLike(ctx, pubID, authorID); err != nil {
-		return err
+func (s *publicationService) LikePublication(ctx context.Context, pubID int64, authorID int64) (bool, error) {
+	isLiked, err := s.repo.ToggleLike(ctx, pubID, authorID)
+	if err != nil {
+		return false, err
 	}
 	if s.activityService != nil {
 		_ = s.activityService.Log(ctx, authorID, model.ActivityTypeLike)
 	}
-	return nil
+	return isLiked, nil
 }
 
 // PresignPublicationImages generates presigned URLs for uploading multiple images.
@@ -179,8 +181,9 @@ func (s *publicationService) AttachPublicationImages(ctx context.Context, pubID 
 }
 
 // GetPublication fetches single publication by id via repository.
-func (s *publicationService) GetPublication(ctx context.Context, id int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error) {
-	pub, team, needs, err := s.repo.GetByID(ctx, id)
+// userID используется для заполнения поля IsLiked.
+func (s *publicationService) GetPublication(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error) {
+	pub, team, needs, err := s.repo.GetByID(ctx, id, userID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -188,7 +191,8 @@ func (s *publicationService) GetPublication(ctx context.Context, id int64) (*mod
 }
 
 // SearchPublications delegates to repository with minimal validation
-func (s *publicationService) SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int) ([]model.Publication, error) {
+// userID используется для заполнения поля IsLiked.
+func (s *publicationService) SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
@@ -198,7 +202,7 @@ func (s *publicationService) SearchPublications(ctx context.Context, f model.Pub
 	if f.Type != nil && *f.Type != model.PublicationTypeProject && *f.Type != model.PublicationTypeService {
 		return nil, errors.New("invalid_type")
 	}
-	return s.repo.Search(ctx, f, limit, offset)
+	return s.repo.Search(ctx, f, limit, offset, userID)
 }
 
 // SearchNeeds delegates to repository with minimal validation
