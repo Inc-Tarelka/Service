@@ -43,7 +43,7 @@ export const SearchFiltersDrawer = observer(
     const drawerSize = DRAWER_SIZES[activeTab] || '80%';
 
     const handleLocalApply = () => {
-      let finalFilters = { ...filters };
+      const finalFilters = { ...filters };
       if (
         activeTab === SearchPublicationsType.PROFILE &&
         !finalFilters.authorType

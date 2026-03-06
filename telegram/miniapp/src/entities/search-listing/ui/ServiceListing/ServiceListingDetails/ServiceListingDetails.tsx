@@ -1,4 +1,4 @@
-import { useDisclosure } from '@mantine/hooks';
+import { useDebouncedCallback, useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { ActionsDrawer } from 'entities/interaction';
@@ -6,8 +6,15 @@ import { NeedListingItem } from 'entities/search-listing/ui/NeedListing/NeedList
 import { TeamMemberItem } from 'entities/search-listing/ui/ServiceListing/TeamMemberItem/TeamMemberItem';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
+import type {
+  PublicationNeedDetailed,
+  PublicationTeamMember,
+} from 'shared/api/service/Publication';
 import type { SearchNeedItem } from 'shared/api/service/PublicationNeedsSearch';
-import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
+import type {
+  SearchServiceItem,
+  ServiceNeed,
+} from 'shared/api/service/PublicationServicesSearch';
 import CommentIcon from 'shared/assets/icons/comment';
 import EditIcon from 'shared/assets/icons/edit';
 import EyeOpenIcon from 'shared/assets/icons/EyeOpen';
@@ -15,11 +22,6 @@ import LikeIcon from 'shared/assets/icons/like';
 import MoreHorizontalIcon from 'shared/assets/icons/MoreHorizontalIcon';
 import ShareIcon from 'shared/assets/icons/share';
 import TrashIcon from 'shared/assets/icons/trash';
-import {
-  MOCK_CITY_MAP,
-  MOCK_SERVICE_DETAIL,
-} from 'shared/mocks/serviceDetailMocks';
-import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import s from './ServiceListingDetails.module.scss';
 
@@ -27,63 +29,76 @@ dayjs.locale('ru');
 
 interface ServiceListingDetailsProps {
   service: SearchServiceItem;
+  cityName?: string;
+  team?: PublicationTeamMember[];
+  needs?: PublicationNeedDetailed[];
   onNeedClick?: (id: number) => void;
   onCommentClick?: () => void;
-  onLikeClick?: () => void;
+  onLike?: (id: number) => void;
 }
+
+const formatCount = (count: number): string | number => {
+  if (count > 99) return '99+';
+  return count;
+};
+
+const mapNeedToListingItem = (
+  need: ServiceNeed | PublicationNeedDetailed,
+  publicationName: string,
+  cityId?: number,
+): SearchNeedItem => ({
+  id: need.id,
+  name: need.name,
+  description: need.description,
+  cityName: cityId?.toString(),
+  publicationName,
+});
 
 export const ServiceListingDetails = observer(
   (props: ServiceListingDetailsProps) => {
-    const { service, onNeedClick, onCommentClick, onLikeClick } = props;
+    const {
+      service,
+      cityName,
+      team,
+      needs,
+      onNeedClick,
+      onCommentClick,
+      onLike,
+    } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
       useDisclosure(false);
     const [deleteDrawerOpened, { open: openDelete, close: closeDelete }] =
       useDisclosure(false);
 
+    const [isLiked, setIsLiked] = useState(service.isLiked ?? false);
+    const [likesCount, setLikesCount] = useState(service.likesCount ?? 0);
+
     useEffect(() => {
-      referenceStore.getCitiesAction();
-    }, []);
+      setIsLiked(service.isLiked ?? false);
+      setLikesCount(service.likesCount ?? 0);
+    }, [service.isLiked, service.likesCount]);
 
-    const cityName =
-      referenceStore.cities.find((city) => city.id === service.cityId)?.name ||
-      MOCK_CITY_MAP[service.cityId] ||
-      service.cityId;
+    const debouncedLike = useDebouncedCallback((id: number) => {
+      onLike?.(id);
+    }, 1000);
 
-    const rawNeeds =
-      service.needs && service.needs.length > 0
-        ? service.needs
-        : MOCK_SERVICE_DETAIL.needs;
+    const handleLikeClick = () => {
+      const nextLiked = !isLiked;
+      setIsLiked(nextLiked);
+      setLikesCount((prev) => (nextLiked ? prev + 1 : prev - 1));
+      debouncedLike(service.id);
+    };
 
-    const needs: SearchNeedItem[] =
-      rawNeeds?.map((need: any) => ({
-        id: need.id,
-        name: need.name,
-        description: need.description,
-        cityName: service.cityId?.toString(),
-        publicationName: service.name,
-      })) || [];
+    const displayNeeds: SearchNeedItem[] = (needs ?? service.needs ?? []).map(
+      (need) => mapNeedToListingItem(need, service.name, service.cityId),
+    );
 
-    const coAuthors =
-      service.coAuthors && service.coAuthors.length > 0
-        ? service.coAuthors
-        : MOCK_SERVICE_DETAIL.coAuthors;
+    const coAuthors = team ?? [];
 
     const images =
       service.images && service.images.length > 0
-        ? [
-            ...service.images,
-            {
-              id: 991,
-              url: 'https://images.unsplash.com/photo-1574068468668-a05a11f871da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              position: 1,
-            },
-            {
-              id: 992,
-              url: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              position: 2,
-            },
-          ]
+        ? service.images
         : service.topImageUrl
           ? [{ id: 0, url: service.topImageUrl, position: 0 }]
           : [];
@@ -108,26 +123,33 @@ export const ServiceListingDetails = observer(
               <div className={s.badge}>
                 <EyeOpenIcon />
                 <span className={s.count}>
-                  {(service.viewsCount ?? 0) > 99
-                    ? '99+'
-                    : (service.viewsCount ?? 0)}
+                  {formatCount(service.viewsCount ?? 0)}
                 </span>
               </div>
+
               <div
-                className={s.badge}
-                onClick={onLikeClick}
-                style={{ cursor: 'pointer' }}
+                className={`${s.badge} ${isLiked ? s.likedBadge : ''}`}
+                onClick={handleLikeClick}
               >
-                <LikeIcon ClassNames={s.icon} />
-                <span className={s.count}>{service.likesCount || 0}</span>
+                <div
+                  className={`${s.likeIconWrapper} ${isLiked ? s.isLiked : ''}`}
+                >
+                  <LikeIcon filled={isLiked} />
+                </div>
+                <div className={s.countContainer}>
+                  <div className={s.countScroller}>
+                    <span key={likesCount} className={s.countAnimated}>
+                      {formatCount(likesCount)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div
-                className={s.badge}
-                onClick={onCommentClick}
-                style={{ cursor: 'pointer' }}
-              >
+
+              <div className={s.badge} onClick={onCommentClick}>
                 <CommentIcon ClassNames={s.icon} />
-                <span className={s.count}>{service.commentsCount || 0}</span>
+                <span className={s.count}>
+                  {formatCount(service.commentsCount ?? 0)}
+                </span>
               </div>
             </div>
             <div className={s.badgesRight}>
@@ -174,26 +196,26 @@ export const ServiceListingDetails = observer(
             )}
           </div>
 
-          {coAuthors && coAuthors.length > 0 && (
+          {coAuthors.length > 0 && (
             <div className={s.section}>
               <h3 className={s.sectionTitle}>Команда</h3>
               <div className={s.teamList}>
-                {coAuthors.map((author: any, index: number) => (
+                {coAuthors.map((author) => (
                   <TeamMemberItem
-                    key={author.id}
+                    key={author.userId}
                     member={author}
-                    isAuthor={index === 0}
+                    isAuthor={author.isAuthor}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {needs.length > 0 && (
+          {displayNeeds.length > 0 && (
             <div className={s.section}>
               <h3 className={s.sectionTitle}>Потребности</h3>
               <div className={s.needsList}>
-                {needs.map((need) => (
+                {displayNeeds.map((need) => (
                   <NeedListingItem
                     key={need.id}
                     need={need}

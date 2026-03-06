@@ -1,6 +1,7 @@
 import { authStore } from './api/Auth/auth-store';
 import { SearchInteractionsStore } from './api/Interaction/search-interactions-store';
 import { PostStore } from './api/Post/post-store';
+import { PublicationDetailsStore } from './api/Publication/publication-details-store';
 import { PublicationStore } from './api/Publication/publication-store';
 import { SearchPublicationStore } from './api/Publication/search-publication-store';
 import { SearchNeedsStore } from './api/PublicationNeedsSearch/search-needs-store';
@@ -24,6 +25,7 @@ export class RootStore {
   userProfileStore = new UserProfileStore();
   postStore = new PostStore();
   publicationStore = new PublicationStore();
+  publicationDetailsStore = new PublicationDetailsStore();
   searchPublicationStore = new SearchPublicationStore();
   searchNeedsStore = new SearchNeedsStore();
   searchServicesStore = new SearchServicesStore();

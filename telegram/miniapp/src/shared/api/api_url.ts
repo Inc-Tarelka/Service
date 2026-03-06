@@ -27,6 +27,8 @@ export const API_URL = {
   search_publications: () => '/publications/search',
   search_publication_needs: () => '/publications/needs/search',
   search_publication_services: () => '/publications/services/search',
+  get_publication_details: (id: string) => `/publications/${id}`,
+  publication_like: (id: string) => `/publications/${id}/likes`,
 
   // Posts
   posts: () => '/posts',

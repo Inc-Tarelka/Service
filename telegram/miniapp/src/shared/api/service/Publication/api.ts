@@ -5,6 +5,7 @@ import type {
   PresignRequest,
   PresignResponse,
   Publication,
+  PublicationDetailsResponse,
   SearchPublicationsParams,
   SearchPublicationsResponse,
 } from './types';
@@ -30,6 +31,22 @@ export const searchPublications = async (
   const response = await baseInstanceV1.get<SearchPublicationsResponse>(
     API_URL.search_publications(),
     { params },
+  );
+  return response.data;
+};
+
+// =========== GET PUBLICATION DETAILS ===========
+export const getPublicationDetails = async (id: number) => {
+  const response = await baseInstanceV1.get<PublicationDetailsResponse>(
+    API_URL.get_publication_details(id.toString()),
+  );
+  return response.data;
+};
+
+// =========== TOGGLE PUBLICATION LIKE ===========
+export const togglePublicationLike = async (id: number) => {
+  const response = await baseInstanceV1.post(
+    API_URL.publication_like(id.toString()),
   );
   return response.data;
 };

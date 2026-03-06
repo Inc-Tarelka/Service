@@ -51,6 +51,7 @@ export interface SearchServiceItem {
   images?: ServiceImage[];
   tags: ServiceTag[];
   likesCount: number;
+  isLiked?: boolean;
   commentsCount: number;
   viewsCount?: number;
   createdAt: string;

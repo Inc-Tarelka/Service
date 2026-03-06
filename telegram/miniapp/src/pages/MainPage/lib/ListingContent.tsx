@@ -19,8 +19,8 @@ interface ListingContentProps {
   onItemClick: (id: number) => void;
 }
 
-export const ListingContent = observer(
-  ({
+export const ListingContent = observer((params: ListingContentProps) => {
+  const {
     activeTab,
     needs = [],
     services = [],
@@ -28,38 +28,37 @@ export const ListingContent = observer(
     isLoading,
     isLoaded,
     onItemClick,
-  }: ListingContentProps) => {
-    if (!isLoaded && !isLoading) {
-      return null;
-    }
+  } = params;
+  if (!isLoaded && !isLoading) {
+    return null;
+  }
 
-    switch (activeTab) {
-      case SearchPublicationsType.PROFILE:
-        return (
-          <ProfileListingList
-            users={users}
-            onItemClick={onItemClick}
-            isLoading={isLoading}
-          />
-        );
-      case SearchPublicationsType.SERVICE:
-        return (
-          <ServiceListingList
-            services={services}
-            onItemClick={onItemClick}
-            isLoading={isLoading}
-          />
-        );
-      case SearchPublicationsType.NEED:
-        return (
-          <NeedListingList
-            needs={needs}
-            onItemClick={onItemClick}
-            isLoading={isLoading}
-          />
-        );
-      default:
-        return null;
-    }
-  },
-);
+  switch (activeTab) {
+    case SearchPublicationsType.PROFILE:
+      return (
+        <ProfileListingList
+          users={users}
+          onItemClick={onItemClick}
+          isLoading={isLoading}
+        />
+      );
+    case SearchPublicationsType.SERVICE:
+      return (
+        <ServiceListingList
+          services={services}
+          onItemClick={onItemClick}
+          isLoading={isLoading}
+        />
+      );
+    case SearchPublicationsType.NEED:
+      return (
+        <NeedListingList
+          needs={needs}
+          onItemClick={onItemClick}
+          isLoading={isLoading}
+        />
+      );
+    default:
+      return null;
+  }
+});

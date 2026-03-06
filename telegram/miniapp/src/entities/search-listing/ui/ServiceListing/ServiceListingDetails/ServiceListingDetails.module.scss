@@ -235,6 +235,82 @@
   margin: 0;
 }
 
+.sectionT.icon {
+  color: var(--text-color);
+  fill: var(--text-color);
+  height: 16px;
+  transition: all 0.2s ease;
+  width: 16px;
+  
+  &.filled {
+     color: var(--red);
+     fill: var(--red);
+     transform: scale(1.1);
+  }
+}
+
+.likeIconWrapper {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    &.isLiked {
+        animation: heartPulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+}
+
+@keyframes heartPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.countContainer {
+    align-items: center;
+    display: inline-flex;
+    height: 18px;
+    margin-left: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.countScroller {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.countAnimated {
+    animation: slideUpIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-block;
+    height: 18px;
+    line-height: 18px;
+}
+
+@keyframes slideUpIn {
+    0% { opacity: 0; transform: translateY(100%); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDownIn {
+    0% { opacity: 0; transform: translateY(-100%); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.animateUp .countAnimated {
+    animation: slideUpIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animateDown .countAnimated {
+    animation: slideDownIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.likedBadge {
+   color: var(--text-color);
+}
+
 .teamList,
 .needsList {
   display: flex;

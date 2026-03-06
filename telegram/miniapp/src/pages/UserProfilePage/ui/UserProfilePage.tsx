@@ -70,6 +70,7 @@ export const UserProfilePage = observer(() => {
 
       <Box className={classes.tabsSection}>
         <TabsSwitcher
+          contentPaddingTop={16}
           fullWidth={true}
           hideMask={true}
           className={classes.tabsSwitcher}

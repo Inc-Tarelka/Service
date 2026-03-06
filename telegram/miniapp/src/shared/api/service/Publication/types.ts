@@ -141,3 +141,27 @@ export interface ErrorResponse {
   error: string;
   message: string;
 }
+
+export interface PublicationTeamMember {
+  avatarUrl: string;
+  cityName: string;
+  firstName: string;
+  isAuthor: boolean;
+  lastName: string;
+  specialization: string;
+  userId: number;
+}
+
+export interface PublicationDetailsData extends SearchPublication {
+  authorFirstName?: string;
+  authorLastName?: string;
+  authorTelegramUrl?: string;
+  commentsCount?: number;
+  topImageUrl?: string;
+}
+
+export interface PublicationDetailsResponse {
+  needs: PublicationNeedDetailed[];
+  publication: PublicationDetailsData;
+  team: PublicationTeamMember[];
+}

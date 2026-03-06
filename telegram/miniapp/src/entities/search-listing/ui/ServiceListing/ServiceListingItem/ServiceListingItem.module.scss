@@ -38,22 +38,6 @@
 }
 
 
-.badge {
-  align-items: center;
-  background: var(--tertiary-bg-color); 
-  border: 1px solid rgb(255, 255, 255, 0.1);
-  border: 1px solid var(--card-bg);
-  border-radius: 32px; 
-  color: #fff;
-  display: flex;
-  font-family: var(--font-caption);
-  gap: 0; 
-  height: 36px;
-  justify-content: center;
-  min-width: 64px;
-  padding: 0 8px;
-}
-
 .count {
   font-family: var(--font-caption);
   font-weight: 400;
@@ -69,7 +53,7 @@
 
 .countVisible {
   margin-left: 6px;
-  max-width: 40px; /* Sufficient for 99+ (approx 3 chars) */
+  max-width: 40px; 
   opacity: 1;
 }
 

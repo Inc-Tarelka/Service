@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
-import LikeIcon from 'shared/assets/icons/like';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import s from './ServiceListingItem.module.scss';
 
@@ -14,9 +13,6 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
   const { service, onClick } = props;
   const mainImage = service.topImageUrl;
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(service.likesCount);
-
   useEffect(() => {
     referenceStore.getCitiesAction();
   }, []);
@@ -28,39 +24,12 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
   const firstName = 'Иван';
   const lastName = 'Иванов';
   const username = 'nick_name';
-
-  const handleLikeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
-  };
-
-  const formatCount = (count: number) => {
-    if (count > 99) return '99+';
-    return count;
-  };
-
   return (
     <div className={s.container} onClick={() => onClick?.(service.id)}>
       <div className={s.imageSection}>
         {mainImage && (
           <img src={mainImage} className={s.image} alt={service.name} />
         )}
-
-        <div className={s.badges}>
-          <div
-            className={s.badge}
-            onClick={handleLikeClick}
-            style={{ cursor: 'pointer' }}
-          >
-            <LikeIcon ClassNames={`${s.icon} ${isLiked ? s.filled : ''}`} />
-            <span
-              className={`${s.count} ${likesCount > 0 ? s.countVisible : ''}`}
-            >
-              {formatCount(likesCount)}
-            </span>
-          </div>
-        </div>
       </div>
 
       <div className={s.infoSection}>
