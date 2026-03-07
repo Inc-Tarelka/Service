@@ -398,6 +398,15 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 		if companyName != nil {
 			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
 		}
+		// Обогащаем PERSON городами и специализациями, как в SearchByFilters
+		if u.Type == model.AccountTypePerson {
+			if specs, err := r.GetSpecializations(ctx, u.ID); err == nil {
+				fu.Specializations = specs
+			}
+			if cities, err := r.GetCities(ctx, u.ID); err == nil {
+				fu.Cities = cities
+			}
+		}
 		result = append(result, fu)
 	}
 	return result, nil

@@ -76,15 +76,15 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 // SearchUsersByName godoc
-// @Summary Поиск пользователей по имени
-// @Description Ищет профили по имени/фамилии (PERSON) или названию компании (COMPANY)
+// @Summary Поиск пользователей по имени и Telegram
+// @Description Ищет профили по имени/фамилии (PERSON), названию компании (COMPANY) и telegram_url (хэндл или ссылка)
 // @Tags users
 // @Produce json
 // @Security BearerAuth
-// @Param q query string true "Строка поиска"
+// @Param q query string false "Строка поиска (может быть пустой)"
 // @Param limit query int false "Лимит результатов" default(20)
 // @Param offset query int false "Смещение"
-// @Success 200 {array} model.TarelkaUserFull
+// @Success 200 {array} model.UserSearchItem
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 401 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
@@ -93,12 +93,47 @@ func (h *UserHandler) SearchUsersByName(c *gin.Context) {
 	q := strings.TrimSpace(c.Query("q"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	res, err := h.userService.SearchUsersByName(c.Request.Context(), q, limit, offset)
+	users, err := h.userService.SearchUsersByName(c.Request.Context(), q, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, res)
+
+	// Мапим полный объект пользователя в упрощённый DTO
+	items := make([]model.UserSearchItem, 0, len(users))
+	for _, u := range users {
+		var name, surname string
+		if u.Person != nil {
+			name = u.Person.Name
+			surname = u.Person.Surname
+		}
+
+		// Берём первый город, если есть
+		var city *model.City
+		if len(u.Cities) > 0 {
+			city = &u.Cities[0]
+		}
+
+		// Берём первую специализацию по имени, если есть
+		var specName *string
+		if len(u.Specializations) > 0 {
+			v := u.Specializations[0].Name
+			specName = &v
+		}
+
+		item := model.UserSearchItem{
+			ID:             u.ID,
+			Name:           name,
+			Surname:        surname,
+			TelegramURL:    u.TelegramURL,
+			City:           city,
+			Specialization: specName,
+			LogoURL:        u.LogoURL,
+		}
+		items = append(items, item)
+	}
+
+	c.JSON(http.StatusOK, items)
 }
 
 // SearchUsersByTelegram godoc
@@ -116,19 +151,8 @@ func (h *UserHandler) SearchUsersByName(c *gin.Context) {
 // @Failure 500 {object} model.ErrorResponse
 // @Router /users/search/telegram [get]
 func (h *UserHandler) SearchUsersByTelegram(c *gin.Context) {
-	q := strings.TrimSpace(c.Query("q"))
-	if q == "" {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_query"})
-		return
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	res, err := h.userService.SearchUsersByTelegram(c.Request.Context(), q, limit, offset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, res)
+	// Deprecated: логика поиска по Telegram объединена с SearchUsersByName (/users/search/name)
+	c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "endpoint_deprecated"})
 }
 
 // SearchUsersByFilters godoc

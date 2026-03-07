@@ -178,3 +178,15 @@ type UpdateUserRequest struct {
 	// Use the same enum values as model.FindWork (string values)
 	FindWork *string `json:"find_work,omitempty"`
 }
+
+// UserSearchItem - упрощённый ответ для поиска пользователей
+// Используется в /users/search/name
+type UserSearchItem struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Surname        string  `json:"surname"`
+	TelegramURL    *string `json:"telegram_url,omitempty"`
+	City           *City   `json:"city,omitempty"`
+	Specialization *string `json:"specialisation,omitempty"`
+	LogoURL        *string `json:"logo_url,omitempty"`
+}

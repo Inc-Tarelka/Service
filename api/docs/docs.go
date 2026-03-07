@@ -1585,21 +1585,20 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Ищет профили по имени/фамилии (PERSON) или названию компании (COMPANY)",
+                "description": "Ищет профили по имени/фамилии (PERSON), названию компании (COMPANY) и telegram_url (хэндл или ссылка)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "Поиск пользователей по имени",
+                "summary": "Поиск пользователей по имени и Telegram",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Строка поиска",
+                        "description": "Строка поиска (может быть пустой)",
                         "name": "q",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -1621,7 +1620,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.TarelkaUserFull"
+                                "$ref": "#/definitions/model.UserSearchItem"
                             }
                         }
                     },
@@ -3291,6 +3290,32 @@ const docTemplate = `{
                 },
                 "find_work": {
                     "description": "Use the same enum values as model.FindWork (string values)",
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserSearchItem": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "$ref": "#/definitions/model.City"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "specialisation": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "telegram_url": {
                     "type": "string"
                 }
             }
