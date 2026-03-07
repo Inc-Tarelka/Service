@@ -369,40 +369,8 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 	if strings.TrimSpace(q) == "" {
 		return []*model.TarelkaUserFull{}, nil
 	}
-	// Build base pattern for ILIKE contains search
-	base := strings.TrimSpace(q)
-	pattern := "%" + base + "%"
-	tokens := strings.Fields(base)
-
-	// Build dynamic WHERE with optional tokenized matching (name/surname in any order)
-	where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
-	args := []interface{}{pattern}
-	// If user entered two+ tokens, try matching name and surname independently in any order
-	if len(tokens) >= 2 {
-		t1 := "%" + tokens[0] + "%"
-		t2 := "%" + tokens[1] + "%"
-		where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
-		args = append(args, t1, t2)
-	}
-
-	// Compose final query with computed parameter positions for limit/offset
-	// limit and offset placeholders depend on args length
-	limPos := len(args) + 1
-	offPos := len(args) + 2
-	query := fmt.Sprintf(`
-		SELECT 
-			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
-			p.name, p.surname, c.company_name
-		FROM tarelka_users u
-		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
-		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
-		WHERE %s
-		ORDER BY u.created_at DESC
-		LIMIT $%d OFFSET $%d
-	`, where, limPos, offPos)
-
-	args = append(args, limit, offset)
-	rows, err := r.pool.Query(ctx, query, args...)
+	// Delegate search logic to shared helper so it behaves like SearchByFilters (name + telegram_url)
+	rows, err := r.searchUsersWithNameLike(ctx, q, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -433,6 +401,50 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 		result = append(result, fu)
 	}
 	return result, nil
+}
+
+// searchUsersWithNameLike реализует общую логику поиска по имени/фамилии/компании и telegram_url
+// и используется в SearchByName и SearchByFilters, чтобы поведение оставалось единым.
+func (r *tarelkaUserRepository) searchUsersWithNameLike(ctx context.Context, raw string, limit, offset int) (pgx.Rows, error) {
+	base := strings.TrimSpace(raw)
+	pattern := "%" + base + "%"
+	tokens := strings.Fields(base)
+
+	where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+	args := []interface{}{pattern}
+
+	if len(tokens) >= 2 {
+		t1 := "%" + tokens[0] + "%"
+		t2 := "%" + tokens[1] + "%"
+		where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+		args = append(args, t1, t2)
+	}
+
+	// также ищем по telegram_url, как в SearchByFilters
+	handle := strings.TrimPrefix(base, "@")
+	if handle != "" {
+		patternTg := "%" + handle + "%"
+		pos := len(args) + 1
+		where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
+		args = append(args, patternTg)
+	}
+
+	limPos := len(args) + 1
+	offPos := len(args) + 2
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
+		WHERE %s
+		ORDER BY u.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, where, limPos, offPos)
+
+	args = append(args, limit, offset)
+	return r.pool.Query(ctx, query, args...)
 }
 
 // SearchByTelegram finds users by telegram_url
