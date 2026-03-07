@@ -91,10 +91,6 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 // @Router /users/search/name [get]
 func (h *UserHandler) SearchUsersByName(c *gin.Context) {
 	q := strings.TrimSpace(c.Query("q"))
-	if q == "" {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_query"})
-		return
-	}
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	res, err := h.userService.SearchUsersByName(c.Request.Context(), q, limit, offset)
