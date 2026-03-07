@@ -1373,6 +1373,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/references/need-tags": {
+            "get": {
+                "description": "Получение списка всех тегов потребностей",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "references"
+                ],
+                "summary": "Список тегов потребностей",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NeedTagRef"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/references/publication-tags": {
+            "get": {
+                "description": "Получение списка всех тегов публикаций",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "references"
+                ],
+                "summary": "Список тегов публикаций",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.PublicationTagRef"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/references/specializations": {
             "get": {
                 "description": "Получение списка всех специализаций",
@@ -2611,6 +2669,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.NeedTagRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.NeedUpsertItem": {
             "type": "object",
             "required": [
@@ -2938,6 +3007,17 @@ const docTemplate = `{
             }
         },
         "model.PublicationTag": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PublicationTagRef": {
             "type": "object",
             "properties": {
                 "id": {

@@ -273,6 +273,13 @@ definitions:
       name:
         type: string
     type: object
+  model.NeedTagRef:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   model.NeedUpsertItem:
     properties:
       budget:
@@ -490,6 +497,13 @@ definitions:
         type: string
     type: object
   model.PublicationTag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.PublicationTagRef:
     properties:
       id:
         type: integer
@@ -1649,6 +1663,44 @@ paths:
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       summary: Список направлений
+      tags:
+      - references
+  /references/need-tags:
+    get:
+      description: Получение списка всех тегов потребностей
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NeedTagRef'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Список тегов потребностей
+      tags:
+      - references
+  /references/publication-tags:
+    get:
+      description: Получение списка всех тегов публикаций
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PublicationTagRef'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Список тегов публикаций
       tags:
       - references
   /references/specializations:

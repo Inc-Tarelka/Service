@@ -69,3 +69,39 @@ func (h *ReferenceHandler) GetCities(c *gin.Context) {
 
 	c.JSON(http.StatusOK, cities)
 }
+
+// GetPublicationTags godoc
+// @Summary Список тегов публикаций
+// @Description Получение списка всех тегов публикаций
+// @Tags references
+// @Produce json
+// @Success 200 {array} model.PublicationTagRef
+// @Failure 500 {object} model.ErrorResponse
+// @Router /references/publication-tags [get]
+func (h *ReferenceHandler) GetPublicationTags(c *gin.Context) {
+	tags, err := h.referenceService.GetPublicationTags(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, tags)
+}
+
+// GetNeedTags godoc
+// @Summary Список тегов потребностей
+// @Description Получение списка всех тегов потребностей
+// @Tags references
+// @Produce json
+// @Success 200 {array} model.NeedTagRef
+// @Failure 500 {object} model.ErrorResponse
+// @Router /references/need-tags [get]
+func (h *ReferenceHandler) GetNeedTags(c *gin.Context) {
+	tags, err := h.referenceService.GetNeedTags(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, tags)
+}

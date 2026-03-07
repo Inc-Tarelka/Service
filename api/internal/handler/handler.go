@@ -58,6 +58,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			references.GET("/specializations", h.reference.GetSpecializations)
 			references.GET("/directions", h.reference.GetDirections)
 			references.GET("/cities", h.reference.GetCities)
+			references.GET("/publication-tags", h.reference.GetPublicationTags)
+			references.GET("/need-tags", h.reference.GetNeedTags)
 		}
 
 		// Protected routes
