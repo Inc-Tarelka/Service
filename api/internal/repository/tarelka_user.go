@@ -366,8 +366,9 @@ func (r *tarelkaUserRepository) GetCities(ctx context.Context, userID int64) ([]
 
 // SearchByName finds users by person name/surname or company name
 func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	// Если строка поиска пустая, возвращаем всех пользователей (как в SearchByFilters при пустом name)
 	if strings.TrimSpace(q) == "" {
-		return []*model.TarelkaUserFull{}, nil
+		q = ""
 	}
 	// Delegate search logic to shared helper so it behaves like SearchByFilters (name + telegram_url)
 	rows, err := r.searchUsersWithNameLike(ctx, q, limit, offset)
@@ -416,26 +417,33 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 // и используется в SearchByName и SearchByFilters, чтобы поведение оставалось единым.
 func (r *tarelkaUserRepository) searchUsersWithNameLike(ctx context.Context, raw string, limit, offset int) (pgx.Rows, error) {
 	base := strings.TrimSpace(raw)
-	pattern := "%" + base + "%"
-	tokens := strings.Fields(base)
 
-	where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
-	args := []interface{}{pattern}
+	args := []interface{}{}
+	where := ""
 
-	if len(tokens) >= 2 {
-		t1 := "%" + tokens[0] + "%"
-		t2 := "%" + tokens[1] + "%"
-		where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
-		args = append(args, t1, t2)
-	}
+	// Если base пустая, не добавляем WHERE и просто возвращаем всех пользователей
+	if base != "" {
+		pattern := "%" + base + "%"
+		tokens := strings.Fields(base)
 
-	// также ищем по telegram_url, как в SearchByFilters
-	handle := strings.TrimPrefix(base, "@")
-	if handle != "" {
-		patternTg := "%" + handle + "%"
-		pos := len(args) + 1
-		where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
-		args = append(args, patternTg)
+		where = "WHERE ( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+		args = append(args, pattern)
+
+		if len(tokens) >= 2 {
+			t1 := "%" + tokens[0] + "%"
+			t2 := "%" + tokens[1] + "%"
+			where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+			args = append(args, t1, t2)
+		}
+
+		// также ищем по telegram_url, как в SearchByFilters
+		handle := strings.TrimPrefix(base, "@")
+		if handle != "" {
+			patternTg := "%" + handle + "%"
+			pos := len(args) + 1
+			where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
+			args = append(args, patternTg)
+		}
 	}
 
 	limPos := len(args) + 1
@@ -447,7 +455,7 @@ func (r *tarelkaUserRepository) searchUsersWithNameLike(ctx context.Context, raw
 		FROM tarelka_users u
 		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
 		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
-		WHERE %s
+		%s
 		ORDER BY u.created_at DESC
 		LIMIT $%d OFFSET $%d
 	`, where, limPos, offPos)
