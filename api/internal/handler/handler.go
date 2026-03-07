@@ -102,6 +102,12 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				pubs.POST(":id/images/presign", h.publication.PresignImagesForPublication)
 				pubs.POST(":id/images", h.publication.AttachImagesToPublication)
 			}
+
+			// Needs
+			needs := protected.Group("/needs")
+			{
+				needs.GET(":id", h.publication.GetNeed)
+			}
 		}
 	}
 }

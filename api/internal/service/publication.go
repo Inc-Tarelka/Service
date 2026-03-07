@@ -26,6 +26,8 @@ type PublicationService interface {
 	SearchPublications(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional params
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
+	// GetNeed returns single need by id with its tags
+	GetNeed(ctx context.Context, id int64) (*model.Need, error)
 	// GetPublication returns single publication by id; userID нужен для поля IsLiked
 	GetPublication(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
 }
@@ -202,6 +204,11 @@ func (s *publicationService) GetPublication(ctx context.Context, id int64, userI
 		return nil, nil, nil, err
 	}
 	return pub, team, needs, nil
+}
+
+// GetNeed fetches single need by id via repository.
+func (s *publicationService) GetNeed(ctx context.Context, id int64) (*model.Need, error) {
+	return s.repo.GetNeedByID(ctx, id)
 }
 
 // SearchPublications delegates to repository with minimal validation

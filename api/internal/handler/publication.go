@@ -26,6 +26,18 @@ type GetPublicationResponse struct {
 	Needs       []model.Need                  `json:"needs"`
 }
 
+// GetNeedResponse is detailed response for a single need
+type GetNeedResponse struct {
+	ID            int64           `json:"id"`
+	Name          string          `json:"name"`
+	Description   string          `json:"description"`
+	Budget        int64           `json:"budget"`
+	DeadlineStart *time.Time      `json:"deadlineStart,omitempty"`
+	DeadlineEnd   *time.Time      `json:"deadlineEnd,omitempty"`
+	Tags          []model.NeedTag `json:"tags,omitempty"`
+	PublicationID int64           `json:"publicationId"`
+}
+
 // GetPublication godoc
 // @Summary Получить публикацию по ID
 // @Description Возвращает детали публикации с лайками, комментариями, автором, соавторами и потребностями
@@ -69,6 +81,56 @@ func (h *PublicationHandler) GetPublication(c *gin.Context) {
 		Team:        team,
 		Needs:       needs,
 	})
+}
+
+// GetNeed godoc
+// @Summary Получить потребность по ID
+// @Description Возвращает данные о потребности: название, описание, теги, сроки и бюджет
+// @Tags needs
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID потребности"
+// @Success 200 {object} handler.GetNeedResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /needs/{id} [get]
+func (h *PublicationHandler) GetNeed(c *gin.Context) {
+	if _, exists := c.Get("user_id"); !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	need, err := h.svc.GetNeed(c.Request.Context(), id)
+	if err != nil {
+		if err.Error() == "need not found" {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	resp := GetNeedResponse{
+		ID:            need.ID,
+		Name:          need.Name,
+		Description:   need.Description,
+		Budget:        need.Budget,
+		DeadlineStart: need.DeadlineStart,
+		DeadlineEnd:   need.DeadlineEnd,
+		Tags:          need.Tags,
+		PublicationID: need.PublicationID,
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // CreatePublication godoc

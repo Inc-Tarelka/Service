@@ -1,5 +1,26 @@
 basePath: /api/v1
 definitions:
+  handler.GetNeedResponse:
+    properties:
+      budget:
+        type: integer
+      deadlineEnd:
+        type: string
+      deadlineStart:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      publicationId:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/model.NeedTag'
+        type: array
+    type: object
   handler.GetPublicationResponse:
     properties:
       needs:
@@ -1024,6 +1045,44 @@ paths:
       summary: Регистрация через Telegram
       tags:
       - auth
+  /needs/{id}:
+    get:
+      description: 'Возвращает данные о потребности: название, описание, теги, сроки
+        и бюджет'
+      parameters:
+      - description: ID потребности
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetNeedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить потребность по ID
+      tags:
+      - needs
   /publications:
     post:
       parameters:

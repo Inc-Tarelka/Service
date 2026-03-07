@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -28,6 +29,8 @@ type PublicationRepository interface {
 	Search(ctx context.Context, f model.PublicationSearchFilters, limit, offset int, userID *int64) ([]model.Publication, error)
 	// SearchNeeds returns needs filtered by optional criteria
 	SearchNeeds(ctx context.Context, f model.NeedSearchFilters, limit, offset int) ([]model.NeedSearchItem, error)
+	// GetNeedByID returns single need with tags by id
+	GetNeedByID(ctx context.Context, id int64) (*model.Need, error)
 	// GetByID returns a single publication by id with details; userID используется для вычисления поля IsLiked
 	GetByID(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
 }
@@ -825,4 +828,54 @@ func (r *publicationRepository) SearchNeeds(ctx context.Context, f model.NeedSea
 	return out, nil
 }
 
-// no-op
+// GetNeedByID returns single need with its tags by id
+func (r *publicationRepository) GetNeedByID(ctx context.Context, id int64) (*model.Need, error) {
+	var n model.Need
+	row := r.pool.QueryRow(ctx, `
+		SELECT id, publication_id, name, description, budget, deadline_start, deadline_end, city_id
+		FROM needs
+		WHERE id = $1
+	`, id)
+	if err := row.Scan(
+		&n.ID,
+		&n.PublicationID,
+		&n.Name,
+		&n.Description,
+		&n.Budget,
+		&n.DeadlineStart,
+		&n.DeadlineEnd,
+		&n.CityID,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("need not found")
+		}
+		return nil, err
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT t.id, t.name
+		FROM need_tag_links l
+		JOIN need_tags t ON t.id = l.tag_id
+		WHERE l.need_id = $1
+		ORDER BY t.name
+	`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := make([]model.NeedTag, 0)
+	for rows.Next() {
+		var t model.NeedTag
+		if err := rows.Scan(&t.ID, &t.Name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, t)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	n.Tags = tags
+	return &n, nil
+}

@@ -459,6 +459,64 @@
                 }
             }
         },
+        "/needs/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает данные о потребности: название, описание, теги, сроки и бюджет",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "needs"
+                ],
+                "summary": "Получить потребность по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID потребности",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetNeedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications": {
             "post": {
                 "security": [
@@ -2131,6 +2189,38 @@
         }
     },
     "definitions": {
+        "handler.GetNeedResponse": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "deadlineEnd": {
+                    "type": "string"
+                },
+                "deadlineStart": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NeedTag"
+                    }
+                }
+            }
+        },
         "handler.GetPublicationResponse": {
             "type": "object",
             "properties": {
