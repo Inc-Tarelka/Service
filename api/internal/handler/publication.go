@@ -177,12 +177,59 @@ func (h *PublicationHandler) AddComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request"})
 		return
 	}
-	comment, err := h.svc.AddComment(c.Request.Context(), pubID, authorID, req.Content)
+	comment, err := h.svc.AddComment(c.Request.Context(), pubID, authorID, req.Content, req.ParentCommentID)
 	if err != nil {
+		if err.Error() == "comment_reply_only_for_service" {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "comment_reply_only_for_service"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, comment)
+}
+
+// GetServiceComments godoc
+// @Summary Получить комментарии публикации (включая ответы на комментарии)
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Param limit query int false "Лимит" default(20)
+// @Param offset query int false "Смещение" default(0)
+// @Success 200 {object} model.PublicationCommentsResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id}/comments [get]
+func (h *PublicationHandler) GetServiceComments(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	_ = uid.(int64) // пока user_id не используется, но оставляем проверку авторизации
+
+	idStr := c.Param("id")
+	pubID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	total, comments, err := h.svc.GetServiceComments(c.Request.Context(), pubID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.PublicationCommentsResponse{
+		Total:    total,
+		Comments: comments,
+	})
 }
 
 // LikePublication godoc

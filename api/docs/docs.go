@@ -958,6 +958,69 @@ const docTemplate = `{
             }
         },
         "/publications/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Получить комментарии публикации (включая ответы на комментарии)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.PublicationCommentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -2156,6 +2219,9 @@ const docTemplate = `{
             "properties": {
                 "content": {
                     "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
                 }
             }
         },
@@ -2722,6 +2788,49 @@ const docTemplate = `{
                 },
                 "type": {
                     "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.PublicationCommentItem": {
+            "type": "object",
+            "properties": {
+                "authorFirstName": {
+                    "type": "string"
+                },
+                "authorId": {
+                    "type": "integer"
+                },
+                "authorLastName": {
+                    "type": "string"
+                },
+                "authorOrgName": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PublicationCommentsResponse": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationCommentItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },

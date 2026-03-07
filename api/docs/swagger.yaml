@@ -54,6 +54,8 @@ definitions:
     properties:
       content:
         type: string
+      parentCommentId:
+        type: integer
     required:
     - content
     type: object
@@ -428,6 +430,34 @@ definitions:
         type: string
       type:
         $ref: '#/definitions/model.PublicationType'
+    type: object
+  model.PublicationCommentItem:
+    properties:
+      authorFirstName:
+        type: string
+      authorId:
+        type: integer
+      authorLastName:
+        type: string
+      authorOrgName:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      parentCommentId:
+        type: integer
+    type: object
+  model.PublicationCommentsResponse:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/model.PublicationCommentItem'
+        type: array
+      total:
+        type: integer
     type: object
   model.PublicationImage:
     properties:
@@ -1107,6 +1137,47 @@ paths:
       tags:
       - publications
   /publications/{id}/comments:
+    get:
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PublicationCommentsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить комментарии публикации (включая ответы на комментарии)
+      tags:
+      - publications
     post:
       parameters:
       - description: ID публикации

@@ -18,7 +18,8 @@ var (
 type PublicationRepository interface {
 	Create(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	Update(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
-	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
+	AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error)
+	GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error)
 	// ToggleLike ставит лайк, если его нет, и убирает, если он уже есть; возвращает итоговое состояние isLiked
 	ToggleLike(ctx context.Context, pubID int64, authorID int64) (bool, error)
 	// AddImages attaches images to an existing publication and returns created rows
@@ -469,13 +470,13 @@ func (r *publicationRepository) Update(ctx context.Context, pubID int64, authorI
 	return nil
 }
 
-func (r *publicationRepository) AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error) {
+func (r *publicationRepository) AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error) {
 	var c model.Comment
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO publication_comments (publication_id, author_id, content)
-         VALUES ($1, $2, $3)
-         RETURNING id, content, author_id, created_at`,
-		pubID, authorID, content,
+		`INSERT INTO publication_comments (publication_id, author_id, content, parent_comment_id)
+	         VALUES ($1, $2, $3, $4)
+	         RETURNING id, content, author_id, created_at`,
+		pubID, authorID, content, parentCommentID,
 	).Scan(&c.ID, &c.Content, &c.AuthorID, &c.CreatedAt)
 	if err != nil {
 		return nil, err
@@ -562,6 +563,76 @@ func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, auth
 		return nil, err
 	}
 	return out, nil
+}
+
+// GetServiceComments возвращает список комментариев услуги (включая ответы на комментарии, относящиеся к этой услуге)
+// Отсортированы по дате создания (новые сначала).
+func (r *publicationRepository) GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT
+			pc.id,
+			pc.author_id,
+			pc.content,
+			pc.created_at,
+			pc.parent_comment_id,
+			tp.name AS author_first_name,
+			tp.surname AS author_last_name,
+			tc.company_name AS author_org_name,
+			COUNT(*) OVER() AS total_count
+		FROM publication_comments pc
+		JOIN tarelka_users u ON u.id = pc.author_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		WHERE pc.publication_id = $1
+		ORDER BY pc.created_at DESC
+		LIMIT $2 OFFSET $3
+	`, pubID, limit, offset)
+	if err != nil {
+		return 0, nil, err
+	}
+	defer rows.Close()
+
+	var (
+		items []model.PublicationCommentItem
+		total int64
+	)
+
+	for rows.Next() {
+		var item model.PublicationCommentItem
+		var firstName, lastName, orgName *string
+		var parentID *int64
+		if err := rows.Scan(
+			&item.ID,
+			&item.AuthorID,
+			&item.Content,
+			&item.CreatedAt,
+			&parentID,
+			&firstName,
+			&lastName,
+			&orgName,
+			&total,
+		); err != nil {
+			return 0, nil, err
+		}
+		item.ParentCommentID = parentID
+		item.AuthorFirstName = firstName
+		item.AuthorLastName = lastName
+		item.AuthorOrgName = orgName
+		items = append(items, item)
+	}
+
+	if rows.Err() != nil {
+		return 0, nil, rows.Err()
+	}
+
+	return total, items, nil
 }
 
 // Search returns publications filtered by optional criteria.

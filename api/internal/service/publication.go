@@ -14,7 +14,8 @@ import (
 type PublicationService interface {
 	CreatePublication(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	UpdatePublication(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
-	AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error)
+	AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error)
+	GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error)
 	// LikePublication теперь реализует toggle-логику и возвращает итоговое значение isLiked
 	LikePublication(ctx context.Context, pubID int64, authorID int64) (bool, error)
 	// PresignPublicationImages generates presigned PUT URLs for uploading images (optionally into a specific publication folder)
@@ -92,11 +93,14 @@ func (s *publicationService) UpdatePublication(ctx context.Context, pubID int64,
 	return s.repo.Update(ctx, pubID, authorID, req)
 }
 
-func (s *publicationService) AddComment(ctx context.Context, pubID int64, authorID int64, content string) (*model.Comment, error) {
+func (s *publicationService) AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error) {
 	if content == "" {
 		return nil, errors.New("content_required")
 	}
-	comment, err := s.repo.AddComment(ctx, pubID, authorID, content)
+	// если это ответ на комментарий, нужно убедиться, что публикация является услугой
+	// ранее здесь была проверка на тип публикации (SERVICE) для ответов на комментарии,
+	// теперь разрешаем ответы для любого типа публикации
+	comment, err := s.repo.AddComment(ctx, pubID, authorID, content, parentCommentID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +108,16 @@ func (s *publicationService) AddComment(ctx context.Context, pubID int64, author
 		_ = s.activityService.Log(ctx, authorID, model.ActivityTypeComment)
 	}
 	return comment, nil
+}
+
+func (s *publicationService) GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return s.repo.GetServiceComments(ctx, pubID, limit, offset)
 }
 
 func (s *publicationService) LikePublication(ctx context.Context, pubID int64, authorID int64) (bool, error) {

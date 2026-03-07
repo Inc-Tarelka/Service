@@ -147,7 +147,25 @@ type NeedUpsertItem struct {
 }
 
 type AddCommentRequest struct {
-	Content string `json:"content" binding:"required"`
+	Content         string `json:"content" binding:"required"`
+	ParentCommentID *int64 `json:"parentCommentId,omitempty"`
+}
+
+// PublicationCommentItem представляет комментарий в списке комментариев услуги
+type PublicationCommentItem struct {
+	ID              int64     `json:"id"`
+	AuthorID        int64     `json:"authorId"`
+	AuthorFirstName *string   `json:"authorFirstName,omitempty"`
+	AuthorLastName  *string   `json:"authorLastName,omitempty"`
+	AuthorOrgName   *string   `json:"authorOrgName,omitempty"`
+	CreatedAt       time.Time `json:"createdAt"`
+	Content         string    `json:"content"`
+	ParentCommentID *int64    `json:"parentCommentId,omitempty"`
+}
+
+type PublicationCommentsResponse struct {
+	Total    int64                    `json:"total"`
+	Comments []PublicationCommentItem `json:"comments"`
 }
 
 // Publication images upload DTOs
