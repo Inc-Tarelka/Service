@@ -43,6 +43,11 @@ export class SearchInteractionsStore {
       const userParams: SearchUsersParams = {
         name: query,
         cityId: filters.cityId,
+        specializationIds: filters.specializationId
+          ? String(filters.specializationId)
+          : undefined,
+        type: filters.authorType as 'PERSON' | 'COMPANY' | undefined,
+        status: filters.workingStatus,
         limit: 20,
         offset: 0,
       };

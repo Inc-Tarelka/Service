@@ -10,8 +10,8 @@ import { useSearchFilters } from '../../model/useSearchFilters';
 import { DatePickerDrawer } from './DatePickerDrawer';
 import { NeedFilters } from './NeedFilters';
 import { ProfileFilters } from './ProfileFilters';
-import { ServiceFilters } from './ServiceFilters';
 import s from './SearchFiltersDrawer.module.scss';
+import { ServiceFilters } from './ServiceFilters';
 
 interface SearchFiltersDrawerProps {
   opened: boolean;
@@ -112,11 +112,7 @@ export const SearchFiltersDrawer = observer(
               )}
             </div>
 
-            <div
-              className={`${s.footer} ${
-                activeTab === SearchPublicationsType.NEED ? s.footerBottom : ''
-              }`}
-            >
+            <div className={`${s.footer} ${s.footerBottom}`}>
               <ActionIcon
                 onClick={onClose}
                 variant="outline"

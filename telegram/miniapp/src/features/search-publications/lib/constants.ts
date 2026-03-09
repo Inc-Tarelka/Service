@@ -2,7 +2,7 @@ import { SearchPublicationsType } from 'shared/api/types';
 
 export const DRAWER_SIZES: Record<SearchPublicationsType, number | string> = {
   [SearchPublicationsType.PROFILE]: 480,
-  [SearchPublicationsType.SERVICE]: 320,
+  [SearchPublicationsType.SERVICE]: 480,
   [SearchPublicationsType.NEED]: '90%',
   [SearchPublicationsType.PROJECT]: 480,
   [SearchPublicationsType.ALL]: 480,

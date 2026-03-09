@@ -13,7 +13,9 @@ export const API_URL = {
   // References
   cities: () => '/references/cities',
   directions: () => '/references/directions',
-  specializations: () => '/references/specializations',
+  specializations: () => 'references/specializations',
+  publication_tags: () => 'references/publication-tags',
+  needs_tags: () => 'references/need-tags',
 
   profile: () => '/users/me',
   user: (id: string | number) => `/users/${id}`,
@@ -38,4 +40,7 @@ export const API_URL = {
   delete_account: () => '/users/me',
   me: () => '/users/me',
   search_users: () => '/users/search/filters',
+
+  // Needs
+  details_needs: (id: string) => `/needs/${id}`,
 };

@@ -39,15 +39,6 @@ export const ServiceDetailPage = observer(() => {
     }
   }, [id, publicationDetailsStore]);
 
-  const mockNeedData = {
-    title: 'Требуется дизайнер UI/UX',
-    description:
-      'Ищем опытного дизайнера для создания интерфейса мобильного приложения. Проект рассчитан на 2-3 месяца работы.',
-    tags: 'Дизайн, UI/UX, Figma',
-    deadline: '01.03.2026 - 31.05.2026',
-    budget: 150000,
-  };
-
   const isLoading = publicationDetailsStore.isLoading;
   const error = publicationDetailsStore.error;
   const storeService = publicationDetailsStore.data?.publication;
@@ -105,7 +96,7 @@ export const ServiceDetailPage = observer(() => {
         opened={!!selectedNeedId && !responseOpened}
         onClose={() => setSelectedNeedId(null)}
         onRespond={() => setResponseOpened(true)}
-        needData={mockNeedData}
+        needId={selectedNeedId}
       />
       <ResponseToNeedDrawer
         opened={responseOpened}

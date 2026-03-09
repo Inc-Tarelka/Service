@@ -15,96 +15,96 @@ interface ProfileFiltersProps {
   onChange: (filters: SearchPublicationsParams) => void;
 }
 
-export const ProfileFilters = observer(
-  ({ filters, onChange }: ProfileFiltersProps) => {
-    const specializationsData = transformSpecializationsForSelect(
-      referenceStore.specializations,
-    );
+export const ProfileFilters = observer((props: ProfileFiltersProps) => {
+  const { filters, onChange } = props;
 
-    return (
-      <>
-        <div className={s.inputGroup}>
-          <span className={s.label}>Специализация</span>
-          <Select
-            classNames={{ input: s.select }}
-            value={
-              filters.specializationId ? String(filters.specializationId) : null
-            }
-            onChange={(val) =>
-              onChange({
-                ...filters,
-                specializationId: val ? Number(val) : undefined,
-              })
-            }
-            onDropdownOpen={() => referenceStore.getSpecializationsAction()}
-            rightSection={
-              <div style={{ pointerEvents: 'none', display: 'flex' }}>
-                <ChevronDownIcon />
-              </div>
-            }
-            placeholder="Выберите специализацию"
-            data={specializationsData}
-            radius={16}
-            size="lg"
-            searchable
-            clearable
-          />
-        </div>
+  const specializationsData = transformSpecializationsForSelect(
+    referenceStore.specializations,
+  );
 
-        <div className={s.typeSelector}>
-          <Button
-            className={`${s.typeButton} ${
-              filters.authorType === 'PERSON' || !filters.authorType
-                ? s.active
-                : ''
-            }`}
-            onClick={() => onChange({ ...filters, authorType: 'PERSON' })}
-            variant="filled"
-            radius="xl"
-          >
-            Специалист
-          </Button>
-          <Button
-            className={`${s.typeButton} ${
-              filters.authorType === 'COMPANY' ? s.active : ''
-            }`}
-            onClick={() => onChange({ ...filters, authorType: 'COMPANY' })}
-            variant="filled"
-            radius="xl"
-          >
-            Компания
-          </Button>
-        </div>
-
-        <div className={s.inputGroup}>
-          <span className={s.label}>Статус поиска работы</span>
-          <Select
-            classNames={{ input: s.select }}
-            value={filters.workingStatus || null}
-            onChange={(val) =>
-              onChange({
-                ...filters,
-                workingStatus: val as any,
-              })
-            }
-            rightSection={
-              <div style={{ pointerEvents: 'none', display: 'flex' }}>
-                <ChevronDownIcon />
-              </div>
-            }
-            placeholder="Выберите статус"
-            data={WORKING_STATUS_OPTIONS}
-            radius={16}
-            size="lg"
-            clearable
-          />
-        </div>
-
-        <CitySelect
-          value={filters.cityId}
-          onChange={(cityId) => onChange({ ...filters, cityId })}
+  return (
+    <>
+      <div className={s.inputGroup}>
+        <span className={s.label}>Специализация</span>
+        <Select
+          classNames={{ input: s.select }}
+          value={
+            filters.specializationId ? String(filters.specializationId) : null
+          }
+          onChange={(val) =>
+            onChange({
+              ...filters,
+              specializationId: val ? Number(val) : undefined,
+            })
+          }
+          onDropdownOpen={() => referenceStore.getSpecializationsAction()}
+          rightSection={
+            <div style={{ pointerEvents: 'none', display: 'flex' }}>
+              <ChevronDownIcon />
+            </div>
+          }
+          placeholder="Выберите специализацию"
+          data={specializationsData}
+          radius={16}
+          size="lg"
+          searchable
+          clearable
         />
-      </>
-    );
-  },
-);
+      </div>
+
+      <div className={s.typeSelector}>
+        <Button
+          className={`${s.typeButton} ${
+            filters.authorType === 'PERSON' || !filters.authorType
+              ? s.active
+              : ''
+          }`}
+          onClick={() => onChange({ ...filters, authorType: 'PERSON' })}
+          variant="filled"
+          radius="xl"
+        >
+          Специалист
+        </Button>
+        <Button
+          className={`${s.typeButton} ${
+            filters.authorType === 'COMPANY' ? s.active : ''
+          }`}
+          onClick={() => onChange({ ...filters, authorType: 'COMPANY' })}
+          variant="filled"
+          radius="xl"
+        >
+          Компания
+        </Button>
+      </div>
+
+      <div className={s.inputGroup}>
+        <span className={s.label}>Статус поиска работы</span>
+        <Select
+          classNames={{ input: s.select }}
+          value={filters.workingStatus || null}
+          onChange={(val) =>
+            onChange({
+              ...filters,
+              workingStatus: val as any,
+            })
+          }
+          rightSection={
+            <div style={{ pointerEvents: 'none', display: 'flex' }}>
+              <ChevronDownIcon />
+            </div>
+          }
+          placeholder="Выберите статус"
+          data={WORKING_STATUS_OPTIONS}
+          radius={16}
+          size="lg"
+          clearable
+        />
+      </div>
+
+      <CitySelect
+        value={filters.cityId}
+        onChange={(cityId) => onChange({ ...filters, cityId })}
+      />
+    </>
+  );
+});

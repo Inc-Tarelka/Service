@@ -1,5 +1,6 @@
 import { Select } from '@mantine/core';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
+import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { TagList } from 'shared/ui/TagList';
 import s from './SearchFiltersDrawer.module.scss';
 
@@ -10,12 +11,8 @@ interface TagsSelectGroupProps {
   onRemove: (tagId: string) => void;
 }
 
-export const TagsSelectGroup = ({
-  selectedTags,
-  availableTags,
-  onAdd,
-  onRemove,
-}: TagsSelectGroupProps) => {
+export const TagsSelectGroup = (props: TagsSelectGroupProps) => {
+  const { selectedTags, availableTags, onAdd, onRemove } = props;
   return (
     <div className={s.inputGroup}>
       <span className={s.label}>Теги</span>
@@ -23,6 +20,7 @@ export const TagsSelectGroup = ({
         classNames={{ input: s.select }}
         value={null}
         onChange={onAdd}
+        onDropdownOpen={() => referenceStore.getPublicationTagsAction()}
         rightSection={
           <div style={{ pointerEvents: 'none', display: 'flex' }}>
             <ChevronDownIcon />

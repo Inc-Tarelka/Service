@@ -6,13 +6,13 @@ import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SearchPublicationsType } from 'shared/api/types';
+import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher/TabsSwitcher';
 import { Page } from 'widgets/Page/ui/Page';
 import { ListingContent } from '../lib/ListingContent';
 import { useNavigationLogic } from '../lib/useNavigationLogic';
 import s from './MainPage.module.scss';
-import { useViewport } from 'shared/hooks/useViewport';
 
 export const MainPage = observer(() => {
   const {
@@ -34,57 +34,59 @@ export const MainPage = observer(() => {
     useState<SearchPublicationsType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState(queryFromUrl);
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
+  const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
+
+  const tabs = [
+    { label: 'Профили', value: SearchPublicationsType.PROFILE },
+    { label: 'Услуги', value: SearchPublicationsType.SERVICE },
+    { label: 'Потребности', value: SearchPublicationsType.NEED },
+    { label: 'Все', value: SearchPublicationsType.ALL },
+  ];
+  const getActiveStore = () => {
+    switch (activeTab) {
+      case SearchPublicationsType.NEED:
+        return searchNeedsStore;
+      case SearchPublicationsType.SERVICE:
+        return searchServicesStore;
+      case SearchPublicationsType.PROFILE:
+        return searchUsersStore;
+      default:
+        return searchPublicationStore;
+    }
+  };
+
+  const activeStore = getActiveStore();
+  const { isLoading, isLoaded } = activeStore;
 
   const publications = searchPublicationStore.publications;
   const needs = searchNeedsStore.needs;
   const services = searchServicesStore.services;
   const users = searchUsersStore.users;
 
-  const isLoading =
-    activeTab === SearchPublicationsType.NEED
-      ? searchNeedsStore.isLoading
-      : activeTab === SearchPublicationsType.SERVICE
-        ? searchServicesStore.isLoading
-        : activeTab === SearchPublicationsType.PROFILE
-          ? searchUsersStore.isLoading
-          : searchPublicationStore.isLoading;
-
-  const isLoaded =
-    activeTab === SearchPublicationsType.NEED
-      ? searchNeedsStore.isLoaded
-      : activeTab === SearchPublicationsType.SERVICE
-        ? searchServicesStore.isLoaded
-        : activeTab === SearchPublicationsType.PROFILE
-          ? searchUsersStore.isLoaded
-          : searchPublicationStore.isLoaded;
-
-  const mockNeedData = {
-    title: 'Требуется дизайнер UI/UX',
-    description:
-      'Ищем опытного дизайнера для создания интерфейса мобильного приложения. Проект рассчитан на 2-3 месяца работы.',
-    tags: 'Дизайн, UI/UX, Figma',
-    deadline: '01.03.2026 - 31.05.2026',
-    budget: 150000,
-  };
-
   const onItemClick = (id: number) => {
-    if (activeTab === SearchPublicationsType.NEED) {
-      setIsNeedDetailsOpen(true);
-    } else if (activeTab === SearchPublicationsType.SERVICE) {
-      const searchState = new URLSearchParams();
-      if (searchQuery) searchState.set('query', searchQuery);
-      searchState.set('tab', SearchPublicationsType.SERVICE);
-      const selectedService =
-        services.find((s) => s.id === id) ||
-        publications.find((p) => p.id === id);
-      navigate(`/service/${id}?${searchState.toString()}`, {
-        state: { service: selectedService },
-      });
-    } else if (activeTab === SearchPublicationsType.PROFILE) {
-      handleUserNavigation(id, searchQuery);
-    } else {
-      handleDataNavigation(id, activeTab, publications, searchQuery);
+    switch (activeTab) {
+      case SearchPublicationsType.NEED:
+        setSelectedNeedId(id);
+        setIsNeedDetailsOpen(true);
+        break;
+      case SearchPublicationsType.SERVICE: {
+        const searchState = new URLSearchParams();
+        if (searchQuery) searchState.set('query', searchQuery);
+        searchState.set('tab', SearchPublicationsType.SERVICE);
+        const selectedService =
+          services.find((s) => s.id === id) ||
+          publications.find((p) => p.id === id);
+        navigate(`/service/${id}?${searchState.toString()}`, {
+          state: { service: selectedService },
+        });
+        break;
+      }
+      case SearchPublicationsType.PROFILE:
+        handleUserNavigation(id, searchQuery);
+        break;
+      default:
+        handleDataNavigation(id, activeTab, publications, searchQuery);
     }
   };
 
@@ -112,12 +114,7 @@ export const MainPage = observer(() => {
         />
         <TabsSwitcher
           hideMask={true}
-          tabs={[
-            { label: 'Профили', value: SearchPublicationsType.PROFILE },
-            { label: 'Услуги', value: SearchPublicationsType.SERVICE },
-            { label: 'Потребности', value: SearchPublicationsType.NEED },
-            { label: 'Все', value: SearchPublicationsType.ALL },
-          ]}
+          tabs={tabs}
           activeTab={activeTab}
           className={s.tabs}
           onTabChange={(tab) => setActiveTab(tab as any)}
@@ -137,9 +134,12 @@ export const MainPage = observer(() => {
 
       <NeedDetailsDrawer
         opened={isNeedDetailsOpen}
-        onClose={() => setIsNeedDetailsOpen(false)}
+        onClose={() => {
+          setIsNeedDetailsOpen(false);
+          setTimeout(() => setSelectedNeedId(null), 300);
+        }}
         onRespond={handleRespond}
-        needData={mockNeedData}
+        needId={selectedNeedId}
       />
 
       <ResponseToNeedDrawer

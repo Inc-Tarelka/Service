@@ -1,7 +1,9 @@
 export interface SearchUsersParams {
   name?: string;
   cityId?: number;
-  specializationId?: number;
+  specializationIds?: string;
+  type?: 'PERSON' | 'COMPANY';
+  status?: string;
   limit?: number;
   offset?: number;
 }

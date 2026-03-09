@@ -13,6 +13,16 @@ export interface Specialization {
   name: string;
 }
 
+export interface PublicationTag {
+  id: number;
+  name: string;
+}
+
+export interface NeedTag {
+  id: number;
+  name: string;
+}
+
 export enum AccountType {
   PERSON = 'PERSON',
   COMPANY = 'COMPANY',
