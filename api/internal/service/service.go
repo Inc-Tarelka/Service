@@ -15,6 +15,7 @@ type Services struct {
 	Publication  PublicationService
 	Activity     ActivityService
 	Notification NotificationService
+	Repos        *repository.Repositories
 }
 
 // Deps зависимости для создания сервисов
@@ -52,5 +53,6 @@ func NewServices(deps Deps) *Services {
 		Publication:  NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),
 		Activity:     activitySvc,
 		Notification: NewNotificationService(deps.Repos.Notification, deps.Repos.TarelkaUser, deps.TelegramBotToken),
+		Repos:        deps.Repos,
 	}
 }

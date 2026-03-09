@@ -34,9 +34,10 @@ type TarelkaUser struct {
 	// FindWork — enum indicating whether user is looking for a job
 	FindWork *FindWork `json:"find_work,omitempty" db:"find_work"`
 	// Education — free text
-	Education    *string `json:"education,omitempty" db:"education"`
-	TelegramURL  *string `json:"telegram_url,omitempty" db:"telegram_url"`
-	Conversation int     `json:"conversation" db:"conversation"`
+	Education      *string `json:"education,omitempty" db:"education"`
+	TelegramURL    *string `json:"telegram_url,omitempty" db:"telegram_url"`
+	TelegramChatID *int64  `json:"telegram_chat_id,omitempty" db:"telegram_chat_id"`
+	Conversation   int     `json:"conversation" db:"conversation"`
 	// ConversationUpdatedAt — when conversation stage was last changed
 	ConversationUpdatedAt time.Time `json:"conversation_updated_at" db:"conversation_updated_at"`
 	CreatedAt             time.Time `json:"created_at" db:"created_at"`

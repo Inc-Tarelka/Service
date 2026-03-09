@@ -3435,6 +3435,9 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
+                "telegram_chat_id": {
+                    "type": "integer"
+                },
                 "telegram_url": {
                     "type": "string"
                 },
@@ -3514,6 +3517,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.Specialization"
                     }
+                },
+                "telegram_chat_id": {
+                    "type": "integer"
                 },
                 "telegram_url": {
                     "type": "string"

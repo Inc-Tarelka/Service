@@ -706,6 +706,8 @@ definitions:
         type: string
       phone:
         type: string
+      telegram_chat_id:
+        type: integer
       telegram_url:
         type: string
       tg_user_id:
@@ -759,6 +761,8 @@ definitions:
         items:
           $ref: '#/definitions/model.Specialization'
         type: array
+      telegram_chat_id:
+        type: integer
       telegram_url:
         type: string
       tg_user_id:

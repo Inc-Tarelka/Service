@@ -62,11 +62,17 @@ func (s *notificationService) SendCollaborationNotification(
 		return created, nil
 	}
 
-	if receiver.TelegramURL == nil || *receiver.TelegramURL == "" {
+	var chatID string
+	if receiver.TelegramChatID != nil {
+		// Use numeric chat ID if available
+		chatID = fmt.Sprintf("%d", *receiver.TelegramChatID)
+	} else if receiver.TelegramURL != nil && *receiver.TelegramURL != "" {
+		// Fallback to username-based addressing
+		chatID = normalizeTelegramURL(*receiver.TelegramURL)
+	} else {
 		return created, nil
 	}
 
-	chatID := normalizeTelegramURL(*receiver.TelegramURL)
 	text := buildCollaborationMessage(created, message)
 	_ = s.sendTelegramMessage(ctx, chatID, text)
 

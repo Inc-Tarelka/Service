@@ -3429,6 +3429,9 @@
                 "phone": {
                     "type": "string"
                 },
+                "telegram_chat_id": {
+                    "type": "integer"
+                },
                 "telegram_url": {
                     "type": "string"
                 },
@@ -3508,6 +3511,9 @@
                     "items": {
                         "$ref": "#/definitions/model.Specialization"
                     }
+                },
+                "telegram_chat_id": {
+                    "type": "integer"
                 },
                 "telegram_url": {
                     "type": "string"

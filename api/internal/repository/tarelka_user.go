@@ -59,6 +59,9 @@ type TarelkaUserRepository interface {
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
+
+	// UpdateTelegramChatIDByTelegramURL updates telegram_chat_id for user with given telegram_url
+	UpdateTelegramChatIDByTelegramURL(ctx context.Context, telegramURL string, chatID int64) error
 }
 
 type tarelkaUserRepository struct {
@@ -71,9 +74,9 @@ func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 
 func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error) {
 	query := `
-		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
+		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at
 	`
 
 	err := r.pool.QueryRow(ctx, query,
@@ -84,6 +87,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		user.PasswordHash,
 		user.LogoURL,
 		user.TelegramURL,
+		user.TelegramChatID,
 		user.Conversation,
 	).Scan(
 		&user.ID,
@@ -94,6 +98,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.TelegramChatID,
 		&user.Conversation,
 		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
@@ -106,7 +111,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 
 func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at
 		FROM tarelka_users WHERE id = $1
 	`
 
@@ -120,6 +125,7 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.TelegramChatID,
 		&user.Conversation,
 		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
@@ -135,7 +141,7 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 
 func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username string) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, conversation, conversation_updated_at, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at
 		FROM tarelka_users WHERE username = $1
 	`
 
@@ -149,6 +155,7 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		&user.PasswordHash,
 		&user.LogoURL,
 		&user.TelegramURL,
+		&user.TelegramChatID,
 		&user.Conversation,
 		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
@@ -226,6 +233,17 @@ func (r *tarelkaUserRepository) GetCompany(ctx context.Context, userID int64) (*
 		return nil, err
 	}
 	return &company, nil
+}
+
+// UpdateTelegramChatIDByTelegramURL updates telegram_chat_id for a user identified by telegram_url
+func (r *tarelkaUserRepository) UpdateTelegramChatIDByTelegramURL(ctx context.Context, telegramURL string, chatID int64) error {
+	query := `
+		UPDATE tarelka_users
+		SET telegram_chat_id = $1
+		WHERE telegram_url = $2
+	`
+	_, err := r.pool.Exec(ctx, query, chatID, telegramURL)
+	return err
 }
 
 // Relations
