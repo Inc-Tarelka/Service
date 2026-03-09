@@ -10,10 +10,11 @@ import (
 
 // Handler содержит все обработчики
 type Handler struct {
-	auth        *AuthHandler
-	user        *UserHandler
-	reference   *ReferenceHandler
-	publication *PublicationHandler
+	auth         *AuthHandler
+	user         *UserHandler
+	reference    *ReferenceHandler
+	publication  *PublicationHandler
+	notification *NotificationHandler
 
 	authService service.AuthService
 }
@@ -21,11 +22,12 @@ type Handler struct {
 // NewHandler создаёт Handler
 func NewHandler(services *service.Services) *Handler {
 	return &Handler{
-		auth:        NewAuthHandler(services.Auth),
-		user:        NewUserHandler(services.User),
-		reference:   NewReferenceHandler(services.Reference),
-		publication: NewPublicationHandler(services.Publication),
-		authService: services.Auth,
+		auth:         NewAuthHandler(services.Auth),
+		user:         NewUserHandler(services.User),
+		reference:    NewReferenceHandler(services.Reference),
+		publication:  NewPublicationHandler(services.Publication),
+		notification: NewNotificationHandler(services.Notification),
+		authService:  services.Auth,
 	}
 }
 
@@ -109,6 +111,13 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			needs := protected.Group("/needs")
 			{
 				needs.GET(":id", h.publication.GetNeed)
+			}
+
+			// Notifications
+			notifs := protected.Group("/notifications")
+			{
+				notifs.POST("/collaboration", h.notification.CreateCollaboration)
+				notifs.GET("/collaboration", h.notification.ListCollaboration)
 			}
 		}
 	}

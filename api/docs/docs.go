@@ -523,6 +523,116 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications/collaboration": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает уведомления типа Collaboration для текущего пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список уведомлений о сотрудничестве",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает уведомление типа Collaboration и отправляет Telegram-сообщение получателю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Отправить уведомление о сотрудничестве",
+                "parameters": [
+                    {
+                        "description": "Параметры заявки на сотрудничество",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CollaborationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications": {
             "post": {
                 "security": [
@@ -2252,6 +2362,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.CollaborationRequest": {
+            "type": "object",
+            "required": [
+                "publicationId",
+                "receiverId"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.GetNeedResponse": {
             "type": "object",
             "properties": {
@@ -2716,6 +2845,51 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "model.NotificationResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creatorId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "needId": {
+                    "type": "integer"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.NotificationType"
+                }
+            }
+        },
+        "model.NotificationType": {
+            "type": "string",
+            "enum": [
+                "Collaboration",
+                "Response",
+                "Notice"
+            ],
+            "x-enum-varnames": [
+                "NotificationTypeCollaboration",
+                "NotificationTypeResponse",
+                "NotificationTypeNotice"
+            ]
         },
         "model.PasswordForgotRequest": {
             "type": "object",

@@ -1,5 +1,18 @@
 basePath: /api/v1
 definitions:
+  handler.CollaborationRequest:
+    properties:
+      message:
+        maxLength: 1000
+        type: string
+      publicationId:
+        type: integer
+      receiverId:
+        type: integer
+    required:
+    - publicationId
+    - receiverId
+    type: object
   handler.GetNeedResponse:
     properties:
       budget:
@@ -305,6 +318,37 @@ definitions:
     required:
     - name
     type: object
+  model.NotificationResponse:
+    properties:
+      createdAt:
+        type: string
+      creatorId:
+        type: integer
+      id:
+        type: integer
+      isRead:
+        type: boolean
+      message:
+        type: string
+      needId:
+        type: integer
+      publicationId:
+        type: integer
+      receiverId:
+        type: integer
+      type:
+        $ref: '#/definitions/model.NotificationType'
+    type: object
+  model.NotificationType:
+    enum:
+    - Collaboration
+    - Response
+    - Notice
+    type: string
+    x-enum-varnames:
+    - NotificationTypeCollaboration
+    - NotificationTypeResponse
+    - NotificationTypeNotice
   model.PasswordForgotRequest:
     properties:
       username:
@@ -1114,6 +1158,77 @@ paths:
       summary: Получить потребность по ID
       tags:
       - needs
+  /notifications/collaboration:
+    get:
+      description: Возвращает уведомления типа Collaboration для текущего пользователя
+      parameters:
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NotificationResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Список уведомлений о сотрудничестве
+      tags:
+      - notifications
+    post:
+      consumes:
+      - application/json
+      description: Создает уведомление типа Collaboration и отправляет Telegram-сообщение
+        получателю
+      parameters:
+      - description: Параметры заявки на сотрудничество
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CollaborationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.NotificationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Отправить уведомление о сотрудничестве
+      tags:
+      - notifications
   /publications:
     post:
       parameters:
