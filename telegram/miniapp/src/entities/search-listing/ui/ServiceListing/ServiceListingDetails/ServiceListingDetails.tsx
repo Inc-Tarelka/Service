@@ -1,4 +1,4 @@
-import { useDebouncedCallback, useDisclosure } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { ActionsDrawer } from 'entities/interaction';
@@ -79,15 +79,11 @@ export const ServiceListingDetails = observer(
       setLikesCount(service.likesCount ?? 0);
     }, [service.isLiked, service.likesCount]);
 
-    const debouncedLike = useDebouncedCallback((id: number) => {
-      onLike?.(id);
-    }, 1000);
-
     const handleLikeClick = () => {
       const nextLiked = !isLiked;
       setIsLiked(nextLiked);
       setLikesCount((prev) => (nextLiked ? prev + 1 : prev - 1));
-      debouncedLike(service.id);
+      onLike?.(service.id);
     };
 
     const displayNeeds: SearchNeedItem[] = (needs ?? service.needs ?? []).map(

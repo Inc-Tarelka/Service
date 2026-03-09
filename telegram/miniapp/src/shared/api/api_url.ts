@@ -43,4 +43,7 @@ export const API_URL = {
 
   // Needs
   details_needs: (id: string) => `/needs/${id}`,
+
+  // Search
+  search_needs: () => '/users/search/name',
 };

@@ -1,4 +1,5 @@
 export interface SearchUsersParams {
+  q?: string;
   name?: string;
   cityId?: number;
   specializationIds?: string;
@@ -6,6 +7,16 @@ export interface SearchUsersParams {
   status?: string;
   limit?: number;
   offset?: number;
+}
+
+export interface PersonProfession {
+  id: number;
+  title: string;
+}
+
+export interface PersonCity {
+  id: number;
+  title: string;
 }
 
 export interface Person {

@@ -8,6 +8,7 @@ import type {
   PublicationDetailsResponse,
   SearchPublicationsParams,
   SearchPublicationsResponse,
+  ToggleLikeResponse,
 } from './types';
 
 // =========== S3 PRESIGN IMAGE ===========
@@ -44,8 +45,10 @@ export const getPublicationDetails = async (id: number) => {
 };
 
 // =========== TOGGLE PUBLICATION LIKE ===========
-export const togglePublicationLike = async (id: number) => {
-  const response = await baseInstanceV1.post(
+export const togglePublicationLike = async (
+  id: number,
+): Promise<ToggleLikeResponse> => {
+  const response = await baseInstanceV1.post<ToggleLikeResponse>(
     API_URL.publication_like(id.toString()),
   );
   return response.data;

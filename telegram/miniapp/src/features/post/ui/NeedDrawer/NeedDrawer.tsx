@@ -7,6 +7,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { SpecializationsListSkeleton } from 'features/auth/ui/ProfileForm/SpecializationsList.skeleton';
 import { useRef, useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
@@ -24,12 +25,21 @@ interface NeedDrawerProps {
   onClose: () => void;
   onSubmit: (need: PostNeed) => void;
   tagsData: { value: string; label: string }[];
+  onTagsDropdownOpen?: () => void;
+  tagsLoading?: boolean;
 }
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
 export const NeedDrawer = (props: NeedDrawerProps) => {
-  const { opened, onClose, onSubmit, tagsData } = props;
+  const {
+    opened,
+    onClose,
+    onSubmit,
+    tagsData,
+    onTagsDropdownOpen,
+    tagsLoading,
+  } = props;
 
   const [startDateOpened, { open: openStartDate, close: closeStartDate }] =
     useDisclosure(false);
@@ -180,6 +190,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 classNames={{ input: classes.select }}
                 value={null}
                 onChange={handleAddTag}
+                onDropdownOpen={onTagsDropdownOpen}
                 rightSection={
                   <div style={{ pointerEvents: 'none', display: 'flex' }}>
                     <ChevronDownIcon />
@@ -187,6 +198,13 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
+                nothingFoundMessage={
+                  tagsLoading ? (
+                    <SpecializationsListSkeleton />
+                  ) : (
+                    'Ничего не найдено'
+                  )
+                }
                 radius={16}
                 size="lg"
                 searchable

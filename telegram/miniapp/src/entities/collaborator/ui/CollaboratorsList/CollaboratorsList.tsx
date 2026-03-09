@@ -1,20 +1,20 @@
 import { Stack } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
-import { User } from 'shared/api/service/User/types';
+import { SearchUser } from 'shared/api/service/UserSearch/types';
 import classNames from 'shared/library/ClassNames/classNames';
 import { CollaboratorItem } from '../CollaboratorItem/CollaboratorItem';
 import classes from './CollaboratorsList.module.scss';
 
 interface CollaboratorsListProps {
   className?: string;
-  collaborators: User[];
+  collaborators: SearchUser[];
   onItemClick?: (id: string) => void;
 }
 
 export const CollaboratorsList = observer((props: CollaboratorsListProps) => {
   const { className, collaborators, onItemClick } = props;
 
-  const renderCollaborator = (collaborator: User) => {
+  const renderCollaborator = (collaborator: SearchUser) => {
     return (
       <CollaboratorItem
         key={collaborator.id}

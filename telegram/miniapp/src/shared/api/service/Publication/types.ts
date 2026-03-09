@@ -129,10 +129,16 @@ export interface SearchPublication {
   cityId?: number;
   createdAt: string;
   likesCount: number;
+  isLiked?: boolean;
   coAuthors: CoAuthor[];
   images: PublicationImage[];
   tags: PublicationTag[];
   needs: PublicationNeedDetailed[];
+}
+
+export interface ToggleLikeResponse {
+  isLiked: boolean;
+  success: boolean;
 }
 
 export type SearchPublicationsResponse = SearchPublication[];

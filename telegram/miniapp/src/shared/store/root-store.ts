@@ -8,6 +8,7 @@ import { SearchPublicationStore } from './api/Publication/search-publication-sto
 import { SearchNeedsStore } from './api/PublicationNeedsSearch/search-needs-store';
 import { SearchServicesStore } from './api/PublicationServicesSearch/search-services-store';
 import { ReferenceStore } from './api/Reference/reference-store';
+import { SearchStore } from './api/Search/search-store';
 import { UserProfileStore } from './api/User/user-profile-store';
 import { UserStore } from './api/User/user-store';
 import { SearchUsersStore } from './api/UserSearch/search-users-store';
@@ -31,6 +32,7 @@ export class RootStore {
   searchNeedsStore = new SearchNeedsStore();
   searchServicesStore = new SearchServicesStore();
   searchUsersStore = new SearchUsersStore();
+  searchStore = new SearchStore();
   searchInteractionsStore = new SearchInteractionsStore(this);
   scrollRecoveryStore = new ScrollRecoveryStore();
   needsStore = new NeedsStore();

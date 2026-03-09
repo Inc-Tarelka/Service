@@ -14,7 +14,7 @@ import { AddCollaborators, AddNeeds, NeedDrawer } from 'features/post';
 import { EditNeedPreviewDrawer } from 'features/post/ui/EditNeedPreviewDrawer/EditNeedPreviewDrawer';
 import { NeedPreviewDrawer } from 'features/post/ui/NeedPreviewDrawer/NeedPreviewDrawer';
 import { observer } from 'mobx-react-lite';
-import { Activity, useCallback, useRef, useState } from 'react';
+import { Activity, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
 import type { CreatePublicationRequest } from 'shared/api/service/Publication';
@@ -23,21 +23,15 @@ import XIcon from 'shared/assets/icons/x';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
-import { tagsData } from 'shared/mocks/tagsMock';
-import { MOCK_USERS } from 'shared/mocks/userListMocks';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import { Page } from 'widgets/Page';
+import { DEFAULT_STEP, PostStep, VALID_STEPS } from '../lib/constants';
 import classes from './PostPage.module.scss';
-
-type PostStep = 'creating' | 'collaborators';
-
-const VALID_STEPS: PostStep[] = ['creating', 'collaborators'];
-const DEFAULT_STEP: PostStep = 'creating';
 
 export const PostPage = observer(() => {
   const { galleryStore, postStore, publicationStore } = useStore();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   useBackButton();
@@ -47,25 +41,24 @@ export const PostPage = observer(() => {
     ? (rawStep as PostStep)
     : DEFAULT_STEP;
 
-  const goToStep = useCallback(
-    (nextStep: PostStep) => {
-      setSearchParams({ step: nextStep });
-    },
-    [setSearchParams],
-  );
-
   const citiesData = referenceStore.cities.map((c) => ({
     value: String(c.id),
     label: c.name,
   }));
 
-  const filteredUsers = postStore.searchQuery
-    ? MOCK_USERS.filter((u) =>
-        `${u.firstName} ${u.lastName}`
-          .toLowerCase()
-          .includes(postStore.searchQuery.toLowerCase()),
-      )
-    : MOCK_USERS;
+  const publicationTagsData = referenceStore.publicationTags.map((t) => ({
+    value: String(t.id),
+    label: t.name,
+  }));
+
+  const needsTagsData = referenceStore.needsTags.map((t) => ({
+    value: String(t.id),
+    label: t.name,
+  }));
+
+  const { searchUsersStore } = useStore();
+
+  const filteredUsers = searchUsersStore.users;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -85,27 +78,6 @@ export const PostPage = observer(() => {
     if (photoId) {
       galleryStore.removePhoto(photoId);
     }
-  };
-
-  const handleAddCollaborator = () => {
-    postStore.setSearchQuery('');
-    goToStep('collaborators');
-  };
-
-  const handleSelectCollaborator = (userId: string) => {
-    const user = MOCK_USERS.find((u) => u.id === userId);
-    if (user) {
-      const newCollaborator: PostCollaborator = {
-        id: String(user.id),
-        name: `${user.firstName} ${user.lastName}`,
-        profession: user.profession || '',
-        city: user.city || '',
-        avatarUrl: user.avatarUrl,
-        status: 'pending',
-      };
-      postStore.addCollaborator(newCollaborator);
-    }
-    goToStep('creating');
   };
 
   const [needDrawerOpened, { open: openNeedDrawer, close: closeNeedDrawer }] =
@@ -255,14 +227,32 @@ export const PostPage = observer(() => {
             values={postStore.formValues}
             onChange={postStore.setFormValue}
             citiesData={citiesData}
-            tagsData={tagsData}
+            tagsData={publicationTagsData}
             onCitiesDropdownOpen={() => referenceStore.getCitiesAction()}
+            onTagsDropdownOpen={() => {
+              referenceStore.getPublicationTagsAction();
+            }}
             citiesLoading={referenceStore.citiesData?.state === 'pending'}
+            tagsLoading={
+              referenceStore.publicationTagsData?.state === 'pending'
+            }
           />
 
           <AddCollaborators
             collaborators={postStore.collaborators}
-            onAdd={handleAddCollaborator}
+            onUserSelect={(user) => {
+              const newCollaborator: PostCollaborator = {
+                id: user.id.toString(),
+                name: user.person
+                  ? `${user.person.name} ${user.person.surname}`.trim()
+                  : user.username,
+                avatarUrl: user.logo_url,
+                profession: user.specializations?.[0]?.name,
+                city: user.cities?.[0]?.name,
+                status: 'pending',
+              };
+              postStore.addCollaborator(newCollaborator);
+            }}
             onRemove={postStore.removeCollaborator}
           />
 
@@ -270,7 +260,7 @@ export const PostPage = observer(() => {
             needs={postStore.needs}
             onAdd={openNeedDrawer}
             onRemove={postStore.removeNeed}
-            tagsData={tagsData}
+            tagsData={needsTagsData}
             onNeedClick={handleNeedClick}
           />
         </div>
@@ -297,7 +287,10 @@ export const PostPage = observer(() => {
         <div className={classes.searchHeader}>
           <TextInput
             value={postStore.searchQuery}
-            onChange={(e) => postStore.setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              postStore.setSearchQuery(e.target.value);
+              searchUsersStore.searchUsersAction({ q: e.target.value });
+            }}
             placeholder="Поиск"
             rightSection={<SearchIcon className={classes.searchIcon} />}
             radius={16}
@@ -307,10 +300,7 @@ export const PostPage = observer(() => {
         </div>
 
         <div className={classes.scrollContent}>
-          <CollaboratorsList
-            collaborators={filteredUsers}
-            onItemClick={handleSelectCollaborator}
-          />
+          <CollaboratorsList collaborators={filteredUsers} />
         </div>
       </Activity>
 
@@ -318,7 +308,9 @@ export const PostPage = observer(() => {
         opened={needDrawerOpened}
         onClose={closeNeedDrawer}
         onSubmit={postStore.addNeed}
-        tagsData={tagsData}
+        tagsData={needsTagsData}
+        onTagsDropdownOpen={() => referenceStore.getNeedsTagsAction()}
+        tagsLoading={referenceStore.needsTagsData?.state === 'pending'}
       />
 
       <NeedPreviewDrawer
@@ -326,7 +318,7 @@ export const PostPage = observer(() => {
         onClose={closeNeedPreview}
         onEdit={handleEditNeed}
         need={selectedNeed}
-        tagsData={tagsData}
+        tagsData={needsTagsData}
       />
 
       <EditNeedPreviewDrawer
@@ -335,7 +327,9 @@ export const PostPage = observer(() => {
         onSave={handleSaveEditedNeed}
         onDelete={handleDeleteNeed}
         need={selectedNeed}
-        tagsData={tagsData}
+        tagsData={needsTagsData}
+        onTagsDropdownOpen={() => referenceStore.getNeedsTagsAction()}
+        tagsLoading={referenceStore.needsTagsData?.state === 'pending'}
       />
 
       <Drawer

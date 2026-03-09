@@ -7,6 +7,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { SpecializationsListSkeleton } from 'features/auth/ui/ProfileForm/SpecializationsList.skeleton';
 import { useEffect, useRef, useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
 import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
@@ -25,12 +26,23 @@ interface EditNeedPreviewDrawerProps {
   onDelete: () => void;
   tagsData: { value: string; label: string }[];
   need?: PostNeed | null;
+  onTagsDropdownOpen?: () => void;
+  tagsLoading?: boolean;
 }
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
 export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
-  const { opened, onClose, onSave, onDelete, tagsData, need } = props;
+  const {
+    opened,
+    onClose,
+    onSave,
+    onDelete,
+    tagsData,
+    need,
+    onTagsDropdownOpen,
+    tagsLoading,
+  } = props;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -184,6 +196,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 classNames={{ input: classes.select }}
                 value={null}
                 onChange={handleAddTag}
+                onDropdownOpen={onTagsDropdownOpen}
                 rightSection={
                   <div style={{ pointerEvents: 'none', display: 'flex' }}>
                     <ChevronDownIcon />
@@ -191,6 +204,13 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
+                nothingFoundMessage={
+                  tagsLoading ? (
+                    <SpecializationsListSkeleton />
+                  ) : (
+                    'Ничего не найдено'
+                  )
+                }
                 radius={16}
                 size="lg"
                 searchable
