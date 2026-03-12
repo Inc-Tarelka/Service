@@ -121,6 +121,7 @@
   flex: 1;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .commentHeader {
@@ -128,17 +129,91 @@
   display: flex;
   gap: 8px;
 
+  .authorInfo {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .nameRow {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
   .authorName {
     color: var(--text-color);
+    flex: 0 1 auto;
     font-size: 14px;
     font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .replyingToName {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .time {
     color: var(--text-color-light);
+    flex-shrink: 0;
     font-size: 12px;
   }
 }
+
+.paginationRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.showRepliesBtn, .hideRepliesBtn {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 4px;
+  padding: 4px 0;
+
+  &:hover {
+    color: var(--text-color);
+  }
+
+  svg {
+    height: 16px;
+    stroke: var(--text-secondary);
+    stroke-width: 2px;
+    width: 16px;
+  }
+}
+
+.replyLine {
+  border-color: var(--text-secondary);
+  margin-right: 8px;
+  opacity: 0.5;
+  width: 24px;
+}
+
+.placeholder {
+  width: 1px;
+}
+
 
 .text {
   color: var(--text-color);
@@ -146,6 +221,22 @@
   font-weight: 400;
   line-height: 1.4;
   margin: 0;
+  overflow-wrap: break-word;
+}
+
+.readMoreBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 4px;
+  padding: 0;
+
+  &:hover {
+    color: var(--text-color);
+  }
 }
 
 .replyButton {
@@ -164,25 +255,30 @@
 }
 
 .footer {
-  align-items: center;
+  align-items: flex-end;
   background: transparent;
   border: 1px solid var(--card-bg);
   border-radius: 16px;
   display: flex;
   flex-shrink: 0;
-  height: 48px;
   justify-content: space-between;
-  padding: 0 16px;
+  min-height: 48px;
+  padding: 8px 16px;
 
   .input {
+    flex: 1;
+    margin-right: 8px;
+  }
+
+  .textareaInput {
     background: transparent;
     border: none;
     color: var(--text-color);
-    flex: 1;
     font-size: 14px;
     font-weight: 400;
     outline: none;
     padding: 0;
+    resize: none;
 
     &::placeholder {
       color: var(--text-secondary);
@@ -197,7 +293,7 @@
     cursor: pointer;
     display: flex;
     justify-content: center;
-    margin-left: 8px;
+    margin-bottom: 2px;
     padding: 0;
     
     svg {
@@ -211,4 +307,55 @@
   color: var(--text-color-light);
   padding: 40px 0;
   text-align: center;
+}
+
+.footerContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.replyingTo {
+  align-items: center;
+  background: var(--block-bg);
+  border-bottom: 1px solid var(--card-bg);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.replyingToContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  padding-right: 12px;
+}
+
+.replyingToLabel {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.replyingToText {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cancelReplyButton {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
 }

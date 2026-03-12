@@ -2,6 +2,7 @@ import { authStore } from './api/Auth/auth-store';
 import { SearchInteractionsStore } from './api/Interaction/search-interactions-store';
 import { NeedsStore } from './api/Needs/needs-store';
 import { PostStore } from './api/Post/post-store';
+import { PublicationCommentsStore } from './api/Publication/publication-comments-store';
 import { PublicationDetailsStore } from './api/Publication/publication-details-store';
 import { PublicationStore } from './api/Publication/publication-store';
 import { SearchPublicationStore } from './api/Publication/search-publication-store';
@@ -34,4 +35,5 @@ export class RootStore {
   searchInteractionsStore = new SearchInteractionsStore(this);
   scrollRecoveryStore = new ScrollRecoveryStore();
   needsStore = new NeedsStore();
+  publicationCommentsStore = new PublicationCommentsStore(this);
 }

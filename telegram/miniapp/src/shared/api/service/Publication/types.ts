@@ -171,3 +171,29 @@ export interface PublicationDetailsResponse {
   publication: PublicationDetailsData;
   team: PublicationTeamMember[];
 }
+
+export interface PublicationComment {
+  id: number;
+  authorId: number;
+  authorFirstName?: string;
+  authorLastName?: string;
+  authorOrgName?: string;
+  content: string;
+  createdAt: string;
+  parentCommentId?: number;
+}
+
+export interface GetPublicationCommentsResponse {
+  comments: PublicationComment[];
+  total: number;
+}
+
+export interface CreatePublicationCommentRequest {
+  content: string;
+  parentCommentId?: number;
+}
+
+export interface GetPublicationCommentsParams {
+  limit?: number;
+  offset?: number;
+}

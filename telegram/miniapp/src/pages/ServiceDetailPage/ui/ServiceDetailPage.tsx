@@ -11,10 +11,7 @@ import { NeedDetailsDrawer } from 'features/view-need/ui/NeedDetailsDrawer/NeedD
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
-import {
-  MOCK_COMMENTS,
-  MOCK_SERVICE_DETAIL,
-} from 'shared/mocks/serviceDetailMocks';
+import { MOCK_SERVICE_DETAIL } from 'shared/mocks/serviceDetailMocks';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { Page } from 'widgets/Page';
 import s from './ServiceDetailPage.module.scss';
@@ -109,7 +106,7 @@ export const ServiceDetailPage = observer(() => {
       <ServiceCommentsDrawer
         opened={commentsOpened}
         onClose={() => setCommentsOpened(false)}
-        comments={MOCK_COMMENTS}
+        publicationId={service.id}
       />
       <NeedDetailsDrawer
         opened={!!selectedNeedId && !responseOpened}
