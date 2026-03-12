@@ -260,6 +260,57 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64, userID *i
 		needs = append(needs, n)
 	}
 
+	// Load publication images
+	imgRows, err := r.pool.Query(ctx, `
+		SELECT id, url, position
+		FROM publication_images
+		WHERE publication_id = $1
+		ORDER BY COALESCE(position, 0), id
+	`, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer imgRows.Close()
+
+	images := make([]model.PublicationImage, 0)
+	for imgRows.Next() {
+		var img model.PublicationImage
+		if err := imgRows.Scan(&img.ID, &img.URL, &img.Position); err != nil {
+			return nil, nil, nil, err
+		}
+		images = append(images, img)
+	}
+	if imgRows.Err() != nil {
+		return nil, nil, nil, imgRows.Err()
+	}
+	p.Images = images
+
+	// Load publication tags
+	tagRows, err := r.pool.Query(ctx, `
+		SELECT t.id, t.name
+		FROM publication_tag_links l
+		JOIN publication_tags t ON t.id = l.tag_id
+		WHERE l.publication_id = $1
+		ORDER BY t.name
+	`, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer tagRows.Close()
+
+	tags := make([]model.PublicationTag, 0)
+	for tagRows.Next() {
+		var t model.PublicationTag
+		if err := tagRows.Scan(&t.ID, &t.Name); err != nil {
+			return nil, nil, nil, err
+		}
+		tags = append(tags, t)
+	}
+	if tagRows.Err() != nil {
+		return nil, nil, nil, tagRows.Err()
+	}
+	p.Tags = tags
+
 	return &p, team, needs, nil
 }
 
