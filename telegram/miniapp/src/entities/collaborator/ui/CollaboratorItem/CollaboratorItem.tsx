@@ -1,5 +1,8 @@
 import { Box, Group, Text } from '@mantine/core';
-import type { SearchUser } from 'shared/api/service/UserSearch/types';
+import type {
+  CoauthorSearchUser,
+  SearchUser,
+} from 'shared/api/service/UserSearch/types';
 import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
 import {
   formatCollaboratorMeta,
@@ -8,7 +11,7 @@ import {
 import classes from './CollaboratorItem.module.scss';
 
 interface CollaboratorItemProps {
-  collaborator: SearchUser;
+  collaborator: SearchUser | CoauthorSearchUser;
   onClick?: (id: string) => void;
 }
 
@@ -18,6 +21,10 @@ export const CollaboratorItem = ({
 }: CollaboratorItemProps) => {
   const fullName = formatCollaboratorName(collaborator);
   const meta = formatCollaboratorMeta(collaborator);
+  const logoUrl =
+    'logo_url' in collaborator ? collaborator.logo_url : undefined;
+  const username =
+    'username' in collaborator ? collaborator.username : undefined;
 
   return (
     <Box
@@ -26,7 +33,7 @@ export const CollaboratorItem = ({
     >
       <Group gap={12} align="flex-start">
         <img
-          src={collaborator.logo_url || defaultUserSvg}
+          src={logoUrl || defaultUserSvg}
           alt={fullName}
           width={40}
           height={40}
@@ -36,9 +43,9 @@ export const CollaboratorItem = ({
           <Text color="white" className={classes.cardTitle}>
             {fullName}
           </Text>
-          <Text className={classes.cardDescription}>
-            @{collaborator.username}
-          </Text>
+          {username && (
+            <Text className={classes.cardDescription}>@{username}</Text>
+          )}
           {meta && (
             <Text color="white" className={classes.info}>
               {meta}

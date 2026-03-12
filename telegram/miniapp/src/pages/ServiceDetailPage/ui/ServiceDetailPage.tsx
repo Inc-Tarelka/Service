@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useStore } from 'app/StoreProvider';
 import { ServiceListingDetails } from 'entities/search-listing/ui/ServiceListing/ServiceListingDetails/ServiceListingDetails';
@@ -9,6 +9,7 @@ import { ServiceCommentsDrawer } from 'features/post/ui/ServiceCommentsDrawer/Se
 import { ResponseToNeedDrawer } from 'features/respond-to-need/ui/ResponseToNeedDrawer/ResponseToNeedDrawer';
 import { NeedDetailsDrawer } from 'features/view-need/ui/NeedDetailsDrawer/NeedDetailsDrawer';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import {
   MOCK_COMMENTS,
@@ -21,7 +22,8 @@ import s from './ServiceDetailPage.module.scss';
 export const ServiceDetailPage = observer(() => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const { publicationDetailsStore } = useStore();
+  const navigate = useNavigate();
+  const { publicationDetailsStore, userStore } = useStore();
 
   const [commentsOpened, setCommentsOpened] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
@@ -56,6 +58,22 @@ export const ServiceDetailPage = observer(() => {
     publicationDetailsStore.toggleLikeAction(publicationId);
   };
 
+  const handleTeamMemberClick = (userId: number) => {
+    const currentUserId = userStore.profile?.id;
+    const isOwner = currentUserId && String(currentUserId) === String(userId);
+
+    const searchState = new URLSearchParams();
+    searchState.set('tab', 'profile');
+
+    if (isOwner) {
+      navigate(`${RoutePath[AppRoutes.PROFILE]}?${searchState.toString()}`);
+    } else {
+      navigate(
+        `${RoutePath[AppRoutes.USER_PROFILE].replace(':id', String(userId))}?${searchState.toString()}`,
+      );
+    }
+  };
+
   if (isLoading) {
     return (
       <Page disableScrollRecovery>
@@ -86,6 +104,7 @@ export const ServiceDetailPage = observer(() => {
         onCommentClick={() => setCommentsOpened(true)}
         onNeedClick={(needId: number) => setSelectedNeedId(needId)}
         onLike={handleLike}
+        onTeamMemberClick={handleTeamMemberClick}
       />
       <ServiceCommentsDrawer
         opened={commentsOpened}

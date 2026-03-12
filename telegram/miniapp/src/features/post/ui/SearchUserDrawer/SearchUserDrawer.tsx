@@ -4,14 +4,14 @@ import { useStore } from 'app/StoreProvider';
 import { CollaboratorsList } from 'entities/collaborator/ui/CollaboratorsList/CollaboratorsList';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { SearchUser } from 'shared/api/service/UserSearch/types';
+import type { CoauthorSearchUser } from 'shared/api/service/UserSearch/types';
 import SearchIcon from 'shared/assets/icons/search';
 import classes from './SearchUserDrawer.module.scss';
 
 interface SearchUserDrawerProps {
   opened: boolean;
   onClose: () => void;
-  onUserSelect: (user: SearchUser) => void;
+  onUserSelect: (user: CoauthorSearchUser) => void;
 }
 
 export const SearchUserDrawer = observer((props: SearchUserDrawerProps) => {
@@ -23,7 +23,7 @@ export const SearchUserDrawer = observer((props: SearchUserDrawerProps) => {
   useEffect(() => {
     if (opened) {
       if (debouncedQuery.trim()) {
-        searchUsersStore.searchUsersAction({ q: debouncedQuery });
+        searchUsersStore.searchCoauthorsAction({ q: debouncedQuery });
       } else {
         searchUsersStore.reset();
       }
@@ -72,20 +72,20 @@ export const SearchUserDrawer = observer((props: SearchUserDrawerProps) => {
         </div>
 
         <div className={classes.scrollContent}>
-          {searchUsersStore.isLoading ? (
+          {searchUsersStore.isCoauthorsLoading ? (
             <div className={classes.loaderContainer}>
               <Loader color="var(--accent-color)" />
             </div>
-          ) : searchUsersStore.error ? (
+          ) : searchUsersStore.coauthorsError ? (
             <Text className={classes.errorText} ta="center" mt="md" color="red">
               Ошибка загрузки пользователей
             </Text>
-          ) : searchUsersStore.users.length > 0 ? (
+          ) : searchUsersStore.coauthors.length > 0 ? (
             <CollaboratorsList
-              collaborators={searchUsersStore.users}
+              collaborators={searchUsersStore.coauthors}
               onItemClick={(id) => {
-                const user = searchUsersStore.users.find(
-                  (u: SearchUser) => String(u.id) === id,
+                const user = searchUsersStore.coauthors.find(
+                  (u: CoauthorSearchUser) => String(u.id) === id,
                 );
                 if (user) {
                   onUserSelect(user);

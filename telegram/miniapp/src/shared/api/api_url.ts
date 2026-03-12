@@ -45,5 +45,5 @@ export const API_URL = {
   details_needs: (id: string) => `/needs/${id}`,
 
   // Search
-  search_needs: () => '/users/search/name',
+  search_coauthors: () => '/users/search/name',
 };

@@ -6,14 +6,25 @@ import s from './TeamMemberItem.module.scss';
 interface TeamMemberItemProps {
   member: ServiceAuthor | any;
   isAuthor?: boolean;
+  onClick?: (id: number) => void;
 }
 
-export const TeamMemberItem = ({ member, isAuthor }: TeamMemberItemProps) => {
+export const TeamMemberItem = ({
+  member,
+  isAuthor,
+  onClick,
+}: TeamMemberItemProps) => {
   const [imgError, setImgError] = useState(false);
   const avatarUrl = member.logo_url || member.avatarUrl;
 
   return (
-    <div className={s.teamMember}>
+    <div
+      className={s.teamMember}
+      onClick={() => onClick?.(member.id || member.userId)}
+      role="button"
+      tabIndex={0}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
       <div className={s.avatarWrapper}>
         {avatarUrl && !imgError ? (
           <img

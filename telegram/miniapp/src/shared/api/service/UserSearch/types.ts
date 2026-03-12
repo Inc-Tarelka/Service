@@ -55,3 +55,18 @@ export interface SearchUser {
 }
 
 export type SearchUsersResponse = SearchUser[];
+
+export interface CoauthorSearchUser {
+  id: number;
+  name: string;
+  surname: string;
+  telegram_url?: string;
+  logo_url?: string;
+  city?: {
+    id: number;
+    name: string;
+  };
+  specialisation?: string;
+}
+
+export type CoauthorsResponse = CoauthorSearchUser[];

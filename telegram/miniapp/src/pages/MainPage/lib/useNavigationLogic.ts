@@ -34,8 +34,6 @@ export const useNavigationLogic = () => {
           `${RoutePath[AppRoutes.USER_PROFILE].replace(':id', String(publication.authorId))}?${searchState.toString()}`,
         );
       }
-    } else {
-      console.log('Clicked publication:', id);
     }
   };
 

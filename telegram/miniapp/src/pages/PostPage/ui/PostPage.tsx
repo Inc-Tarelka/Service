@@ -144,15 +144,15 @@ export const PostPage = observer(() => {
         cityId: postStore.formValues.cityId
           ? Number(postStore.formValues.cityId)
           : undefined,
-        tagIds: [],
-        coAuthorIds: [],
+        tagIds: postStore.formValues.tagIds.map(Number),
+        coAuthorIds: postStore.collaborators.map((c) => Number(c.id)),
         needs: postStore.needs.map((need) => ({
           name: need.title,
           description: need.description,
           budget: need.budget ? Number(need.budget) : undefined,
           deadlineStart: need.startDate?.toISOString(),
           deadlineEnd: need.endDate?.toISOString(),
-          tagIds: [],
+          tagIds: need.tagIds ? need.tagIds.map(Number) : [],
         })),
       };
       await publicationStore.createPublicationAction(
@@ -243,12 +243,10 @@ export const PostPage = observer(() => {
             onUserSelect={(user) => {
               const newCollaborator: PostCollaborator = {
                 id: user.id.toString(),
-                name: user.person
-                  ? `${user.person.name} ${user.person.surname}`.trim()
-                  : user.username,
+                name: `${user.name ?? ''} ${user.surname ?? ''}`.trim(),
                 avatarUrl: user.logo_url,
-                profession: user.specializations?.[0]?.name,
-                city: user.cities?.[0]?.name,
+                profession: user.specialisation,
+                city: user.city?.name,
                 status: 'pending',
               };
               postStore.addCollaborator(newCollaborator);

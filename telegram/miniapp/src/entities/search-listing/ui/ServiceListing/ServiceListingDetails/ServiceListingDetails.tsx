@@ -35,6 +35,7 @@ interface ServiceListingDetailsProps {
   onNeedClick?: (id: number) => void;
   onCommentClick?: () => void;
   onLike?: (id: number) => void;
+  onTeamMemberClick?: (id: number) => void;
 }
 
 const formatCount = (count: number): string | number => {
@@ -64,6 +65,7 @@ export const ServiceListingDetails = observer(
       onNeedClick,
       onCommentClick,
       onLike,
+      onTeamMemberClick,
     } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
@@ -201,6 +203,7 @@ export const ServiceListingDetails = observer(
                     key={author.userId}
                     member={author}
                     isAuthor={author.isAuthor}
+                    onClick={onTeamMemberClick}
                   />
                 ))}
               </div>

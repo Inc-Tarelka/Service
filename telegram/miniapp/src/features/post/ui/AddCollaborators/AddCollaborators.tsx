@@ -1,7 +1,7 @@
 import { Button } from '@mantine/core';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { PostCollaborator } from 'shared/api/service/Post/types';
-import type { SearchUser } from 'shared/api/service/UserSearch/types';
+import type { CoauthorSearchUser } from 'shared/api/service/UserSearch/types';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
 import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
@@ -11,7 +11,7 @@ import classes from './AddCollaborators.module.scss';
 interface AddCollaboratorsProps {
   collaborators: PostCollaborator[];
   onRemove: (id: string) => void;
-  onUserSelect: (user: SearchUser) => void;
+  onUserSelect: (user: CoauthorSearchUser) => void;
 }
 
 export const AddCollaborators = (props: AddCollaboratorsProps) => {
