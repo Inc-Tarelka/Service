@@ -40,6 +40,7 @@ func NewServices(deps Deps) *Services {
 			deps.Repos.TarelkaUser,
 			deps.Repos.Reference,
 			deps.Repos.Token,
+			deps.Repos.RegLog,
 			deps.TokenSecret,
 			deps.AccessTokenTTL,
 			deps.RefreshTokenTTL,

@@ -67,6 +67,7 @@ type authService struct {
 	tarelkaUserRepo repository.TarelkaUserRepository
 	referenceRepo   repository.ReferenceRepository
 	tokenRepo       repository.TokenRepository
+	regLogRepo      repository.RegistrationLogRepository
 
 	jwtSecret       string
 	accessTokenTTL  time.Duration
@@ -81,6 +82,7 @@ func NewAuthService(
 	tarelkaUserRepo repository.TarelkaUserRepository,
 	referenceRepo repository.ReferenceRepository,
 	tokenRepo repository.TokenRepository,
+	regLogRepo repository.RegistrationLogRepository,
 	jwtSecret string,
 	accessTokenTTL time.Duration,
 	refreshTokenTTL time.Duration,
@@ -93,6 +95,7 @@ func NewAuthService(
 		tarelkaUserRepo: tarelkaUserRepo,
 		referenceRepo:   referenceRepo,
 		tokenRepo:       tokenRepo,
+		regLogRepo:      regLogRepo,
 		jwtSecret:       jwtSecret,
 		accessTokenTTL:  accessTokenTTL,
 		refreshTokenTTL: refreshTokenTTL,
@@ -162,6 +165,22 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 	user, err = s.tarelkaUserRepo.Create(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("create tarelka user (pre-register): %w", err)
+	}
+
+	// Log registration stage 0 (pre-register created)
+	if s.regLogRepo != nil {
+		stage := 0
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			TarelkaUserID:     &user.ID,
+			Phone:             user.Phone,
+			Event:             model.RegistrationEventPreRegisterCreated,
+			ActionFlag:        model.RegistrationActionSuccess,
+			ConversationStage: &stage,
+			Metadata: map[string]any{
+				"username": user.Username,
+				"source":   "pre_register",
+			},
+		})
 	}
 
 	return &model.PreRegisterResponse{UserID: user.ID}, nil
@@ -259,6 +278,25 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 	// 8. Обновляем стадию conversation: 1 или 2 в зависимости от профиля
 	if err := s.tarelkaUserRepo.UpdateConversation(ctx, tarelkaUser.ID, stage); err != nil {
 		return nil, fmt.Errorf("update conversation: %w", err)
+	}
+
+	// Log registration completion for stage 1 or 2
+	if s.regLogRepo != nil {
+		convStage := stage
+		event := model.RegistrationEventRegisterStage1Completed
+		if stage >= 2 {
+			event = model.RegistrationEventRegisterStage2Completed
+		}
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			TarelkaUserID:     &tarelkaUser.ID,
+			Phone:             tarelkaUser.Phone,
+			Event:             event,
+			ActionFlag:        model.RegistrationActionSuccess,
+			ConversationStage: &convStage,
+			Metadata: map[string]any{
+				"account_type": tarelkaUser.Type,
+			},
+		})
 	}
 
 	// 9. Генерация токенов
@@ -440,6 +478,19 @@ func (s *authService) SendPhoneVerification(ctx context.Context, phone string) (
 		return nil, fmt.Errorf("gateway_error")
 	}
 
+	// Log successful sending of verification code
+	if s.regLogRepo != nil {
+		normalizedCopy := normalized
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			Phone:      &normalizedCopy,
+			Event:      model.RegistrationEventPhoneCodeSent,
+			ActionFlag: model.RegistrationActionSuccess,
+			Metadata: map[string]any{
+				"request_id": gr.Result.RequestID,
+			},
+		})
+	}
+
 	return &model.SendPhoneVerificationResponse{RequestID: gr.Result.RequestID}, nil
 }
 
@@ -448,12 +499,51 @@ func (s *authService) VerifyPhoneCode(ctx context.Context, requestID, code strin
 	ok, phone, err := s.verifyPhoneWithGateway(ctx, requestID, code)
 	if err != nil {
 		if errors.Is(err, ErrCodeExpired) {
+			if s.regLogRepo != nil {
+				_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+					Event:      model.RegistrationEventPhoneCodeExpired,
+					ActionFlag: model.RegistrationActionFailure,
+					Metadata: map[string]any{
+						"request_id": requestID,
+					},
+				})
+			}
 			return &model.VerifyCodeResponse{Status: "expired"}, nil
+		}
+		if s.regLogRepo != nil {
+			_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+				Event:      model.RegistrationEventPhoneCodeInvalid,
+				ActionFlag: model.RegistrationActionFailure,
+				Metadata: map[string]any{
+					"request_id": requestID,
+					"error":      err.Error(),
+				},
+			})
 		}
 		return &model.VerifyCodeResponse{Status: "error"}, nil
 	}
 	if ok {
-		return &model.VerifyCodeResponse{Status: "ok", Phone: normalizePhone(phone)}, nil
+		norm := normalizePhone(phone)
+		if s.regLogRepo != nil {
+			_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+				Phone:      &norm,
+				Event:      model.RegistrationEventPhoneCodeVerified,
+				ActionFlag: model.RegistrationActionSuccess,
+				Metadata: map[string]any{
+					"request_id": requestID,
+				},
+			})
+		}
+		return &model.VerifyCodeResponse{Status: "ok", Phone: norm}, nil
+	}
+	if s.regLogRepo != nil {
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			Event:      model.RegistrationEventPhoneCodeInvalid,
+			ActionFlag: model.RegistrationActionFailure,
+			Metadata: map[string]any{
+				"request_id": requestID,
+			},
+		})
 	}
 	return &model.VerifyCodeResponse{Status: "invalid"}, nil
 }

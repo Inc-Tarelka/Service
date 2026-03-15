@@ -13,6 +13,7 @@ type Repositories struct {
 	Publication  PublicationRepository
 	Activity     ActivityRepository
 	Notification NotificationRepository
+	RegLog       RegistrationLogRepository
 }
 
 // NewRepositories создаёт все репозитории
@@ -25,5 +26,6 @@ func NewRepositories(pool *pgxpool.Pool) *Repositories {
 		Publication:  NewPublicationRepository(pool),
 		Activity:     NewActivityRepository(pool),
 		Notification: NewNotificationRepository(pool),
+		RegLog:       NewRegistrationLogRepository(pool),
 	}
 }
