@@ -15,9 +15,7 @@ type Handler struct {
 	reference    *ReferenceHandler
 	publication  *PublicationHandler
 	notification *NotificationHandler
-	telegram     *TelegramHandler
-
-	authService service.AuthService
+	authService  service.AuthService
 }
 
 // NewHandler создаёт Handler
@@ -28,7 +26,6 @@ func NewHandler(services *service.Services) *Handler {
 		reference:    NewReferenceHandler(services.Reference),
 		publication:  NewPublicationHandler(services.Publication),
 		notification: NewNotificationHandler(services.Notification),
-		telegram:     NewTelegramHandler(services.Repos.TarelkaUser),
 		authService:  services.Auth,
 	}
 }
@@ -42,12 +39,6 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 
 	api := router.Group("/api/v1")
 	{
-		// Internal routes (no auth, used by telegram-binder)
-		internalGroup := api.Group("/internal")
-		{
-			internalGroup.POST("/telegram/chat-link", h.telegram.LinkChatID)
-		}
-
 		// Auth routes (public)
 		auth := api.Group("/auth")
 		{

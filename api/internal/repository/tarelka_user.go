@@ -59,9 +59,6 @@ type TarelkaUserRepository interface {
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
-
-	// UpdateTelegramChatIDByTelegramURL updates telegram_chat_id for user with given telegram_url
-	UpdateTelegramChatIDByTelegramURL(ctx context.Context, telegramURL string, chatID int64) error
 }
 
 type tarelkaUserRepository struct {
@@ -398,9 +395,10 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 	var result []*model.TarelkaUserFull
 	for rows.Next() {
 		var (
-			u             model.TarelkaUser
-			name, surname *string
-			companyName   *string
+			u           model.TarelkaUser
+			name        *string
+			surname     *string
+			companyName *string
 		)
 		if err := rows.Scan(
 			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
@@ -408,9 +406,7 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 		); err != nil {
 			return nil, err
 		}
-
 		fu := &model.TarelkaUserFull{TarelkaUser: u}
-		// Attach subtype
 		if name != nil || surname != nil {
 			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(name), Surname: valueOrEmpty(surname)}
 		}

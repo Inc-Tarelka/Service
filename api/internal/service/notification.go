@@ -62,16 +62,9 @@ func (s *notificationService) SendCollaborationNotification(
 		return created, nil
 	}
 
-	var chatID string
-	if receiver.TelegramChatID != nil {
-		// Use numeric chat ID if available
-		chatID = fmt.Sprintf("%d", *receiver.TelegramChatID)
-	} else if receiver.TelegramURL != nil && *receiver.TelegramURL != "" {
-		// Fallback to username-based addressing
-		chatID = normalizeTelegramURL(*receiver.TelegramURL)
-	} else {
-		return created, nil
-	}
+	// Используем только tg_user_id для отправки сообщения в бота.
+	// Поле tg_user_id не может быть пустым, поэтому дополнительных fallbacks не делаем.
+	chatID := fmt.Sprintf("%d", receiver.TgUserID)
 
 	text := buildCollaborationMessage(created, message)
 	_ = s.sendTelegramMessage(ctx, chatID, text)
