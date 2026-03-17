@@ -74,4 +74,7 @@ type TarelkaUserFull struct {
 	Specializations []Specialization `json:"specializations,omitempty"`
 	Directions      []Direction      `json:"directions,omitempty"`
 	Cities          []City           `json:"cities,omitempty"`
+	// ProjectTopImages содержит URL главных изображений (position = 0)
+	// последних (по created_at) до трёх проектов пользователя.
+	ProjectTopImages []string `json:"projectTopImages,omitempty"`
 }

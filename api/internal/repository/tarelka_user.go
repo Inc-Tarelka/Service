@@ -379,6 +379,37 @@ func (r *tarelkaUserRepository) GetCities(ctx context.Context, userID int64) ([]
 	return cities, nil
 }
 
+// GetLastProjectTopImages возвращает до 3 URL главных изображений (position = 0)
+// последних по дате создания проектов пользователя.
+func (r *tarelkaUserRepository) GetLastProjectTopImages(ctx context.Context, userID int64, limit int) ([]string, error) {
+	if limit <= 0 {
+		limit = 3
+	}
+	query := `
+		SELECT pi.url
+		FROM publications p
+		JOIN publication_images pi ON pi.publication_id = p.id AND pi.position = 0
+		WHERE p.author_id = $1 AND p.type = 'PROJECT'
+		ORDER BY p.created_at DESC
+		LIMIT $2
+	`
+	rows, err := r.pool.Query(ctx, query, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []string
+	for rows.Next() {
+		var u string
+		if err := rows.Scan(&u); err != nil {
+			return nil, err
+		}
+		urls = append(urls, u)
+	}
+	return urls, nil
+}
+
 // SearchByName finds users by person name/surname or company name
 func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
 	// Если строка поиска пустая, возвращаем всех пользователей (как в SearchByFilters при пустом name)
@@ -421,6 +452,10 @@ func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limi
 			if cities, err := r.GetCities(ctx, u.ID); err == nil {
 				fu.Cities = cities
 			}
+		}
+		// Добавляем главные изображения последних проектов (для всех типов аккаунта)
+		if imgs, err := r.GetLastProjectTopImages(ctx, u.ID, 3); err == nil {
+			fu.ProjectTopImages = imgs
 		}
 		result = append(result, fu)
 	}
@@ -649,6 +684,10 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 			if cities, err := r.GetCities(ctx, u.ID); err == nil {
 				fu.Cities = cities
 			}
+		}
+		// Attach last project top images (up to 3) for every user
+		if imgs, err := r.GetLastProjectTopImages(ctx, u.ID, 3); err == nil {
+			fu.ProjectTopImages = imgs
 		}
 		result = append(result, fu)
 	}
