@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 
-import ChevronRightIcon from 'shared/assets/icons/chevronRight'; // Check exist
+import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import s from './TermsSection.module.scss';
 
 export const TermsSection = observer(() => {
@@ -27,7 +27,6 @@ export const TermsSection = observer(() => {
       <div className={s.list}>
         {documents.map((doc) => (
           <button key={doc.id} className={s.item}>
-            {/* <DocumentIcon className={s.docIcon} /> */}
             <span className={s.label}>{doc.title}</span>
             <ChevronRightIcon className={s.chevron} />
           </button>

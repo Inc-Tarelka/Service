@@ -6,6 +6,7 @@ import classes from './TabsSwitcher.module.scss';
 export interface TabItem<T extends string> {
   label: string;
   value: T;
+  badge?: string;
 }
 
 interface TabsSwitcherProps<T extends string> {
@@ -92,6 +93,9 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
               onClick={(e) => handleTabChange(tabItem.value, e)}
             >
               {tabItem.label}
+              {tabItem.badge && (
+                <span className={classes.tabBadge}>{tabItem.badge}</span>
+              )}
             </button>
           ))}
         </div>

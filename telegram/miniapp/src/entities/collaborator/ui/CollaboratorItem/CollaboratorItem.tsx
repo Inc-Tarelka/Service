@@ -15,10 +15,8 @@ interface CollaboratorItemProps {
   onClick?: (id: string) => void;
 }
 
-export const CollaboratorItem = ({
-  collaborator,
-  onClick,
-}: CollaboratorItemProps) => {
+export const CollaboratorItem = (props: CollaboratorItemProps) => {
+  const { collaborator, onClick } = props;
   const fullName = formatCollaboratorName(collaborator);
   const meta = formatCollaboratorMeta(collaborator);
   const logoUrl =

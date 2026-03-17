@@ -19,6 +19,7 @@ export class UserStore {
   }
 
   profileData?: IPromiseBasedObservable<AxiosResponse<User>>;
+  _localOverrides: Partial<User> = {};
 
   deleteAccountData?: IPromiseBasedObservable<
     AxiosResponse<DeleteAccountResponse>
@@ -42,6 +43,14 @@ export class UserStore {
     } catch (error) {
       console.error('Failed to delete account:', error);
     }
+  };
+
+  setLocalOverride = (overrides: Partial<User>) => {
+    this._localOverrides = { ...this._localOverrides, ...overrides };
+  };
+
+  clearLocalOverrides = () => {
+    this._localOverrides = {};
   };
 
   updateProfileAction = async (
@@ -79,7 +88,7 @@ export class UserStore {
     if (this.profileData?.state === 'fulfilled') {
       const apiData = this.profileData.value.data;
 
-      return {
+      const computed: User = {
         ...apiData,
         firstName: apiData.person?.name || MOCK_USER.firstName,
         lastName: apiData.person?.surname || MOCK_USER.lastName,
@@ -105,11 +114,11 @@ export class UserStore {
                 : MOCK_USER.status,
 
         stats: apiData.stats || MOCK_USER.stats,
-
         tags: apiData.tags || MOCK_USER.tags,
-
         role: apiData.role || MOCK_USER.role,
       };
+
+      return { ...computed, ...this._localOverrides };
     }
     return null;
   }

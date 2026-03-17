@@ -43,6 +43,14 @@ export const API_URL = {
   me: () => '/users/me',
   search_users: () => '/users/search/filters',
 
+  // User media
+  user_logo_presign: (id: number) => `/users/${id}/logo/presign`,
+  user_logo_confirm: (id: number) => `/users/${id}/logo/confirm`,
+  user_logo_url: (id: number) => `/users/${id}/logo/url`,
+  user_wallpaper_presign: (id: number) => `/users/${id}/wallpaper/presign`,
+  user_wallpaper_confirm: (id: number) => `/users/${id}/wallpaper/confirm`,
+  user_wallpaper_url: (id: number) => `/users/${id}/wallpaper/url`,
+
   // Needs
   details_needs: (id: string) => `/needs/${id}`,
 

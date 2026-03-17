@@ -67,3 +67,39 @@ export interface DeleteAccountResponse {
   data: string;
   success: boolean;
 }
+
+// ===== User media upload types =====
+
+export interface UserMediaPresignRequest {
+  contentType: string;
+}
+
+export interface UserMediaPresignResponse {
+  key: string;
+  uploadUrl: string;
+  headers: Record<string, string>;
+}
+
+export interface UserMediaConfirmRequest {
+  key: string;
+  mimeType: string;
+  size: number;
+}
+
+export interface UserLogoConfirmResponse {
+  logoUrl: string;
+}
+
+export interface UserWallpaperConfirmResponse {
+  wallpaperUrl: string;
+}
+
+export interface UserMediaUrlRequest {
+  logoUrl?: string;
+  wallpaperUrl?: string;
+}
+
+export interface UserMediaUrlResponse {
+  data: string;
+  success: boolean;
+}

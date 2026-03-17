@@ -9,6 +9,7 @@ import { SearchPublicationStore } from './api/Publication/search-publication-sto
 import { SearchNeedsStore } from './api/PublicationNeedsSearch/search-needs-store';
 import { SearchServicesStore } from './api/PublicationServicesSearch/search-services-store';
 import { ReferenceStore } from './api/Reference/reference-store';
+import { UserMediaStore } from './api/User/user-media-store';
 import { UserProfileStore } from './api/User/user-profile-store';
 import { UserStore } from './api/User/user-store';
 import { SearchUsersStore } from './api/UserSearch/search-users-store';
@@ -25,6 +26,7 @@ export class RootStore {
   galleryStore = new GalleryStore();
   userStore = new UserStore();
   userProfileStore = new UserProfileStore();
+  userMediaStore = new UserMediaStore();
   postStore = new PostStore();
   publicationStore = new PublicationStore();
   publicationDetailsStore = new PublicationDetailsStore();

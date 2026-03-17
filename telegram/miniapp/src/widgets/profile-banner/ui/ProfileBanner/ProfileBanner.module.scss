@@ -10,8 +10,8 @@
 .cover {
   background: linear-gradient(
     180deg,
-    rgb(228, 160, 206, 0),
-    rgb(228, 160, 206, 0.2) 100%
+    color-mix(in srgb, var(--accent-color) 0%, transparent),
+    color-mix(in srgb, var(--accent-color) 20%, transparent) 100%
   );
   background-position: center;
   background-size: cover;
@@ -27,7 +27,7 @@
 }
 
 .cover::after {
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.3) 0%, rgb(0 0 0 / 0) 100%);
+  background: linear-gradient(180deg, rgb(0, 0, 0, 0.3) 0%, rgb(0, 0, 0, 0) 100%);
   content: '';
   inset: 0;
   position: absolute;

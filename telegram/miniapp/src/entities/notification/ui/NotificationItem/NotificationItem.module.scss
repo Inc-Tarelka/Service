@@ -1,0 +1,63 @@
+.card {
+  border: 1px solid var(--card-bg);
+  border-radius: 24px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.unread {
+  background:
+    linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--green) 10%, transparent) 100%),
+    var(--tertiary-bg-color);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleRow {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+}
+
+.title {
+  color: var(--text-color);
+  flex: 1;
+  font: var(--font-body);
+  line-height: 1.2;
+}
+
+.username {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.chevron {
+  flex-shrink: 0;
+  height: 20px;
+  margin-top: 2px;
+  opacity: 0.6;
+  width: 12px;
+}
+
+.body {
+  color: var(--text-color-secondary);
+  font: var(--font-body);
+  line-height: 1.2;
+}
+
+.date {
+  color: var(--tertiary-text-color);
+  font: var(--font-caption);
+}

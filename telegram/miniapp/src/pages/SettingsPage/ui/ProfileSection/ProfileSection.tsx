@@ -1,7 +1,11 @@
 import { Button, Group } from '@mantine/core';
 import { useStore } from 'app/StoreProvider';
 import { ActionItem, ActionsDrawer } from 'entities/interaction';
-import { EditProfileForm } from 'features/edit-profile';
+import {
+  AvatarUploadDrawer,
+  CoverUploadDrawer,
+  EditProfileForm,
+} from 'features/edit-profile';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import EditIcon from 'shared/assets/icons/edit';
@@ -12,8 +16,13 @@ import s from './ProfileSection.module.scss';
 
 export const ProfileSection = observer(() => {
   const { userStore } = useStore();
-  const [avatarDrawerOpened, setAvatarDrawerOpened] = useState(false);
-  const [coverDrawerOpened, setCoverDrawerOpened] = useState(false);
+
+  const [avatarActionsOpened, setAvatarActionsOpened] = useState(false);
+  const [coverActionsOpened, setCoverActionsOpened] = useState(false);
+  const [avatarEditorOpened, setAvatarEditorOpened] = useState(false);
+  const [coverEditorOpened, setCoverEditorOpened] = useState(false);
+  const [avatarAutoOpen, setAvatarAutoOpen] = useState(false);
+  const [coverAutoOpen, setCoverAutoOpen] = useState(false);
 
   useEffect(() => {
     if (!userStore.profile && !userStore.isLoadingProfile) {
@@ -23,27 +32,35 @@ export const ProfileSection = observer(() => {
 
   const user = userStore.profile;
 
-  const handleAvatarAction = (action: 'gallery' | 'delete') => {
-    console.log('Avatar action:', action);
-    // TODO: Implement actual logic
+  const handleDeleteAvatar = async () => {
+    if (!user) return;
+    await userStore.updateProfileAction({ logo_url: '' }, user.id as number);
+    await userStore.getProfileAction();
   };
 
-  const handleCoverAction = (action: 'gallery' | 'delete') => {
-    console.log('Cover action:', action);
-    // TODO: Implement actual logic
+  const handleDeleteCover = async () => {
+    if (!user) return;
+    await userStore.updateProfileAction(
+      { wallpaper_url: '' },
+      user.id as number,
+    );
+    await userStore.getProfileAction();
   };
 
   const avatarActions: ActionItem[] = [
     {
       label: 'Выбрать из галереи',
       icon: <GalleryIcon />,
-      onClick: () => handleAvatarAction('gallery'),
+      onClick: () => {
+        setAvatarAutoOpen(true);
+        setAvatarEditorOpened(true);
+      },
     },
     {
       label: 'Удалить текущее фото',
       icon: <TrashIcon color="var(--red)" />,
       variant: 'danger',
-      onClick: () => handleAvatarAction('delete'),
+      onClick: handleDeleteAvatar,
     },
   ];
 
@@ -51,13 +68,16 @@ export const ProfileSection = observer(() => {
     {
       label: 'Выбрать из галереи',
       icon: <GalleryIcon />,
-      onClick: () => handleCoverAction('gallery'),
+      onClick: () => {
+        setCoverAutoOpen(true);
+        setCoverEditorOpened(true);
+      },
     },
     {
       label: 'Удалить текущее фото',
       icon: <TrashIcon color="var(--red)" />,
       variant: 'danger',
-      onClick: () => handleCoverAction('delete'),
+      onClick: handleDeleteCover,
     },
   ];
 
@@ -83,7 +103,7 @@ export const ProfileSection = observer(() => {
             radius="xl"
             size="md"
             leftSection={<EditIcon className={s.icon} />}
-            onClick={() => setAvatarDrawerOpened(true)}
+            onClick={() => setAvatarActionsOpened(true)}
             color="var(--text-color)"
           >
             Аватарка
@@ -93,7 +113,7 @@ export const ProfileSection = observer(() => {
             radius="xl"
             size="md"
             leftSection={<EditIcon className={s.icon} />}
-            onClick={() => setCoverDrawerOpened(true)}
+            onClick={() => setCoverActionsOpened(true)}
             color="var(--text-color)"
           >
             Обложка
@@ -104,18 +124,44 @@ export const ProfileSection = observer(() => {
       </div>
 
       <ActionsDrawer
-        opened={avatarDrawerOpened}
-        onClose={() => setAvatarDrawerOpened(false)}
+        opened={avatarActionsOpened}
+        onClose={() => setAvatarActionsOpened(false)}
         title="Аватарка"
         actions={avatarActions}
       />
 
       <ActionsDrawer
-        opened={coverDrawerOpened}
-        onClose={() => setCoverDrawerOpened(false)}
+        opened={coverActionsOpened}
+        onClose={() => setCoverActionsOpened(false)}
         title="Обложка"
         actions={coverActions}
       />
+
+      {user && (
+        <AvatarUploadDrawer
+          opened={avatarEditorOpened}
+          onClose={() => {
+            setAvatarEditorOpened(false);
+            setAvatarAutoOpen(false);
+          }}
+          userId={user.id as number}
+          currentAvatarUrl={user.logo_url}
+          autoOpenPicker={avatarAutoOpen}
+        />
+      )}
+
+      {user && (
+        <CoverUploadDrawer
+          opened={coverEditorOpened}
+          onClose={() => {
+            setCoverEditorOpened(false);
+            setCoverAutoOpen(false);
+          }}
+          userId={user.id as number}
+          currentCoverUrl={user.wallpaper_url}
+          autoOpenPicker={coverAutoOpen}
+        />
+      )}
     </div>
   );
 });

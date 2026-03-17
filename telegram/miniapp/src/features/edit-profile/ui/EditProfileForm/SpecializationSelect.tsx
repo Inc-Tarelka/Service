@@ -37,6 +37,7 @@ export const SpecializationSelect = observer(
           searchable
           clearable
           error={error}
+          comboboxProps={{ withinPortal: false }}
         />
       </div>
     );

@@ -35,6 +35,7 @@ export const CitySelect = observer(
           searchable
           clearable
           error={error}
+          comboboxProps={{ withinPortal: false }}
         />
       </div>
     );
