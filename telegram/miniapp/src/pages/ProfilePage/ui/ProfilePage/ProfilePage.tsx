@@ -47,18 +47,27 @@ export const ProfilePage = observer(() => {
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS}
           contentPaddingTop={16}
-        >
-          {activeTab === 'publications' && (
-            <PublicationsList publications={userStore.publications} />
-          )}
-          {activeTab === 'info' && <ProfileInfoSection user={user} />}
-          {activeTab === 'interactions' && (
-            <InteractionsList
-              interactions={userStore.interactions}
-              canEdit={true}
-            />
-          )}
-        </TabsSwitcher>
+          stickyTop="var(--total-navbar-height)"
+          renderTab={(tab) => {
+            switch (tab) {
+              case 'publications':
+                return (
+                  <PublicationsList publications={userStore.publications} />
+                );
+              case 'info':
+                return <ProfileInfoSection user={user} />;
+              case 'interactions':
+                return (
+                  <InteractionsList
+                    interactions={userStore.interactions}
+                    canEdit={true}
+                  />
+                );
+              default:
+                return null;
+            }
+          }}
+        />
       </Box>
     </Page>
   );

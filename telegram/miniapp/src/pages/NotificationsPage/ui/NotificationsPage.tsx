@@ -58,67 +58,74 @@ export const NotificationsPage = () => {
     }
   };
 
-  const filteredItems = MOCK_NOTIFICATIONS.filter(
-    (item) => activeTab === NOTIFICATION_TAB.ALL || item.tab === activeTab,
-  );
-
-  const isGrouped = activeTab === NOTIFICATION_TAB.RESPONSES;
-
   return (
-    <Page className={classes.page}>
+    <Page smallPaddingBottom className={classes.page}>
       <TabsSwitcher
+        hideMask={true}
+        stickyTop={12}
         contentPaddingTop={24}
         tabs={TABS}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-      >
-        {isGrouped ? (
-          <Stack gap={24}>
-            {MOCK_NOTIFICATION_GROUPS.map((group) => (
-              <Stack key={group.id} gap={12}>
-                <Text
-                  className={
-                    group.isHighlighted
-                      ? classes.groupTitleHighlighted
-                      : classes.groupTitle
-                  }
-                >
-                  {group.title}
-                </Text>
-                <Stack gap={8}>
-                  {group.items.map((item) => (
-                    <NotificationItem
-                      key={item.id}
-                      variant={item.variant}
-                      username={item.username}
-                      title={item.title}
-                      body={item.body}
-                      date={item.date}
-                      isRead={item.isRead}
-                      onClick={() => handleItemClick(item)}
-                    />
-                  ))}
-                </Stack>
+        className={classes.tabs}
+        renderTab={(tab) => {
+          const items = MOCK_NOTIFICATIONS.filter(
+            (item) => tab === NOTIFICATION_TAB.ALL || item.tab === tab,
+          );
+          const grouped = tab === NOTIFICATION_TAB.RESPONSES;
+
+          if (grouped) {
+            return (
+              <Stack gap={24}>
+                {MOCK_NOTIFICATION_GROUPS.map((group) => (
+                  <Stack key={group.id} gap={12}>
+                    <Text
+                      className={
+                        group.isHighlighted
+                          ? classes.groupTitleHighlighted
+                          : classes.groupTitle
+                      }
+                    >
+                      {group.title}
+                    </Text>
+                    <Stack gap={8}>
+                      {group.items.map((item) => (
+                        <NotificationItem
+                          key={item.id}
+                          variant={item.variant}
+                          username={item.username}
+                          title={item.title}
+                          body={item.body}
+                          date={item.date}
+                          isRead={item.isRead}
+                          onClick={() => handleItemClick(item)}
+                        />
+                      ))}
+                    </Stack>
+                  </Stack>
+                ))}
               </Stack>
-            ))}
-          </Stack>
-        ) : (
-          <Stack gap={8}>
-            {filteredItems.map((item) => (
-              <NotificationItem
-                key={item.id}
-                variant={item.variant}
-                username={item.username}
-                title={item.title}
-                body={item.body}
-                date={item.date}
-                isRead={item.isRead}
-                onClick={() => handleItemClick(item)}
-              />
-            ))}
-          </Stack>
-        )}
-      </TabsSwitcher>
+            );
+          }
+
+          return (
+            <Stack gap={8}>
+              {items.map((item) => (
+                <NotificationItem
+                  key={item.id}
+                  variant={item.variant}
+                  username={item.username}
+                  title={item.title}
+                  body={item.body}
+                  date={item.date}
+                  isRead={item.isRead}
+                  onClick={() => handleItemClick(item)}
+                />
+              ))}
+            </Stack>
+          );
+        }}
+      />
 
       {selectedItem?.tab === 'responses' &&
         selectedItem.sender &&

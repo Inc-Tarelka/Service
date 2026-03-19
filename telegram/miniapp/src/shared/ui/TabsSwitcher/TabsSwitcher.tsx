@@ -1,7 +1,12 @@
 import { Box } from '@mantine/core';
 import clsx from 'clsx';
-import { AnimatePresence, motion } from 'motion/react';
-import { ReactNode, useCallback, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import classes from './TabsSwitcher.module.scss';
 
 export interface TabItem<T extends string> {
@@ -15,10 +20,12 @@ interface TabsSwitcherProps<T extends string> {
   activeTab?: T;
   onTabChange?: (tab: T) => void;
   children?: ReactNode;
+  renderTab?: (tab: T) => ReactNode;
   className?: string;
   fullWidth?: boolean;
   hideMask?: boolean;
   contentPaddingTop?: number | string;
+  stickyTop?: string | number;
 }
 
 const SWIPE_THRESHOLD = 50;
@@ -30,35 +37,23 @@ interface TouchState {
   direction: 'horizontal' | 'vertical' | null;
 }
 
-const contentVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? '30%' : '-30%',
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? '-30%' : '30%',
-    opacity: 0,
-  }),
-};
-
 export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
   const {
     tabs,
     activeTab,
     onTabChange,
     children,
+    renderTab,
     className,
     fullWidth,
     hideMask,
     contentPaddingTop,
+    stickyTop,
   } = props;
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
   const currentTab = activeTab !== undefined ? activeTab : internalTab;
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
+  const [tabsBarHeight, setTabsBarHeight] = useState(40);
 
   const currentIndex = tabs.findIndex((t) => t.value === currentTab);
 
@@ -66,11 +61,36 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
   const offsetRef = useRef(0);
   const [offsetX, setOffsetX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [slideDirection, setSlideDirection] = useState(0);
+
+  const trackPageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [activePageHeight, setActivePageHeight] = useState<
+    number | undefined
+  >();
+
+  useLayoutEffect(() => {
+    if (stickyTop === undefined) return;
+    const el = tabsWrapperRef.current;
+    if (!el) return;
+    const update = () => setTabsBarHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [stickyTop]);
+
+  useLayoutEffect(() => {
+    if (stickyTop !== undefined) return;
+    const el = trackPageRefs.current.get(currentTab);
+    if (!el) return;
+    const update = () => setActivePageHeight(el.scrollHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [currentTab, stickyTop]);
 
   const changeTab = useCallback(
-    (newTab: T, direction: number) => {
-      setSlideDirection(direction);
+    (newTab: T) => {
       if (activeTab === undefined) {
         setInternalTab(newTab);
       }
@@ -83,8 +103,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     newTab: T,
     event: React.MouseEvent<HTMLButtonElement>,
   ) => {
-    const newIndex = tabs.findIndex((t) => t.value === newTab);
-    changeTab(newTab, newIndex > currentIndex ? 1 : -1);
+    changeTab(newTab);
 
     if (!fullWidth) {
       const buttonElement = event.currentTarget;
@@ -186,7 +205,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
           : Math.max(currentIndex - 1, 0);
 
       if (newIndex !== currentIndex) {
-        changeTab(tabs[newIndex].value, current < 0 ? 1 : -1);
+        changeTab(tabs[newIndex].value);
       }
     }
 
@@ -194,6 +213,23 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     setOffsetX(0);
     setIsSwiping(false);
   }, [currentIndex, tabs, changeTab]);
+
+  const stickyTopCss =
+    stickyTop !== undefined
+      ? typeof stickyTop === 'number'
+        ? `${stickyTop}px`
+        : String(stickyTop)
+      : undefined;
+
+  const independentScroll =
+    stickyTopCss !== undefined && renderTab !== undefined;
+
+  const viewportStyle: React.CSSProperties | undefined = independentScroll
+    ? {
+        height: `calc(100dvh - ${stickyTopCss} - ${tabsBarHeight}px - var(--TB-padding, 0px))`,
+        overflow: 'hidden',
+      }
+    : undefined;
 
   return (
     <Box
@@ -205,6 +241,16 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
       <div
         className={clsx(classes.tabsWrapper, { [classes.noMask]: hideMask })}
         ref={tabsWrapperRef}
+        style={
+          stickyTop !== undefined
+            ? {
+                position: 'sticky',
+                top: stickyTop,
+                backgroundColor: 'var(--bg-color)',
+                zIndex: 50,
+              }
+            : undefined
+        }
       >
         <div className={classes.tabsList}>
           {tabs.map((tabItem) => (
@@ -224,35 +270,58 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
           ))}
         </div>
       </div>
-      <Box
-        className={classes.content}
-        pt={contentPaddingTop}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          transform: isSwiping ? `translateX(${offsetX}px)` : undefined,
-          transition: isSwiping ? 'none' : 'transform 0.2s ease-out',
-        }}
-      >
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          custom={slideDirection}
+      {renderTab ? (
+        <Box
+          className={classes.viewport}
+          pt={independentScroll ? undefined : contentPaddingTop}
+          style={
+            viewportStyle ??
+            (activePageHeight !== undefined
+              ? { maxHeight: activePageHeight }
+              : undefined)
+          }
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <motion.div
-            key={currentTab}
-            custom={slideDirection}
-            variants={contentVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+          <div
+            className={classes.track}
+            style={{
+              width: `${tabs.length * 100}%`,
+              height: independentScroll ? '100%' : undefined,
+              transform: `translateX(calc(-${currentIndex * (100 / tabs.length)}% + ${offsetX}px))`,
+              transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
+            }}
           >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </Box>
+            {tabs.map((tab) => (
+              <div
+                key={tab.value}
+                ref={(el) => {
+                  if (el) trackPageRefs.current.set(tab.value, el);
+                  else trackPageRefs.current.delete(tab.value);
+                }}
+                className={classes.trackPage}
+                style={{
+                  width: `${100 / tabs.length}%`,
+                  ...(independentScroll
+                    ? {
+                        overflowY: 'auto',
+                        height: '100%',
+                        paddingTop: contentPaddingTop,
+                      }
+                    : {}),
+                }}
+              >
+                {renderTab(tab.value)}
+              </div>
+            ))}
+          </div>
+        </Box>
+      ) : (
+        <Box className={classes.content} pt={contentPaddingTop}>
+          {children}
+        </Box>
+      )}
     </Box>
   );
 };

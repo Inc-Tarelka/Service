@@ -3,7 +3,7 @@ import { ResponseToNeedDrawer } from 'features/respond-to-need';
 import { SearchPublications } from 'features/search-publications';
 import { NeedDetailsDrawer } from 'features/view-need';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SearchPublicationsType } from 'shared/api/types';
 import { useViewport } from 'shared/hooks/useViewport';
@@ -37,14 +37,26 @@ export const MainPage = observer(() => {
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
 
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [_, setHeaderHeight] = useState(0);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
+    ro.observe(el);
+    setHeaderHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
+
   const tabs = [
+    { label: 'Все', value: SearchPublicationsType.ALL },
     { label: 'Профили', value: SearchPublicationsType.PROFILE },
     { label: 'Услуги', value: SearchPublicationsType.SERVICE },
     { label: 'Потребности', value: SearchPublicationsType.NEED },
-    { label: 'Все', value: SearchPublicationsType.ALL },
   ];
-  const getActiveStore = () => {
-    switch (activeTab) {
+  const getStoreForTab = (tab: SearchPublicationsType) => {
+    switch (tab) {
       case SearchPublicationsType.NEED:
         return searchNeedsStore;
       case SearchPublicationsType.SERVICE:
@@ -56,16 +68,13 @@ export const MainPage = observer(() => {
     }
   };
 
-  const activeStore = getActiveStore();
-  const { isLoading, isLoaded } = activeStore;
-
   const publications = searchPublicationStore.publications;
   const needs = searchNeedsStore.needs;
   const services = searchServicesStore.services;
   const users = searchUsersStore.users;
 
-  const onItemClick = (id: number) => {
-    switch (activeTab) {
+  const handleItemClickForTab = (id: number, tab: SearchPublicationsType) => {
+    switch (tab) {
       case SearchPublicationsType.NEED:
         setSelectedNeedId(id);
         setIsNeedDetailsOpen(true);
@@ -86,7 +95,7 @@ export const MainPage = observer(() => {
         handleUserNavigation(id, searchQuery);
         break;
       default:
-        handleDataNavigation(id, activeTab, publications, searchQuery);
+        handleDataNavigation(id, tab, publications, searchQuery);
     }
   };
 
@@ -102,35 +111,42 @@ export const MainPage = observer(() => {
 
   return (
     <Page
-      key={activeTab}
+      smallPaddingBottom
+      scrollKey={`main-${activeTab}`}
       className={classNames(s.mainPage, {}, [])}
-      scrollKey={`main-page-${activeTab}`}
     >
-      <div className={classNames(s.header, { [s.desktop]: isDesktop }, [])}>
+      <div
+        ref={headerRef}
+        className={classNames(s.header, { [s.desktop]: isDesktop }, [])}
+      >
         <SearchPublications
           activeTab={activeTab}
           initialQuery={queryFromUrl}
           onSearchQueryChange={(query) => setSearchQuery(query)}
         />
-        <TabsSwitcher
-          hideMask={true}
-          tabs={tabs}
-          activeTab={activeTab}
-          className={s.tabs}
-          onTabChange={(tab) => setActiveTab(tab as any)}
-        />
       </div>
-      <div className={s.content}>
-        <ListingContent
-          activeTab={activeTab}
-          needs={needs}
-          services={services}
-          users={users}
-          isLoading={isLoading}
-          isLoaded={isLoaded}
-          onItemClick={onItemClick}
-        />
-      </div>
+      <TabsSwitcher
+        hideMask={true}
+        tabs={tabs}
+        activeTab={activeTab}
+        className={s.tabs}
+        onTabChange={(tab) => setActiveTab(tab as any)}
+        stickyTop={64}
+        renderTab={(tab) => {
+          const store = getStoreForTab(tab);
+          return (
+            <ListingContent
+              activeTab={tab}
+              needs={needs}
+              services={services}
+              users={users}
+              isLoading={store.isLoading}
+              isLoaded={store.isLoaded}
+              onItemClick={(id) => handleItemClickForTab(id, tab)}
+            />
+          );
+        }}
+      />
 
       <NeedDetailsDrawer
         opened={isNeedDetailsOpen}

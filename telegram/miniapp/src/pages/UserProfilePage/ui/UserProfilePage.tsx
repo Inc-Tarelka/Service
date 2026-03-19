@@ -58,20 +58,26 @@ export const UserProfilePage = observer(() => {
           contentPaddingTop={16}
           fullWidth={true}
           hideMask={true}
+          stickyTop="var(--total-navbar-height)"
           className={classes.tabsSwitcher}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS.filter((t) =>
             (['publications', 'info'] as ProfileTab[]).includes(t.value),
           )}
-        >
-          {activeTab === 'publications' && (
-            <PublicationsList publications={userStore.publications} />
-          )}
-          {activeTab === 'info' && (
-            <ProfileInfoSection user={user} isPublicView={true} />
-          )}
-        </TabsSwitcher>
+          renderTab={(tab) => {
+            switch (tab) {
+              case 'publications':
+                return (
+                  <PublicationsList publications={userStore.publications} />
+                );
+              case 'info':
+                return <ProfileInfoSection user={user} isPublicView={true} />;
+              default:
+                return null;
+            }
+          }}
+        />
       </Box>
 
       <OfferCollaborationDrawer

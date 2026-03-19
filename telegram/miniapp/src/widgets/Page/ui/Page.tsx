@@ -1,6 +1,6 @@
 import { useStore } from 'app/StoreProvider';
 import { observer } from 'mobx-react-lite';
-import { ReactNode, UIEvent, useRef } from 'react';
+import { ReactNode, UIEvent, useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInitialEffect } from 'shared/hooks/useInitialEffect';
 import { useThrottle } from 'shared/hooks/useThrottle';
@@ -36,11 +36,21 @@ export const Page = observer((props: PageProps) => {
   const finalScrollKey = scrollKey || pathname;
 
   useInitialEffect(() => {
-    if (wrapperRef.current && !disableScrollRecovery) {
-      wrapperRef.current.scrollTop =
-        scrollRecoveryStore.getScroll(finalScrollKey);
-    }
+    const el = wrapperRef.current;
+    if (!el || disableScrollRecovery) return;
+    el.style.scrollBehavior = 'auto';
+    el.scrollTop = scrollRecoveryStore.getScroll(finalScrollKey);
+    el.style.scrollBehavior = '';
   });
+
+  useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (disableScrollRecovery || !el) return;
+    el.style.scrollBehavior = 'auto';
+    el.scrollTop = scrollRecoveryStore.getScroll(finalScrollKey);
+    el.style.scrollBehavior = '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finalScrollKey]);
 
   const onScroll = useThrottle((e: UIEvent<HTMLDivElement>) => {
     if (!disableScrollRecovery) {

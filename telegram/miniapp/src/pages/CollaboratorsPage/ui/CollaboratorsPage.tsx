@@ -49,20 +49,27 @@ export const CollaboratorsPage = () => {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         hideMask
-      >
-        {activeTab === 'collaborators' && (
-          <CollaboratorsList
-            collaborators={MOCK_COLLABORATORS}
-            onItemClick={handleItemClick}
-          />
-        )}
-        {activeTab === 'outgoing' && (
-          <CollaboratorsList
-            collaborators={MOCK_OUTGOING_REQUESTS}
-            onItemClick={handleItemClick}
-          />
-        )}
-      </TabsSwitcher>
+        renderTab={(tab) => {
+          switch (tab) {
+            case 'collaborators':
+              return (
+                <CollaboratorsList
+                  collaborators={MOCK_COLLABORATORS}
+                  onItemClick={handleItemClick}
+                />
+              );
+            case 'outgoing':
+              return (
+                <CollaboratorsList
+                  collaborators={MOCK_OUTGOING_REQUESTS}
+                  onItemClick={handleItemClick}
+                />
+              );
+            default:
+              return null;
+          }
+        }}
+      />
     </Page>
   );
 };
