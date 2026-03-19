@@ -48,7 +48,7 @@ func NewServices(deps Deps) *Services {
 			deps.TelegramGatewayToken,
 			deps.TelegramGatewayURL,
 		),
-		User:         NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Storage),
+		User:         NewUserService(deps.Repos.TarelkaUser, deps.Storage),
 		Reference:    NewReferenceService(deps.Repos.Reference),
 		Storage:      deps.Storage,
 		Publication:  NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),

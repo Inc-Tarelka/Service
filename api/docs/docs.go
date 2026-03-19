@@ -1888,7 +1888,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Получение базовой информации о пользователе по ID",
+                "description": "Получение информации о пользователе по ID",
                 "produces": [
                     "application/json"
                 ],
@@ -2167,64 +2167,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{id}/profile": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Расширенная информация о пользователе по ID: данные профиля, публикации и агрегированные метрики.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Профиль пользователя",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID пользователя",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.UserProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3628,59 +3570,19 @@ const docTemplate = `{
                     "description": "Для PERSON: имя и фамилия",
                     "type": "string"
                 },
+                "specializationIds": {
+                    "description": "Список специализаций. nil — не менять, пустой массив — очистить.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "surname": {
                     "type": "string"
                 },
                 "username": {
                     "description": "Общие поля",
                     "type": "string"
-                }
-            }
-        },
-        "model.UserProfilePublicationItem": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "imageUrl": {
-                    "type": "string"
-                },
-                "isAuthor": {
-                    "type": "boolean"
-                },
-                "likesCount": {
-                    "type": "integer"
-                },
-                "type": {
-                    "$ref": "#/definitions/model.PublicationType"
-                }
-            }
-        },
-        "model.UserProfileResponse": {
-            "type": "object",
-            "properties": {
-                "outgoingRequestsCount": {
-                    "description": "Число непрочитанных запросов/уведомлений для пользователя.",
-                    "type": "integer"
-                },
-                "projectsCount": {
-                    "description": "Число проектов пользователя (где он автор или соавтор).",
-                    "type": "integer"
-                },
-                "publications": {
-                    "description": "Публикации, где пользователь является автором или соавтором.\nОтсортированы по дате создания (сначала новые).",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.UserProfilePublicationItem"
-                    }
-                },
-                "teammatesCount": {
-                    "description": "Число уникальных сокомандников во всех проектах пользователя.",
-                    "type": "integer"
-                },
-                "user": {
-                    "$ref": "#/definitions/model.TarelkaUserFull"
                 }
             }
         },

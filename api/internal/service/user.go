@@ -41,83 +41,28 @@ type UserService interface {
 		education *string,
 	) error
 
+	// UpdateUserSpecializations полностью заменяет специализации пользователя на переданный список.
+	UpdateUserSpecializations(ctx context.Context, userID int64, specializationIDs []int64) error
+
 	// Delete user account
 	DeleteUser(ctx context.Context, userID int64) error
-
-	// GetUserProfile возвращает расширенный профиль пользователя с публикациями и метриками.
-	GetUserProfile(ctx context.Context, id int64) (*model.UserProfileResponse, error)
 }
 
 type userService struct {
-	tarelkaUserRepo  repository.TarelkaUserRepository
-	publicationRepo  repository.PublicationRepository
-	notificationRepo repository.NotificationRepository
-	storage          StorageService
+	tarelkaUserRepo repository.TarelkaUserRepository
+	storage         StorageService
 }
 
-func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicationRepo repository.PublicationRepository, notificationRepo repository.NotificationRepository, storage StorageService) UserService {
+func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, storage StorageService) UserService {
 	return &userService{
-		tarelkaUserRepo:  tarelkaUserRepo,
-		publicationRepo:  publicationRepo,
-		notificationRepo: notificationRepo,
-		storage:          storage,
+		tarelkaUserRepo: tarelkaUserRepo,
+		storage:         storage,
 	}
 }
 
 // GetUser получение полной информации о пользователе
 func (s *userService) GetUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error) {
 	return s.tarelkaUserRepo.GetFullUser(ctx, id)
-}
-
-// GetUserProfile строит расширенный профиль пользователя.
-func (s *userService) GetUserProfile(ctx context.Context, id int64) (*model.UserProfileResponse, error) {
-	user, err := s.tarelkaUserRepo.GetFullUser(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Публикации пользователя (автор и соавтор)
-	pubShorts, err := s.publicationRepo.GetUserPublications(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	pubItems := make([]model.UserProfilePublicationItem, 0, len(pubShorts))
-	for _, p := range pubShorts {
-		item := model.UserProfilePublicationItem{
-			ID:         p.ID,
-			LikesCount: p.LikesCount,
-			Type:       p.Type,
-			ImageURL:   p.ImageURL,
-			IsAuthor:   p.IsAuthor,
-		}
-		pubItems = append(pubItems, item)
-	}
-
-	// Число сокомандников
-	teammatesCount, err := s.tarelkaUserRepo.GetTeammatesCount(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Число непрочитанных уведомлений для пользователя
-	unreadCount, err := s.notificationRepo.CountUnreadByReceiver(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Число проектов пользователя
-	projectsCount, err := s.publicationRepo.GetUserProjectsCount(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.UserProfileResponse{
-		User:                  user,
-		Publications:          pubItems,
-		TeammatesCount:        teammatesCount,
-		OutgoingRequestsCount: unreadCount,
-		ProjectsCount:         projectsCount,
-	}, nil
 }
 
 // GetUsersByTelegramID получение всех tarelka аккаунтов для telegram пользователя
@@ -257,6 +202,16 @@ func (s *userService) UpdateUserProfile(
 		return err
 	}
 	// Variant A (simple): any profile update is considered a signal to move to stage 2
+	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
+	return nil
+}
+
+// UpdateUserSpecializations полностью заменяет специализации пользователя.
+func (s *userService) UpdateUserSpecializations(ctx context.Context, userID int64, specializationIDs []int64) error {
+	if err := s.tarelkaUserRepo.ReplaceSpecializations(ctx, userID, specializationIDs); err != nil {
+		return err
+	}
+	// Любое содержательное изменение профиля тоже можно считать сигналом для conversation.
 	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)
 	return nil
 }

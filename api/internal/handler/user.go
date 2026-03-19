@@ -47,7 +47,7 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 
 // GetUser godoc
 // @Summary Получить пользователя
-// @Description Получение базовой информации о пользователе по ID
+// @Description Получение информации о пользователе по ID
 // @Tags users
 // @Produce json
 // @Security BearerAuth
@@ -73,36 +73,6 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
-}
-
-// GetUserProfile godoc
-// @Summary Профиль пользователя
-// @Description Расширенная информация о пользователе по ID: данные профиля, публикации и агрегированные метрики.
-// @Tags users
-// @Produce json
-// @Security BearerAuth
-// @Param id path int true "ID пользователя"
-// @Success 200 {object} model.UserProfileResponse
-// @Failure 400 {object} model.ErrorResponse
-// @Failure 401 {object} model.ErrorResponse
-// @Failure 404 {object} model.ErrorResponse
-// @Failure 500 {object} model.ErrorResponse
-// @Router /users/{id}/profile [get]
-func (h *UserHandler) GetUserProfile(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
-		return
-	}
-
-	profile, err := h.userService.GetUserProfile(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, profile)
 }
 
 // SearchUsersByName godoc
@@ -561,6 +531,14 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 	); err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
+	}
+
+	// Специализации: если поле присутствует в запросе, заменяем весь список.
+	if req.SpecializationIDs != nil {
+		if err := h.userService.UpdateUserSpecializations(c.Request.Context(), id, *req.SpecializationIDs); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+			return
+		}
 	}
 	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
 }

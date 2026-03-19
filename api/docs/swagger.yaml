@@ -799,45 +799,16 @@ definitions:
       name:
         description: 'Для PERSON: имя и фамилия'
         type: string
+      specializationIds:
+        description: Список специализаций. nil — не менять, пустой массив — очистить.
+        items:
+          type: integer
+        type: array
       surname:
         type: string
       username:
         description: Общие поля
         type: string
-    type: object
-  model.UserProfilePublicationItem:
-    properties:
-      id:
-        type: integer
-      imageUrl:
-        type: string
-      isAuthor:
-        type: boolean
-      likesCount:
-        type: integer
-      type:
-        $ref: '#/definitions/model.PublicationType'
-    type: object
-  model.UserProfileResponse:
-    properties:
-      outgoingRequestsCount:
-        description: Число непрочитанных запросов/уведомлений для пользователя.
-        type: integer
-      projectsCount:
-        description: Число проектов пользователя (где он автор или соавтор).
-        type: integer
-      publications:
-        description: |-
-          Публикации, где пользователь является автором или соавтором.
-          Отсортированы по дате создания (сначала новые).
-        items:
-          $ref: '#/definitions/model.UserProfilePublicationItem'
-        type: array
-      teammatesCount:
-        description: Число уникальных сокомандников во всех проектах пользователя.
-        type: integer
-      user:
-        $ref: '#/definitions/model.TarelkaUserFull'
     type: object
   model.UserSearchItem:
     properties:
@@ -1897,7 +1868,7 @@ paths:
       - references
   /users/{id}:
     get:
-      description: Получение базовой информации о пользователе по ID
+      description: Получение информации о пользователе по ID
       parameters:
       - description: ID пользователя
         in: path
@@ -2084,44 +2055,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Установить внешнюю ссылку лого
-      tags:
-      - users
-  /users/{id}/profile:
-    get:
-      description: 'Расширенная информация о пользователе по ID: данные профиля, публикации
-        и агрегированные метрики.'
-      parameters:
-      - description: ID пользователя
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.UserProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Профиль пользователя
       tags:
       - users
   /users/{id}/wallpaper/confirm:
