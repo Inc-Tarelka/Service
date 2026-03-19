@@ -1,43 +1,66 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
-import LikeIcon from 'shared/assets/icons/like';
+import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
+import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
+import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import s from './ServiceListingItem.module.scss';
 
 interface ServiceListingItemProps {
-  publication: SearchPublication;
+  service: SearchServiceItem;
   onClick?: (id: number) => void;
 }
 
-export const ServiceListingItem = (props: ServiceListingItemProps) => {
-  const { publication, onClick } = props;
-  const mainImage = publication.images?.[0]?.url;
+export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
+  const { service, onClick } = props;
+  const mainImage = service.topImageUrl;
+
+  useEffect(() => {
+    referenceStore.getCitiesAction();
+  }, []);
+
+  const cityName =
+    referenceStore.cities.find((city) => city.id === service.cityId)?.name ||
+    '';
+
+  const firstName = 'Иван';
+  const lastName = 'Иванов';
+  const username = 'nick_name';
   return (
-    <div className={s.container} onClick={() => onClick?.(publication.id)}>
-      <div
-        className={s.image}
-        style={{
-          backgroundImage: mainImage ? `url(${mainImage})` : undefined,
-        }}
-      />
-      <div className={s.content}>
-        <h3 className={s.title}>{publication.name}</h3>
-        {publication.description && (
-          <p className={s.description}>{publication.description}</p>
+    <div className={s.container} onClick={() => onClick?.(service.id)}>
+      <div className={s.imageSection}>
+        {mainImage && (
+          <img src={mainImage} className={s.image} alt={service.name} />
         )}
-        <div className={s.footer}>
-          {publication.tags?.length > 0 && (
-            <div className={s.tags}>
-              {publication.tags.slice(0, 2).map((tag) => (
-                <span key={tag.id} className={s.tag}>
-                  {tag.name}
-                </span>
-              ))}
-            </div>
+      </div>
+
+      <div className={s.infoSection}>
+        <div className={s.authorRow}>
+          <div className={s.authorData}>
+            <span className={s.authorName}>
+              {firstName} {lastName}
+            </span>
+            <span className={s.authorUsername}>@{username}</span>
+          </div>
+          <div className={s.locationAndTags}>
+            <span className={s.city}>{cityName}</span>
+            {service.tags && service.tags.length > 0 && (
+              <div className={s.tagsList}>
+                {service.tags.map((tag) => (
+                  <span key={tag.id} className={s.tagItem}>
+                    #{tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={s.textSection}>
+          <h3 className={s.title}>{service.name}</h3>
+          {service.description && (
+            <p className={s.description}>{service.description}</p>
           )}
-          <span className={s.likes}>
-            <LikeIcon ClassNames={s.icon} /> {publication.likesCount}
-          </span>
         </div>
       </div>
     </div>
   );
-};
+});

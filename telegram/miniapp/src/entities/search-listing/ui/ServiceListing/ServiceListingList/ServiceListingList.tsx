@@ -1,16 +1,16 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
+import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
 import { ServiceListingItem } from '../ServiceListingItem/ServiceListingItem';
 import { ServiceListingSkeleton } from '../ServiceListingSkeleton/ServiceListingSkeleton';
 import classes from './ServiceListingList.module.scss';
 
 interface ServiceListingListProps {
-  publications: SearchPublication[];
+  services: SearchServiceItem[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
 }
 
 export const ServiceListingList = (props: ServiceListingListProps) => {
-  const { publications, onItemClick, isLoading } = props;
+  const { services, onItemClick, isLoading } = props;
 
   if (isLoading) {
     return (
@@ -22,7 +22,7 @@ export const ServiceListingList = (props: ServiceListingListProps) => {
     );
   }
 
-  if (publications.length === 0) {
+  if (!services || services.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>
@@ -32,10 +32,10 @@ export const ServiceListingList = (props: ServiceListingListProps) => {
 
   return (
     <div className={classes.grid}>
-      {publications.map((publication) => (
+      {services.map((service) => (
         <ServiceListingItem
-          key={publication.id}
-          publication={publication}
+          key={service.id}
+          service={service}
           onClick={onItemClick}
         />
       ))}

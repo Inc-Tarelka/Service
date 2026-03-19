@@ -1,4 +1,10 @@
-export { createPublication, presignImages, searchPublications } from './api';
+export {
+  createPublication,
+  getPublicationDetails,
+  presignImages,
+  searchPublications,
+  togglePublicationLike,
+} from './api';
 export type {
   CoAuthor,
   CreatePublicationRequest,
@@ -7,12 +13,16 @@ export type {
   PresignRequest,
   PresignResponse,
   Publication,
+  PublicationDetailsData,
+  PublicationDetailsResponse,
   PublicationImage,
   PublicationNeed,
   PublicationNeedDetailed,
   PublicationTag,
+  PublicationTeamMember,
   SearchPublication,
   SearchPublicationsParams,
   SearchPublicationsResponse,
+  ToggleLikeResponse,
   WorkingStatus,
 } from './types';

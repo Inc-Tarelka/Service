@@ -1,14 +1,15 @@
 import { Button, Select, TextInput } from '@mantine/core';
+import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
 
+import { useStore } from 'app/StoreProvider';
+import type { AccountType as ApiAccountType } from 'shared/api/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { Page } from 'widgets/Page';
-import { AccountType } from '../../model/types';
 import { profileSchema } from '../../model/validation';
 
-import { useStore } from 'app/StoreProvider';
 import { CitiesListSkeleton } from './CitiesLIst.skeleton';
 import s from './ProfileForm.module.scss';
 import { SpecializationsListSkeleton } from './SpecializationsList.skeleton';
@@ -18,7 +19,7 @@ interface ProfileFormProps {
 }
 
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
-  const { authStore } = useStore();
+  const { authStore, userStore } = useStore();
 
   const {
     values,
@@ -30,7 +31,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     setErrors,
   } = useFormWithValidation({
     initialValues: {
-      accountType: 'specialist' as AccountType,
+      accountType: 'specialist',
       name: '',
       lastName: '',
       specialization: '',
@@ -39,82 +40,71 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     schema: profileSchema,
     onSubmit: async (values) => {
       try {
-        const wizardData = authStore.tempData;
-
-        console.log('ProfileForm submitting with tempData:', wizardData);
-        console.log('ProfileForm values:', values);
-
-        if (
-          !wizardData.login ||
-          !wizardData.password ||
-          !wizardData.phone ||
-          !wizardData.verificationCode ||
-          !wizardData.verificationRequestId
-        ) {
-          console.error('Missing wizard data', wizardData);
-          setErrors({ name: 'Данные регистрации неполные. Вернитесь назад.' });
-          return;
-        }
-
-        const type = values.accountType === 'company' ? 'COMPANY' : 'PERSON';
-
-        const accountData: any = {
-          type: type as any,
-          username: wizardData.login,
-          password: wizardData.password,
-          phone: wizardData.phone,
-        };
-
-        if (values.accountType === 'company') {
-          accountData.companyName = values.name;
-          accountData.name = values.name;
-        } else {
-          accountData.name = values.name;
-          accountData.surname = values.lastName;
-        }
-
         const cityId = parseInt(values.city);
         const specializationId = parseInt(values.specialization);
 
         if (isNaN(cityId) || isNaN(specializationId)) {
-          console.error('Invalid ID selection');
           setErrors({ name: 'Выберите город и специализацию' });
           return;
         }
 
-        console.log('Calling registerAction with:', {
-          account: accountData,
-          cityIds: [cityId],
-          specializationIds: [specializationId],
-          phoneVerification: {
-            verificationCode: wizardData.verificationCode,
-            verificationRequestId: wizardData.verificationRequestId,
-          },
-        });
+        const {
+          login,
+          phone,
+          password,
+          accountType,
+          verificationRequestId,
+          verificationCode,
+          userId,
+        } = authStore.tempData;
 
-        const success = await authStore.registerAction({
-          account: accountData,
-          cityIds: [cityId],
+        if (
+          !login ||
+          !phone ||
+          !password ||
+          !verificationRequestId ||
+          !verificationCode
+        ) {
+          setErrors({
+            name: 'Данные сессии потеряны. Начните регистрацию заново.',
+          });
+          return;
+        }
+
+        const success = await authStore.telegramRegistrationAction({
+          initData: WebApp.initData || '',
+          account: {
+            type:
+              (accountType as unknown as ApiAccountType) ??
+              ('PERSON' as ApiAccountType),
+            username: login,
+            phone,
+            password,
+          },
+          phoneVerification: {
+            verificationCode,
+            verificationRequestId,
+          },
+          specializationIds: [specializationId],
           directionIds: [],
-          specializationIds: [specializationId],
-          initData:
-            'user=%7B%22id%22%3A6969807631%2C%22first_name%22%3A%22%D0%BA%D1%80%D1%83%D0%B6%D0%BA%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22kryshkia%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2Fns51B3uNbn3VnRNQyaZjvhPopkMCpSbAF5BkCoFCEDO1VuzohY4ufKHP7ov8LozQ.svg%22%7D&chat_instance=-7734611608118716575&chat_type=private&auth_date=1769879812&signature=xXXUjkUfw4bi--mkri9PMhlERwsM1bxY8pgtk4pDplU6OoatHUXTcotE6uyBPjGKeIhe7WsU5YqPzkFQQW5vAQ&hash=aab9365ce077c830310ea848b99de9d2f909ec4777de494c777d9751795a33cf',
-          phoneVerification: {
-            verificationCode: wizardData.verificationCode,
-            verificationRequestId: wizardData.verificationRequestId,
-          },
+          cityIds: [cityId],
         });
-
-        console.log('Registration result:', success);
 
         if (success) {
+          await userStore.updateProfileAction(
+            {
+              firstName: values.name,
+              lastName: values.lastName,
+            },
+            userId,
+          );
           onSuccess(values);
         } else {
-          setErrors({ name: 'Ошибка регистрации' });
+          setErrors({ name: 'Ошибка регистрации. Попробуйте снова.' });
         }
       } catch (error) {
-        console.error('Profile error:', error);
-        setErrors({ name: 'Ошибка сохранения профиля' });
+        console.error('Registration error:', error);
+        setErrors({ name: 'Ошибка регистрации' });
       }
     },
   });

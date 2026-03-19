@@ -1,16 +1,16 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
+import type { SearchUser } from 'shared/api/service/UserSearch';
 import { ProfileListingItem } from '../ProfileListingItem/ProfileListingItem';
 import { ProfileListingSkeleton } from '../ProfileListingSkeleton/ProfileListingSkeleton';
 import classes from './ProfileListingList.module.scss';
 
 interface ProfileListingListProps {
-  publications: SearchPublication[];
+  users: SearchUser[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
 }
 
 export const ProfileListingList = (props: ProfileListingListProps) => {
-  const { publications, onItemClick, isLoading } = props;
+  const { users, onItemClick, isLoading } = props;
 
   if (isLoading) {
     return (
@@ -22,7 +22,7 @@ export const ProfileListingList = (props: ProfileListingListProps) => {
     );
   }
 
-  if (publications.length === 0) {
+  if (!users || users.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>
@@ -32,12 +32,8 @@ export const ProfileListingList = (props: ProfileListingListProps) => {
 
   return (
     <div className={classes.list}>
-      {publications.map((publication) => (
-        <ProfileListingItem
-          key={publication.id}
-          publication={publication}
-          onClick={onItemClick}
-        />
+      {users.map((user) => (
+        <ProfileListingItem key={user.id} user={user} onClick={onItemClick} />
       ))}
     </div>
   );

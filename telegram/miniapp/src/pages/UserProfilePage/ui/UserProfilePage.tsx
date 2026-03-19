@@ -1,4 +1,5 @@
 import { Box } from '@mantine/core';
+import { useStore } from 'app/StoreProvider';
 import { PublicationsList } from 'entities/publication';
 import {
   OfferCollaborationButton,
@@ -6,18 +7,43 @@ import {
 } from 'features/offer-collaboration';
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
-import { MOCK_OTHER_USER, MOCK_PUBLICATIONS } from 'shared/mocks/profileMocks';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
 import classes from './UserProfilePage.module.scss';
+import { UserProfilePageSkeleton } from './UserProfilePage.skeleton';
 
 export const UserProfilePage = observer(() => {
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const user = MOCK_OTHER_USER;
+  const { userProfileStore, userStore } = useStore();
+
+  useBackToSearch();
+
+  useEffect(() => {
+    if (id) {
+      userProfileStore.getUserProfileAction(id);
+    }
+  }, [id, userProfileStore]);
+
+  if (userProfileStore.isLoading) {
+    return <UserProfilePageSkeleton />;
+  }
+
+  const user = userProfileStore.profile;
+
+  if (!user) {
+    return (
+      <Page className={classes.profilePage}>
+        <div>Ошибка загрузки профиля пользователя</div>
+      </Page>
+    );
+  }
 
   return (
     <Page className={classes.profilePage}>
@@ -29,6 +55,9 @@ export const UserProfilePage = observer(() => {
 
       <Box className={classes.tabsSection}>
         <TabsSwitcher
+          contentPaddingTop={16}
+          fullWidth={true}
+          hideMask={true}
           className={classes.tabsSwitcher}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -37,7 +66,7 @@ export const UserProfilePage = observer(() => {
           )}
         >
           {activeTab === 'publications' && (
-            <PublicationsList publications={MOCK_PUBLICATIONS} />
+            <PublicationsList publications={userStore.publications} />
           )}
           {activeTab === 'info' && (
             <ProfileInfoSection user={user} isPublicView={true} />

@@ -10,8 +10,8 @@ import { useSearchFilters } from '../../model/useSearchFilters';
 import { DatePickerDrawer } from './DatePickerDrawer';
 import { NeedFilters } from './NeedFilters';
 import { ProfileFilters } from './ProfileFilters';
-import { ServiceFilters } from './ServiceFilters';
 import s from './SearchFiltersDrawer.module.scss';
+import { ServiceFilters } from './ServiceFilters';
 
 interface SearchFiltersDrawerProps {
   opened: boolean;
@@ -43,7 +43,7 @@ export const SearchFiltersDrawer = observer(
     const drawerSize = DRAWER_SIZES[activeTab] || '80%';
 
     const handleLocalApply = () => {
-      let finalFilters = { ...filters };
+      const finalFilters = { ...filters };
       if (
         activeTab === SearchPublicationsType.PROFILE &&
         !finalFilters.authorType
@@ -112,16 +112,12 @@ export const SearchFiltersDrawer = observer(
               )}
             </div>
 
-            <div
-              className={`${s.footer} ${
-                activeTab === SearchPublicationsType.NEED ? s.footerBottom : ''
-              }`}
-            >
+            <div className={`${s.footer} ${s.footerBottom}`}>
               <ActionIcon
                 onClick={onClose}
                 variant="outline"
                 size={48}
-                radius="40"
+                radius="16"
               >
                 <XIcon />
               </ActionIcon>

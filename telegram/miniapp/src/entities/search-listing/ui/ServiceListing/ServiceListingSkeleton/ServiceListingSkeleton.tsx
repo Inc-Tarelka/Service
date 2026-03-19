@@ -3,17 +3,20 @@ import classes from './ServiceListingSkeleton.module.scss';
 export const ServiceListingSkeleton = () => {
   return (
     <div className={classes.container}>
-      <div className={classes.image} />
-      <div className={classes.content}>
+      <div className={classes.imageSection} />
+
+      <div className={classes.infoSection}>
+        <div className={classes.authorRow}>
+          <div className={classes.authorData}>
+            <div className={classes.authorName} />
+            <div className={classes.authorUsername} />
+          </div>
+          <div className={classes.city} />
+        </div>
+
         <div className={classes.title} />
         <div className={classes.description} />
-        <div className={classes.footer}>
-          <div className={classes.tags}>
-            <div className={classes.tag} />
-            <div className={classes.tag} />
-          </div>
-          <div className={classes.likes} />
-        </div>
+        <div className={classes.descriptionShort} />
       </div>
     </div>
   );

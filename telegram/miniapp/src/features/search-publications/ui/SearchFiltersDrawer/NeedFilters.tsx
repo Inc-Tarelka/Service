@@ -79,7 +79,7 @@ export const NeedFilters = (props: NeedFiltersProps) => {
               <RubIcon />
             </span>
           }
-          radius={24}
+          radius={16}
           size="lg"
         />
       </div>

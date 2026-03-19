@@ -22,7 +22,7 @@ export const UserStats = ({ stats }: UserStatsProps) => {
     <div className={classes.container}>
       <div className={classes.stat} onClick={handleCollaboratorsClick}>
         <span className={classes.count}>{stats.collaborations}</span>
-        <span className={classes.label}>соавторы</span>
+        <span className={classes.label}>сокомандники</span>
       </div>
 
       <div className={classes.stat} onClick={handleOutgoingClick}>

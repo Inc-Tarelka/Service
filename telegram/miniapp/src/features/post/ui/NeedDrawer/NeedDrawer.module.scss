@@ -1,5 +1,4 @@
 .drawer {
-  background: var(--sheet-bg-color);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -66,7 +65,7 @@
   input {
     background: var(--tertiary-bg-color) !important;
     border: 2px solid var(--card-bg) !important;
-    border-radius: 24px !important;
+    border-radius: 16px !important;
     color: var(--text-color) !important;
     font: var(--font-body) !important;
     font-size: 16px !important;
@@ -81,8 +80,8 @@
 .textarea {
   textarea {
     background: var(--tertiary-bg-color) !important;
-    border: 2px solid var(--card-bg) !important;
-    border-radius: 24px !important;
+    border: 1px solid var(--card-bg) !important;
+    border-radius: 16px !important;
     color: var(--text-color) !important;
     font: var(--font-body) !important;
     font-size: 16px !important;
@@ -100,7 +99,7 @@
   input {
     background: var(--tertiary-bg-color) !important;
     border: 2px solid var(--card-bg) !important;
-    border-radius: 24px !important;
+    border-radius: 16px !important;
     color: var(--text-color) !important;
     font: var(--font-body) !important;
     font-size: 16px !important;
@@ -134,7 +133,7 @@
   input {
     background: var(--tertiary-bg-color) !important;
     border: 2px solid var(--card-bg) !important;
-    border-radius: 24px !important;
+    border-radius: 16px !important;
     color: var(--text-color) !important;
     font: var(--font-body) !important;
     font-size: 16px !important;

@@ -1,33 +1,48 @@
-import { Avatar, Box, Group, Text } from '@mantine/core';
-import { User } from 'shared/api/service/User/types';
+import { Box, Group } from '@mantine/core';
+import type {
+  CoauthorSearchUser,
+  SearchUser,
+} from 'shared/api/service/UserSearch/types';
+import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
+import {
+  formatCollaboratorMeta,
+  formatCollaboratorName,
+} from '../../lib/formatCollaborator';
 import classes from './CollaboratorItem.module.scss';
 
 interface CollaboratorItemProps {
-  collaborator: User;
+  collaborator: SearchUser | CoauthorSearchUser;
   onClick?: (id: string) => void;
 }
 
-export const CollaboratorItem = ({
-  collaborator,
-  onClick,
-}: CollaboratorItemProps) => {
+export const CollaboratorItem = (props: CollaboratorItemProps) => {
+  const { collaborator, onClick } = props;
+  const fullName = formatCollaboratorName(collaborator);
+  const meta = formatCollaboratorMeta(collaborator);
+  const logoUrl =
+    'logo_url' in collaborator ? collaborator.logo_url : undefined;
+  const username =
+    'username' in collaborator ? collaborator.username : undefined;
+
   return (
     <Box
       className={classes.card}
       onClick={() => onClick?.(String(collaborator.id))}
     >
       <Group gap={12} align="flex-start">
-        <Avatar src={collaborator.avatarUrl} size={40} radius="xl" />
+        <img
+          src={logoUrl || defaultUserSvg}
+          alt={fullName}
+          width={40}
+          height={40}
+          style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
         <Box className={classes.userInfo}>
-          <Text color="white" className={classes.cardTitle}>
-            {collaborator.firstName} {collaborator.lastName}
-          </Text>
-          <Text className={classes.cardDescription}>
-            @{collaborator.username}
-          </Text>
-          <Text color="white" className={classes.cardDescription}>
-            {collaborator.profession}, {collaborator.city}
-          </Text>
+          <span className={classes.cardTitle}>{fullName}</span>
+          {username && (
+            <span className={classes.cardDescription}>@{username}</span>
+          )}
+          {meta && <span className={classes.info}>{meta}</span>}
         </Box>
       </Group>
     </Box>

@@ -12,42 +12,34 @@ import s from './SearchPublications.module.scss';
 
 interface SearchPublicationsProps {
   activeTab: SearchPublicationsType;
+  initialQuery?: string;
   onSearchComplete?: () => void;
+  onSearchQueryChange?: (query: string) => void;
 }
 
 export const SearchPublications = observer((props: SearchPublicationsProps) => {
-  const { activeTab, onSearchComplete } = props;
-  const { searchPublicationStore } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    activeTab,
+    initialQuery = '',
+    onSearchComplete,
+    onSearchQueryChange,
+  } = props;
+  const { searchInteractionsStore } = useStore();
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [filtersOpened, setFiltersOpened] = useState(false);
   const [filters, setFilters] = useState<SearchPublicationsParams>({});
   const [debouncedQuery] = useDebouncedValue(searchQuery, 500);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 3) {
-      searchPublicationStore.reset();
-      return;
-    }
-
-    const params: SearchPublicationsParams = {
-      ...filters,
-      query: debouncedQuery,
-      limit: 20,
-      offset: 0,
-    };
-
-    if (activeTab === SearchPublicationsType.SERVICE) {
-      params.type = 'SERVICE';
-    } else if (
-      activeTab === SearchPublicationsType.PROFILE ||
-      activeTab === SearchPublicationsType.NEED
-    ) {
-      params.type = 'PROJECT';
-    }
-
-    searchPublicationStore.searchPublicationsAction(params);
+    searchInteractionsStore.performSearch(activeTab, debouncedQuery, filters);
     onSearchComplete?.();
-  }, [debouncedQuery, filters, activeTab]);
+  }, [
+    debouncedQuery,
+    filters,
+    activeTab,
+    searchInteractionsStore,
+    onSearchComplete,
+  ]);
 
   const handleApplyFilters = (newFilters: SearchPublicationsParams) => {
     setFilters(newFilters);
@@ -64,13 +56,17 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
           radius="xl"
           size="lg"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+          onChange={(e) => {
+            const newQuery = e.currentTarget.value;
+            setSearchQuery(newQuery);
+            onSearchQueryChange?.(newQuery);
+          }}
         />
         <ActionIcon
           className={s.filterBtn}
           variant="outline"
           size={48}
-          radius={12}
+          radius={16}
           onClick={() => setFiltersOpened(true)}
         >
           <FilterIcon />

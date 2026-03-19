@@ -30,7 +30,7 @@
 
 .needItem {
   background: var(--tertiary-bg-color);
-  border-radius: 32px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -75,8 +75,8 @@
   text-align: left;
 
   svg {
-    color: var(--green);
     height: 20px;
+    stroke: var(--green) !important;
     width: 20px;
   }
 }
@@ -115,3 +115,4 @@
     border-color: var(--text-color-secondary);
   }
 }
+

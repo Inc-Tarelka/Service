@@ -3,18 +3,30 @@ import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
   getCitiesRequest,
   getDirectionsRequest,
+  getNeedsTagsRequest,
+  getPublicationTagsRequest,
   getSpecializationsRequest,
 } from 'shared/api/service/References/api';
-import { City, Direction, Specialization } from 'shared/api/types';
+import {
+  City,
+  Direction,
+  NeedTag,
+  PublicationTag,
+  Specialization,
+} from 'shared/api/types';
 
 export class ReferenceStore {
   citiesData?: IPromiseBasedObservable<City[]>;
   directionsData?: IPromiseBasedObservable<Direction[]>;
   specializationsData?: IPromiseBasedObservable<Specialization[]>;
+  publicationTagsData?: IPromiseBasedObservable<PublicationTag[]>;
+  needsTagsData?: IPromiseBasedObservable<NeedTag[]>;
 
   cities: City[] = [];
   directions: Direction[] = [];
   specializations: Specialization[] = [];
+  publicationTags: PublicationTag[] = [];
+  needsTags: NeedTag[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -53,6 +65,30 @@ export class ReferenceStore {
       this.specializations = data;
     } catch (error) {
       console.error('Error loading specializations:', error);
+    }
+  };
+
+  getPublicationTagsAction = async () => {
+    if (this.publicationTags.length > 0) return;
+    try {
+      const promise = getPublicationTagsRequest();
+      this.publicationTagsData = fromPromise(promise);
+      const data = await promise;
+      this.publicationTags = data;
+    } catch (error) {
+      console.error('Error loading publication tags:', error);
+    }
+  };
+
+  getNeedsTagsAction = async () => {
+    if (this.needsTags.length > 0) return;
+    try {
+      const promise = getNeedsTagsRequest();
+      this.needsTagsData = fromPromise(promise);
+      const data = await promise;
+      this.needsTags = data;
+    } catch (error) {
+      console.error('Error loading needs tags:', error);
     }
   };
 }

@@ -1,4 +1,10 @@
-export default function LikeIcon({ ClassNames }: { ClassNames: string }) {
+export default function LikeIcon({
+  ClassNames,
+  filled,
+}: {
+  ClassNames?: string;
+  filled?: boolean;
+}) {
   return (
     <svg
       width="24"
@@ -10,7 +16,8 @@ export default function LikeIcon({ ClassNames }: { ClassNames: string }) {
     >
       <path
         d="M5.96055 13.3266L11.5226 18.5516C11.7142 18.7315 11.81 18.8215 11.923 18.8437C11.9739 18.8537 12.0262 18.8537 12.077 18.8437C12.19 18.8215 12.2858 18.7315 12.4774 18.5516L18.0395 13.3266C19.6044 11.8565 19.7945 9.43728 18.4783 7.74085L18.2308 7.42187C16.6562 5.39246 13.4957 5.73281 12.3893 8.05092C12.2331 8.37837 11.767 8.37837 11.6107 8.05092C10.5043 5.73281 7.34379 5.39246 5.76925 7.42187L5.52176 7.74085C4.20557 9.43728 4.39561 11.8565 5.96055 13.3266Z"
-        stroke="white"
+        fill={filled ? 'var(--red)' : 'none'}
+        stroke={filled ? 'var(--red)' : 'white'}
         strokeWidth="1.36"
       />
     </svg>

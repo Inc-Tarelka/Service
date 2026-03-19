@@ -25,7 +25,7 @@ export interface RefreshResponse {
 }
 
 export interface SendPhoneVerificationRequest {
-  phoneNumber: string;
+  PhoneNumber: string;
 }
 
 export interface SendPhoneVerificationResponse {
@@ -38,8 +38,8 @@ export interface VerifyCodeRequest {
 }
 
 export interface VerifyCodeResponse {
-  phone: string;
   status: string;
+  phone?: string;
 }
 
 export interface AccountData {
@@ -57,8 +57,42 @@ export interface PhoneVerification {
   verificationRequestId: string;
 }
 
+export interface TelegramRegisterRequest {
+  initData: string;
+  account: {
+    type: ApiAccountType;
+    username: string;
+    phone: string;
+    password: string;
+  };
+  phoneVerification: PhoneVerification;
+  specializationIds: number[];
+  directionIds: number[];
+  cityIds: number[];
+}
+
+export interface PreRegisterRequest {
+  initData: string;
+  account: {
+    type: ApiAccountType;
+    username: string;
+    phone: string;
+    password?: string;
+    name?: string;
+    surname?: string;
+    companyName?: string;
+  };
+}
+
+export interface PreRegisterResponse {
+  userId: number;
+}
+
 export interface RegisterRequest {
-  account: AccountData;
+  account: {
+    username: string;
+    phone: string;
+  };
   cityIds: number[];
   directionIds: number[];
   initData: string;

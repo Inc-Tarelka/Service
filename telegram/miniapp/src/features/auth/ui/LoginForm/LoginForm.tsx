@@ -27,15 +27,21 @@ export const LoginForm = observer(
       initialValues: { login: '', password: '' },
       schema: loginSchema,
       onSubmit: async (values) => {
-        const success = await authStore.loginAction({
-          username: values.login,
-          password: values.password,
-        });
+        try {
+          const success = await authStore.loginAction({
+            username: values.login,
+            password: values.password,
+          });
 
-        if (success) {
-          onSuccess();
-        } else {
-          setErrors({ password: 'Неверный логин или пароль' });
+          if (success) {
+            onSuccess();
+          } else {
+            setErrors({ password: 'Неверный логин или пароль' });
+          }
+        } catch (error) {
+          // Логируем критическую ошибку входа
+          console.error('Login failed unexpectedly:', error);
+          setErrors({ password: 'Произошла непредвиденная ошибка' });
         }
       },
     });

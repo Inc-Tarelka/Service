@@ -1,6 +1,16 @@
-import { Avatar, Box, Button, Drawer, Group, Stack, Text } from '@mantine/core';
+import {
+  ActionIcon,
+  Avatar,
+  Box,
+  Button,
+  Drawer,
+  Group,
+  Stack,
+  Text,
+} from '@mantine/core';
 import { useState } from 'react';
 import { Interaction } from 'shared/api/service/Interaction/types';
+import XIcon from 'shared/assets/icons/x';
 import { ActionsDrawer } from '../ActionsDrawer/ActionsDrawer';
 import classes from './CollaborationRequestDrawer.module.scss';
 
@@ -31,23 +41,19 @@ export const CollaborationRequestDrawer = ({
         opened={opened}
         onClose={onClose}
         position="bottom"
-        size={500}
+        size={520}
         withCloseButton={false}
         padding={24}
         radius={40}
       >
         <Stack gap={30}>
-          <Text color="white" className={classes.title}>
-            Запрос на сотрудничество
-          </Text>
+          <h1 className={classes.title}>Запрос на сотрудничество</h1>
 
           <Stack gap={16}>
             <Box>
-              <Text color="white" className={classes.sectionTitle}>
-                Кому
-              </Text>
+              <h2 className={classes.sectionTitle}>Кому</h2>
               <Box className={classes.card}>
-                <Group gap={12} align="flex-start">
+                <Group gap={12} align="center">
                   <Avatar
                     src={interaction.initiator.avatarUrl}
                     size={40}
@@ -72,9 +78,7 @@ export const CollaborationRequestDrawer = ({
 
             {interaction.projectDetails && (
               <Box>
-                <Text color="white" className={classes.sectionTitle}>
-                  Привязанный проект
-                </Text>
+                <h2 className={classes.sectionTitle}>Привязанный проект</h2>
                 <Box className={classes.card}>
                   <Box className={classes.projectContent}>
                     {interaction.projectDetails.imageUrl && (
@@ -99,25 +103,32 @@ export const CollaborationRequestDrawer = ({
 
             {interaction.comment && (
               <Box>
-                <Text color="white" className={classes.sectionTitle}>
-                  Комментарий
-                </Text>
-                <Text color="white" className={classes.comment}>
-                  {interaction.comment}
-                </Text>
+                <h2 className={classes.sectionTitle}>Комментарий</h2>
+                <p className={classes.comment}>{interaction.comment}</p>
               </Box>
             )}
           </Stack>
 
-          <Button
-            variant="outline"
-            fullWidth
-            radius="xl"
-            size="lg"
-            onClick={() => setDeleteDrawerOpen(true)}
-          >
-            Удалить
-          </Button>
+          <div className={classes.footer}>
+            <ActionIcon
+              onClick={onClose}
+              variant="outline"
+              size={48}
+              radius={16}
+            >
+              <XIcon />
+            </ActionIcon>
+            <Button
+              className={classes.deleteButton}
+              variant="outline"
+              fullWidth
+              radius="xl"
+              size="lg"
+              onClick={() => setDeleteDrawerOpen(true)}
+            >
+              Удалить
+            </Button>
+          </div>
         </Stack>
       </Drawer>
 

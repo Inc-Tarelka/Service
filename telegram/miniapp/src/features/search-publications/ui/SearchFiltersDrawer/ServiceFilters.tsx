@@ -11,14 +11,15 @@ interface ServiceFiltersProps {
   onRemoveTag: (tagId: string) => void;
 }
 
-export const ServiceFilters = ({
-  filters,
-  onChange,
-  selectedTags,
-  availableTags,
-  onAddTag,
-  onRemoveTag,
-}: ServiceFiltersProps) => {
+export const ServiceFilters = (props: ServiceFiltersProps) => {
+  const {
+    filters,
+    onChange,
+    selectedTags,
+    availableTags,
+    onAddTag,
+    onRemoveTag,
+  } = props;
   return (
     <>
       <CitySelect

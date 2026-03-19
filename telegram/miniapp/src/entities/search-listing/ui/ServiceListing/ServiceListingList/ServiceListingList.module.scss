@@ -1,7 +1,7 @@
 .grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  grid-template-columns: repeat(2, 1fr);
 }
 
 .empty {
@@ -17,3 +17,4 @@
     margin: 0;
   }
 }
+

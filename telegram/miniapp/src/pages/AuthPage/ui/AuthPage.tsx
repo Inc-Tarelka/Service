@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite';
-import { Activity, useCallback, useEffect } from 'react';
+import { Activity, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import s from './AuthPage.module.scss';
 
+import { useStore } from 'app/StoreProvider';
 import type { AuthStep } from 'features/auth';
 import {
   ConfirmCodeForm,
@@ -14,7 +15,6 @@ import {
   RegisterForm,
   VALID_STEPS,
 } from 'features/auth';
-import { useStore } from 'app/StoreProvider';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
@@ -48,11 +48,6 @@ export const AuthPage = observer(() => {
     },
     [setSearchParams],
   );
-
-  useEffect(() => {
-    console.log('Current step:', step);
-    console.log('authStore.tempData:', authStore.tempData);
-  }, [step, authStore.tempData]);
 
   return (
     <div className={classNames(s.authPage, {}, [])}>
@@ -132,12 +127,10 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'reset' ? 'visible' : 'hidden'}>
         <PasswordResetForm
           onSuccess={(data) => {
-            console.log('PasswordResetForm onSuccess:', data);
             authStore.setTempData({
               login: data.login,
               verificationRequestId: data.requestId,
             });
-            console.log('After setTempData:', authStore.tempData);
             goToStep('confirmReset');
           }}
         />
@@ -146,9 +139,7 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'confirmReset' ? 'visible' : 'hidden'}>
         <ConfirmCodeForm
           type="reset"
-          onSuccess={(code) => {
-            console.log('ConfirmCodeForm onSuccess with code:', code);
-            console.log('Current tempData:', authStore.tempData);
+          onSuccess={() => {
             goToStep('newPassword');
           }}
           onResend={async () => {
@@ -156,17 +147,12 @@ export const AuthPage = observer(() => {
               const requestId = await authStore.forgotPasswordAction({
                 username: authStore.tempData.login,
               });
-
               if (requestId) {
-                authStore.setTempData({
-                  verificationRequestId: requestId,
-                });
+                authStore.setTempData({ verificationRequestId: requestId });
               } else {
-                console.error('Failed to resend password reset code');
                 goToStep('reset', { replace: true });
               }
             } else {
-              console.error('No login found in tempData');
               goToStep('reset', { replace: true });
             }
           }}
@@ -176,17 +162,10 @@ export const AuthPage = observer(() => {
       <Activity mode={step === 'newPassword' ? 'visible' : 'hidden'}>
         <NewPasswordForm
           onSuccess={(token) => {
-            console.log('NewPasswordForm onSuccess called with token:', token);
-            console.log('authStore.isAuth:', authStore.isAuth);
-            console.log('authStore.token:', authStore.token);
-
             authStore.clearTempData();
-
             if (token) {
               setToken(token);
-              setTimeout(() => {
-                navigate(RoutePath.main, { replace: true });
-              }, 100);
+              navigate(RoutePath.main, { replace: true });
             } else {
               goToStep('login', { replace: true });
             }

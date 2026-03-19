@@ -1,6 +1,6 @@
 import { Image } from '@mantine/core';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import TrashIcon from 'shared/assets/icons/trash';
 import classes from './ImageCarousel.module.scss';
 
@@ -46,24 +46,10 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
     showDeleteButton = false,
   } = props;
 
-  const [internalIndex, setInternalIndex] = useState(0);
+  const [[internalIndex, direction], setPage] = useState<[number, number]>([
+    0, 0,
+  ]);
   const activeIndex = controlledIndex ?? internalIndex;
-  const [direction, setDirection] = useState(0);
-
-  const [prevIndex, setPrevIndex] = useState(activeIndex);
-
-  useEffect(() => {
-    if (activeIndex !== prevIndex) {
-      if (prevIndex === images.length - 1 && activeIndex === 0) {
-        setDirection(1);
-      } else if (prevIndex === 0 && activeIndex === images.length - 1) {
-        setDirection(-1);
-      } else {
-        setDirection(activeIndex > prevIndex ? 1 : -1);
-      }
-      setPrevIndex(activeIndex);
-    }
-  }, [activeIndex, prevIndex, images.length]);
 
   const paginate = useCallback(
     (newDirection: number) => {
@@ -75,24 +61,21 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
         newIndex = 0;
       }
 
-      setDirection(newDirection);
       if (onIndexChange) {
         onIndexChange(newIndex);
-      } else {
-        setInternalIndex(newIndex);
       }
+      setPage([newIndex, newDirection]);
     },
     [activeIndex, images.length, onIndexChange],
   );
 
   const handleDotClick = useCallback(
     (index: number) => {
-      setDirection(index > activeIndex ? 1 : -1);
+      const dir = index > activeIndex ? 1 : -1;
       if (onIndexChange) {
         onIndexChange(index);
-      } else {
-        setInternalIndex(index);
       }
+      setPage([index, dir]);
     },
     [onIndexChange, activeIndex],
   );
@@ -102,7 +85,7 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
       onDelete(activeIndex);
       if (activeIndex >= images.length - 1 && activeIndex > 0) {
         if (onIndexChange) onIndexChange(activeIndex - 1);
-        else setInternalIndex(activeIndex - 1);
+        else setPage([activeIndex - 1, -1]);
       }
     }
   }, [onDelete, activeIndex, images.length, onIndexChange]);
@@ -141,13 +124,13 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
               }
             }}
             className={classes.motionWrapper}
-            style={{ position: 'absolute', width: '100%', height: '100%' }}
+            style={{ position: 'relative', width: '100%' }}
           >
             <Image
               src={images[activeIndex]}
               alt={`Image ${activeIndex + 1}`}
               className={classes.image}
-              fit="cover"
+              fit="contain"
               draggable={false}
             />
           </motion.div>

@@ -1,0 +1,15 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.groupTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+}
+
+.groupTitleHighlighted {
+  color: var(--green);
+  font: var(--font-body);
+}

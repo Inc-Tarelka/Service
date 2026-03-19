@@ -1,46 +1,39 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
-import { MAX_VISIBLE_TAGS } from '../../../lib/constants';
-import { formatBudget, formatDateRange } from '../../../lib/formatters';
+import clsx from 'clsx';
+import type { SearchNeedItem } from 'shared/api/service/PublicationNeedsSearch';
+import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import s from './NeedListingItem.module.scss';
 
 interface NeedListingItemProps {
-  publication: SearchPublication;
+  need: SearchNeedItem;
   onClick?: (id: number) => void;
+  hideProjectAndCity?: boolean;
 }
 
 export const NeedListingItem = (props: NeedListingItemProps) => {
-  const { publication, onClick } = props;
-  const firstNeed = publication.needs?.[0];
+  const { need, onClick, hideProjectAndCity } = props;
 
   return (
-    <div className={s.container} onClick={() => onClick?.(publication.id)}>
+    <div
+      className={clsx(s.container, { [s.compact]: hideProjectAndCity })}
+      onClick={() => onClick?.(need.id)}
+    >
       <div className={s.header}>
-        <h3 className={s.title}>{firstNeed?.name || publication.name}</h3>
-        {firstNeed?.budget && (
-          <span className={s.budget}>{formatBudget(firstNeed.budget)}</span>
-        )}
+        <h3 className={s.title}>{need.name}</h3>
+        {hideProjectAndCity && <ChevronRightIcon className={s.chevron} />}
       </div>
 
-      {firstNeed?.description && (
-        <p className={s.description}>{firstNeed.description}</p>
-      )}
+      {need.description && <p className={s.description}>{need.description}</p>}
 
-      <div className={s.footer}>
-        {firstNeed?.tags && firstNeed.tags.length > 0 && (
-          <div className={s.tags}>
-            {firstNeed.tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (
-              <span key={tag.id} className={s.tag}>
-                {tag.name}
-              </span>
-            ))}
+      {!hideProjectAndCity && (
+        <>
+          <div className={s.projectSection}>
+            <span className={s.projectLabel}>Проект:</span>
+            <span className={s.projectName}>{need.publicationName}</span>
           </div>
-        )}
-        {(firstNeed?.deadlineStart || firstNeed?.deadlineEnd) && (
-          <span className={s.deadline}>
-            {formatDateRange(firstNeed.deadlineStart, firstNeed.deadlineEnd)}
-          </span>
-        )}
-      </div>
+
+          {need.cityName && <div className={s.city}>{need.cityName}</div>}
+        </>
+      )}
     </div>
   );
 };

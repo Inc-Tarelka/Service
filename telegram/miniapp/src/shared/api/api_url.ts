@@ -2,6 +2,7 @@ export const API_URL = {
   // Auth
   login: () => '/auth/login',
   logout: () => '/auth/logout',
+  pre_register: () => '/auth/pre-register',
   telegram_register: () => '/auth/telegram/register',
   verify_code: () => '/auth/phone/verify',
   send_phone: () => '/auth/phone/send',
@@ -12,7 +13,9 @@ export const API_URL = {
   // References
   cities: () => '/references/cities',
   directions: () => '/references/directions',
-  specializations: () => '/references/specializations',
+  specializations: () => 'references/specializations',
+  publication_tags: () => 'references/publication-tags',
+  needs_tags: () => 'references/need-tags',
 
   profile: () => '/users/me',
   user: (id: string | number) => `/users/${id}`,
@@ -24,6 +27,12 @@ export const API_URL = {
   generate_url_publication: () => '/publications/images/presign',
   post_publication: () => '/publications',
   search_publications: () => '/publications/search',
+  search_publication_needs: () => '/publications/needs/search',
+  search_publication_services: () => '/publications/services/search',
+  get_publication_details: (id: string) => `/publications/${id}`,
+  publication_like: (id: string) => `/publications/${id}/likes`,
+  publication_comment: (id: string) => `/publications/${id}/comments`,
+  publication_comment_post: (id: string) => `/publications/${id}/comments`,
 
   // Posts
   posts: () => '/posts',
@@ -32,4 +41,19 @@ export const API_URL = {
   // User
   delete_account: () => '/users/me',
   me: () => '/users/me',
+  search_users: () => '/users/search/filters',
+
+  // User media
+  user_logo_presign: (id: number) => `/users/${id}/logo/presign`,
+  user_logo_confirm: (id: number) => `/users/${id}/logo/confirm`,
+  user_logo_url: (id: number) => `/users/${id}/logo/url`,
+  user_wallpaper_presign: (id: number) => `/users/${id}/wallpaper/presign`,
+  user_wallpaper_confirm: (id: number) => `/users/${id}/wallpaper/confirm`,
+  user_wallpaper_url: (id: number) => `/users/${id}/wallpaper/url`,
+
+  // Needs
+  details_needs: (id: string) => `/needs/${id}`,
+
+  // Search
+  search_coauthors: () => '/users/search/name',
 };

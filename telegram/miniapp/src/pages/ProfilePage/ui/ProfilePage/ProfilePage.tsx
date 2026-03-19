@@ -1,47 +1,29 @@
-import { Box, Stack } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { useStore } from 'app/StoreProvider';
 import { InteractionsList } from 'entities/interaction';
 import { PublicationsList } from 'entities/publication';
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { Skeleton } from 'shared/ui/Skeleton';
+import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
 import classes from './ProfilePage.module.scss';
-
-const ProfilePageSkeleton = () => {
-  return (
-    <Page className={classes.profilePage}>
-      <Box>
-        <Skeleton height={200} borderRadius={0} />
-        <Stack align="center" mt={-50} gap="sm" p="md">
-          <Skeleton variant="circular" width={100} height={100} />
-          <Skeleton width={180} height={20} />
-          <Skeleton width={120} height={14} />
-        </Stack>
-      </Box>
-    </Page>
-  );
-};
+import { ProfilePageSkeleton } from './ProfilePage.skeleton';
 
 export const ProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const { userStore } = useStore();
-  const [minLoadTime, setMinLoadTime] = useState(true);
+
+  useBackToSearch();
 
   useEffect(() => {
     userStore.getProfileAction();
-    const timer = setTimeout(() => {
-      setMinLoadTime(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
   }, [userStore]);
 
-  if (userStore.isLoadingProfile || minLoadTime) {
+  if (userStore.isLoadingProfile) {
     return <ProfilePageSkeleton />;
   }
 
@@ -52,7 +34,7 @@ export const ProfilePage = observer(() => {
   }
 
   return (
-    <Page className={classes.profilePage}>
+    <Page className={classes.profilePage} disableScrollRecovery>
       <ProfileBanner
         user={user}
         isOwnProfile={true}
@@ -64,6 +46,7 @@ export const ProfilePage = observer(() => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS}
+          contentPaddingTop={16}
         >
           {activeTab === 'publications' && (
             <PublicationsList publications={userStore.publications} />

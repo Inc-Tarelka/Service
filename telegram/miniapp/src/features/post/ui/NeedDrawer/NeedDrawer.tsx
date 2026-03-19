@@ -7,6 +7,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { SpecializationsListSkeleton } from 'features/auth/ui/ProfileForm/SpecializationsList.skeleton';
 import { useRef, useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
@@ -24,12 +25,21 @@ interface NeedDrawerProps {
   onClose: () => void;
   onSubmit: (need: PostNeed) => void;
   tagsData: { value: string; label: string }[];
+  onTagsDropdownOpen?: () => void;
+  tagsLoading?: boolean;
 }
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
 export const NeedDrawer = (props: NeedDrawerProps) => {
-  const { opened, onClose, onSubmit, tagsData } = props;
+  const {
+    opened,
+    onClose,
+    onSubmit,
+    tagsData,
+    onTagsDropdownOpen,
+    tagsLoading,
+  } = props;
 
   const [startDateOpened, { open: openStartDate, close: closeStartDate }] =
     useDisclosure(false);
@@ -121,7 +131,6 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
         classNames={{ content: 'drawer-fulldevice' }}
         styles={{
           content: {
-            background: 'var(--sheet-bg-color)',
             borderRadius: '32px 32px 0 0',
           },
           body: { padding: 0 },
@@ -142,7 +151,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 value={values.title}
                 onChange={handleInputChange('title')}
                 placeholder="Введите название"
-                radius={24}
+                radius={16}
                 size="lg"
                 error={errors.title}
               />
@@ -165,7 +174,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                   handleChange('description', value);
                 }}
                 placeholder="Опишите вакансию или потребность в услуге"
-                radius={24}
+                radius={16}
                 size="lg"
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 autosize
@@ -181,6 +190,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 classNames={{ input: classes.select }}
                 value={null}
                 onChange={handleAddTag}
+                onDropdownOpen={onTagsDropdownOpen}
                 rightSection={
                   <div style={{ pointerEvents: 'none', display: 'flex' }}>
                     <ChevronDownIcon />
@@ -188,7 +198,14 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
-                radius={24}
+                nothingFoundMessage={
+                  tagsLoading ? (
+                    <SpecializationsListSkeleton />
+                  ) : (
+                    'Ничего не найдено'
+                  )
+                }
+                radius={16}
                 size="lg"
                 searchable
                 clearable={false}
@@ -253,7 +270,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
                     <RubIcon />
                   </span>
                 }
-                radius={24}
+                radius={16}
                 size="lg"
                 error={errors.budget}
               />
@@ -265,7 +282,7 @@ export const NeedDrawer = (props: NeedDrawerProps) => {
               onClick={onClose}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <XIcon />
             </ActionIcon>

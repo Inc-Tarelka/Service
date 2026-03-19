@@ -1,16 +1,16 @@
-import type { SearchPublication } from 'shared/api/service/Publication';
+import type { SearchNeedItem } from 'shared/api/service/PublicationNeedsSearch';
 import { NeedListingItem } from '../NeedListingItem/NeedListingItem';
 import { NeedListingSkeleton } from '../NeedListingSkeleton/NeedListingSkeleton';
 import classes from './NeedListingList.module.scss';
 
 interface NeedListingListProps {
-  publications: SearchPublication[];
+  needs: SearchNeedItem[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
 }
 
 export const NeedListingList = (props: NeedListingListProps) => {
-  const { publications, onItemClick, isLoading } = props;
+  const { needs, onItemClick, isLoading } = props;
 
   if (isLoading) {
     return (
@@ -22,7 +22,7 @@ export const NeedListingList = (props: NeedListingListProps) => {
     );
   }
 
-  if (publications.length === 0) {
+  if (!needs || needs.length === 0) {
     return (
       <div className={classes.empty}>
         <p>Ничего не найдено</p>
@@ -32,12 +32,8 @@ export const NeedListingList = (props: NeedListingListProps) => {
 
   return (
     <div className={classes.list}>
-      {publications.map((publication) => (
-        <NeedListingItem
-          key={publication.id}
-          publication={publication}
-          onClick={onItemClick}
-        />
+      {needs.map((need) => (
+        <NeedListingItem key={need.id} need={need} onClick={onItemClick} />
       ))}
     </div>
   );

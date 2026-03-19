@@ -15,6 +15,13 @@
 }
 
 .cardDescription {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+  margin: 0;
+}
+
+.info {
   color: var(--text-color);
   font: var(--font-caption);
   font-weight: 400;

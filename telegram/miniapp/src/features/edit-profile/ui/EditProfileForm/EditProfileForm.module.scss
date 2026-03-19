@@ -1,61 +1,62 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 36px;
 }
 
-.card {
-  background-color: var(--tertiary-bg-color);
-  border: 1px solid var(--card-bg);
-  border-radius: 16px;
+.section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px 12px; 
+  gap: 16px;
 }
 
-.cardTitle {
+.sectionTitle {
   color: var(--text-color);
   font: var(--font-h2);
   font-weight: 600;
-  margin: 0 0 4px;
-  padding-left: 4px;
+  margin: 0;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.labelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
 }
 
 .label {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 400;
+}
+
+.counter {
   color: var(--text-secondary);
-  font: var(--font-note);
-  margin-left: 12px;
+  font: var(--font-caption);
 }
 
-.input {
-  background-color: var(--bg-color) !important;
-  border: none !important;
-  color: var(--text-color) !important;
-  
-  &::placeholder {
-    color: var(--text-secondary) !important;
-  }
-}
-
-.textarea {
-    @extend .input;
-}
-
-.placeholder {
-    color: var(--text-secondary);
-    font: var(--font-body);
-    padding: 10px;
-    text-align: center;
+.buttonContainer {
+  background: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+  bottom: 0;
+  left: 0;
+  padding: 16px 16px 32px;
+  position: fixed;
+  width: 100%;
+  z-index: 999;
 }
 
 .submitButton {
-    background-color: var(--primary-color);
-    margin-top: 12px; 
+  background: var(--accent-color);
+  color: var(--white);
+
+  &:hover {
+    background: var(--accent-color);
+    opacity: 0.9;
+  }
 }

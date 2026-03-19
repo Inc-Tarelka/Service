@@ -13,8 +13,8 @@ export interface PostNeed {
 export interface PostCollaborator {
   id: string;
   name: string;
-  profession: string;
-  city: string;
+  profession?: string;
+  city?: string;
   avatarUrl?: string;
   status: 'confirmed' | 'pending';
 }

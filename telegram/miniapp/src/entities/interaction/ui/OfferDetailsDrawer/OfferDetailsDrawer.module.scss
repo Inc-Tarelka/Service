@@ -1,6 +1,7 @@
 .title {
   color: var(--text-color);
-  font: var(--font-h2);
+  font: var(--font-h1);
+  font-weight: 600;
 }
 
 .sectionTitle {
@@ -11,8 +12,8 @@
 }
 
 .card {
-  background-color: var(--card-bg);
-  border-radius: 24px;
+  border: 1px solid var(--card-bg);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -32,6 +33,21 @@
   font-weight: 400;
   margin: 0;
 }
+
+.cardDescriptionNeed {
+
+  -webkit-box-orient: vertical;
+  color: var(--text-color);
+  display: -webkit-box;
+  font: var(--font-caption);
+  font-weight: 400;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
 .serviceContent {
   align-items: center;
@@ -59,3 +75,15 @@
   font: var(--font-caption);
   font-weight: 400;
 }
+
+.footer {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.deleteButton {
+  flex: 1;
+}
+

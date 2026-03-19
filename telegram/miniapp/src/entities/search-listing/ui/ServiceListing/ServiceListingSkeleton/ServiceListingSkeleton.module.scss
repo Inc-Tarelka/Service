@@ -1,80 +1,102 @@
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-%skeleton {
-  animation: shimmer 1.5s infinite;
-  background: linear-gradient(90deg, 
-    var(--tertiary-bg-color) 25%, 
-    var(--bg-secondary) 50%, 
-    var(--tertiary-bg-color) 75%
-  );
-  background-size: 200% 100%;
-  border-radius: 8px;
-}
-
 .container {
-  background: var(--card-bg);
-  border-radius: 16px;
+  background: var(--tertiary-bg-color);
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
-}
-
-.image {
-  @extend %skeleton;
-  border-radius: 0;
-  height: 160px;
+  position: relative;
   width: 100%;
 }
 
-.content {
+@mixin shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgb(255, 255, 255, 0.05) 0%,
+    rgb(255, 255, 255, 0.2) 50%,
+    rgb(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.imageSection {
+  @include shimmer;
+  aspect-ratio: 4 / 3;
+  border-radius: 24px;
+  position: relative;
+  width: 100%;
+}
+
+.infoSection {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 8px;
   padding: 12px;
 }
 
+.authorRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.authorData {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.authorName {
+  @include shimmer;
+  border-radius: 4px;
+  height: 14px;
+  width: 100px;
+}
+
+.authorUsername {
+  @include shimmer;
+  border-radius: 4px;
+  height: 12px;
+  width: 80px;
+}
+
+.city {
+  @include shimmer;
+  border-radius: 4px;
+  height: 14px;
+  width: 80px;
+}
+
 .title {
-  @extend %skeleton;
+  @include shimmer;
+  border-radius: 4px;
   height: 20px;
+  margin-bottom: 8px;
   width: 80%;
 }
 
 .description {
-  @extend %skeleton;
-  height: 14px;
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 4px;
   width: 100%;
 }
 
-.footer {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin-top: auto;
+.descriptionShort {
+  @include shimmer;
+  border-radius: 4px;
+  height: 16px;
+  width: 70%;
 }
 
-.tags {
-  display: flex;
-  gap: 6px;
-}
-
-.tag {
-  @extend %skeleton;
-  height: 20px;
-  width: 50px;
-}
-
-.likes {
-  @extend %skeleton;
-  height: 20px;
-  width: 30px;
-}

@@ -1,35 +1,145 @@
 .container {
-  background: var(--card-bg);
-  border-radius: 16px;
+  background-color: var(--tertiary-bg-color);
+  border-radius: 24px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  min-height: 310px;
   overflow: hidden;
-  transition: background 0.2s;
+  position: relative;
+  width: 100%;
 
-  &:hover {
-    background: var(--card-bg-hover);
-  }
-
-  &:active {
-    opacity: 0.8;
-  }
 }
 
-.image {
-  background-color: var(--tertiary-bg-color);
-  background-position: center;
-  background-size: cover;
-  height: 160px;
+.imageSection {
+  aspect-ratio: 4 / 3;
+  background-color: var(--tertiary-bg-color); 
+  border-radius: 24px;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
-.content {
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.badges {
   display: flex;
-  flex: 1;
+  gap: 4px;
+  left: 8px; 
+  pointer-events: auto; 
+  position: absolute;
+  top: 8px;
+  z-index: 20;
+}
+
+
+.count {
+  font-family: var(--font-caption);
+  font-weight: 400;
+  margin-left: 0;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.2s ease, 
+              margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.countVisible {
+  margin-left: 6px;
+  max-width: 40px; 
+  opacity: 1;
+}
+
+
+
+.icon {
+  height: 20px;
+  transition: fill 0.2s;
+  width: 20px;
+  
+  &.filled {
+    path {
+      fill: var(--text-color);
+      stroke: var(--text-color);
+    }
+  }
+}
+
+
+
+
+
+.infoSection {
+  background-color: var(--tertiary-bg-color);
+  display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  flex-grow: 1; 
+  padding: 12px 16px 16px; 
+}
+
+.authorRow {
+  align-items: flex-start; 
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px; 
+}
+
+.authorData {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+}
+
+.authorName {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.authorUsername {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+}
+
+.locationAndTags {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.city {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.tagItem {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  font-weight: 400;
+}
+
+.textSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; 
 }
 
 .title {
@@ -37,52 +147,19 @@
   font: var(--font-body);
   font-weight: 600;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .description {
   -webkit-box-orient: vertical;
   color: var(--text-color-secondary);
   display: -webkit-box;
-  font: var(--font-caption);
+  font: var(--font-body);
+  font-weight: 400;
   -webkit-line-clamp: 2;
-  line-clamp: 2;
+  line-clamp: 2; 
   margin: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.footer {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin-top: auto;
-}
 
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag {
-  background: var(--tertiary-bg-color);
-  border-radius: 8px;
-  color: var(--text-color-secondary);
-  font: var(--font-caption);
-  font-size: 12px;
-  padding: 4px 8px;
-}
-
-.likes {
-  color: var(--text-color-secondary);
-  font: var(--font-caption);
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.icon {
-	height: 20px;
-	width: 20px;
-}

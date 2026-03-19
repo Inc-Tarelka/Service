@@ -11,6 +11,14 @@ bin/
 obj/
 *.log
 
+# Firebase
+.firebase/
+
+# Claude / MCP
+CLAUDE.md
+.claude/
+.mcp.json
+
 # Agents
 .agent
 .agents

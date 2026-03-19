@@ -1,25 +1,36 @@
 import { Button } from '@mantine/core';
-import { PostCollaborator } from 'shared/api/service/Post/types';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import type { PostCollaborator } from 'shared/api/service/Post/types';
+import type { CoauthorSearchUser } from 'shared/api/service/UserSearch/types';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
+import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
+import { SearchUserDrawer } from '../SearchUserDrawer/SearchUserDrawer';
 import classes from './AddCollaborators.module.scss';
 
 interface AddCollaboratorsProps {
   collaborators: PostCollaborator[];
-  onAdd: () => void;
   onRemove: (id: string) => void;
+  onUserSelect: (user: CoauthorSearchUser) => void;
 }
 
 export const AddCollaborators = (props: AddCollaboratorsProps) => {
-  const { collaborators, onAdd, onRemove } = props;
+  const { collaborators, onRemove, onUserSelect } = props;
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const isSearchDrawerOpened = searchParams.get('drawer') === 'searchUser';
+
+  const handleOpenDrawer = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('drawer', 'searchUser');
+    setSearchParams(newParams, { replace: false });
+  };
+
+  const handleCloseDrawer = () => {
+    if (isSearchDrawerOpened) {
+      navigate(-1);
+    }
   };
 
   const visibleCollaborators = collaborators.filter(
@@ -29,7 +40,7 @@ export const AddCollaborators = (props: AddCollaboratorsProps) => {
   return (
     <div className={classes.section}>
       <div className={classes.header}>
-        <span className={classes.title}>Соавторы</span>
+        <span className={classes.title}>Сокомандники</span>
         <span className={classes.subtitle}>
           Они будут отображаться в публикации после подтверждения с их стороны.
         </span>
@@ -46,9 +57,11 @@ export const AddCollaborators = (props: AddCollaboratorsProps) => {
                   className={classes.avatar}
                 />
               ) : (
-                <div className={classes.avatarPlaceholder}>
-                  {getInitials(collaborator.name)}
-                </div>
+                <img
+                  src={defaultUserSvg}
+                  alt={collaborator.name}
+                  className={classes.avatar}
+                />
               )}
               <div className={classes.info}>
                 <span className={classes.name}>{collaborator.name}</span>
@@ -92,11 +105,20 @@ export const AddCollaborators = (props: AddCollaboratorsProps) => {
         radius="xl"
         className={classes.addButton}
         size="lg"
-        onClick={onAdd}
+        onClick={handleOpenDrawer}
         leftSection={<PlusIcon />}
       >
         Добавить
       </Button>
+
+      <SearchUserDrawer
+        opened={isSearchDrawerOpened}
+        onClose={handleCloseDrawer}
+        onUserSelect={(user) => {
+          onUserSelect(user);
+          handleCloseDrawer();
+        }}
+      />
     </div>
   );
 };

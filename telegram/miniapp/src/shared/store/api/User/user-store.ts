@@ -1,7 +1,11 @@
 import { AxiosResponse } from 'axios';
 import { makeAutoObservable } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
-import { deleteAccount, getProfile } from 'shared/api/service/User/api';
+import {
+  deleteAccount,
+  getProfile,
+  updateProfile,
+} from 'shared/api/service/User/api';
 import { DeleteAccountResponse, User } from 'shared/api/service/User/types';
 import {
   MOCK_INTERACTIONS,
@@ -15,10 +19,13 @@ export class UserStore {
   }
 
   profileData?: IPromiseBasedObservable<AxiosResponse<User>>;
+  _localOverrides: Partial<User> = {};
 
   deleteAccountData?: IPromiseBasedObservable<
     AxiosResponse<DeleteAccountResponse>
   >;
+
+  updateProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
 
   getProfileAction = async () => {
     try {
@@ -38,8 +45,37 @@ export class UserStore {
     }
   };
 
+  setLocalOverride = (overrides: Partial<User>) => {
+    this._localOverrides = { ...this._localOverrides, ...overrides };
+  };
+
+  clearLocalOverrides = () => {
+    this._localOverrides = {};
+  };
+
+  updateProfileAction = async (
+    data: Partial<User>,
+    userId?: number,
+  ): Promise<boolean> => {
+    try {
+      this.updateProfileData = fromPromise<AxiosResponse<User>>(
+        updateProfile(data, userId),
+      );
+      await this.updateProfileData;
+      await this.getProfileAction();
+      return true;
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      return false;
+    }
+  };
+
   get isLoadingProfile() {
     return this.profileData?.state === 'pending';
+  }
+
+  get isUpdatingProfile() {
+    return this.updateProfileData?.state === 'pending';
   }
 
   get profileError() {
@@ -52,7 +88,7 @@ export class UserStore {
     if (this.profileData?.state === 'fulfilled') {
       const apiData = this.profileData.value.data;
 
-      return {
+      const computed: User = {
         ...apiData,
         firstName: apiData.person?.name || MOCK_USER.firstName,
         lastName: apiData.person?.surname || MOCK_USER.lastName,
@@ -78,11 +114,11 @@ export class UserStore {
                 : MOCK_USER.status,
 
         stats: apiData.stats || MOCK_USER.stats,
-
         tags: apiData.tags || MOCK_USER.tags,
-
         role: apiData.role || MOCK_USER.role,
       };
+
+      return { ...computed, ...this._localOverrides };
     }
     return null;
   }

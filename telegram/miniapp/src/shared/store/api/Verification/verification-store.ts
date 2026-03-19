@@ -19,7 +19,7 @@ export class VerificationStore {
     this.error = null;
     try {
       const response = await sendPhoneVerificationRequest({
-        phoneNumber: phone,
+        PhoneNumber: phone,
       });
       runInAction(() => {
         this.requestId = response.requestId;
@@ -50,7 +50,7 @@ export class VerificationStore {
         verificationRequestId: this.requestId,
       });
 
-      if (response.status === 'success' || response.status === 'ok') {
+      if (response.status === 'ok') {
         runInAction(() => {
           this.verificationCode = code;
           this.isLoading = false;

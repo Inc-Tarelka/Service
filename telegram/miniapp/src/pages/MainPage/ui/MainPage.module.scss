@@ -3,15 +3,28 @@
 }
 
 .header {
+  background-color: var(--bg-color);
   display: flex;
   flex-direction: column;
-  gap: 12px;
   margin-bottom: 16px;
-  margin-top: 12px;
+  margin-top: 0;
+  padding-top: 12px;
+  position: sticky;
+  top: var(--total-navbar-height);
+  z-index: 100;
+
+  &.desktop {
+    top: 0;
+  }
 }
 
 .tabs {
   padding: 0 !important;
+
+  button {
+    font-size: 14px !important;
+    padding: 0 12px !important;
+  }
 }
 
 .loading {

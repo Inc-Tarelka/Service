@@ -3,7 +3,7 @@
   flex-direction: column;
   min-height: 100%;
   overflow-y: hidden;
-  padding: 16px;
+  padding: 12px;
 }
 
 .content {
@@ -41,8 +41,8 @@
 }
 
 .searchInput {
-  background: var(--card-bg) !important;
-  border: none !important;
+  border: 1px solid var(--card-bg) !important;
+  border-radius: 16px;
   color: var(--text-color) !important;
 
   &::placeholder {

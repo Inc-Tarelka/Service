@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SearchPublicationsParams } from 'shared/api/service/Publication';
-import { tagsData } from 'shared/mocks/tagsMock';
+import { referenceStore } from 'shared/store/api/Reference/reference-store';
 
 export const useSearchFilters = (
   currentFilters: SearchPublicationsParams,
@@ -23,7 +23,15 @@ export const useSearchFilters = (
     onApply({});
   };
 
-  // Логика тегов
+  useEffect(() => {
+    referenceStore.getPublicationTagsAction();
+  }, []);
+
+  const tagsData = referenceStore.publicationTags.map((tag) => ({
+    value: tag.id.toString(),
+    label: tag.name,
+  }));
+
   const selectedTagIds = (filters.tagIds as number[]) || [];
   const selectedTags = tagsData.filter((tag) =>
     selectedTagIds.includes(Number(tag.value)),

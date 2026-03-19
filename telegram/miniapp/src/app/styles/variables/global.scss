@@ -28,7 +28,7 @@
     --green: #abdb9f;
     --TabBar-size: 60px;
     --Navbar-size: 90px;
-    --navbar-base-height: 90px;
+    --navbar-base-height: 100px;
     --total-navbar-height: calc(var(--navbar-base-height) + env(safe-area-inset-top));
 
     // components
@@ -41,7 +41,7 @@
     --accent-color: #E4A0CE;
     --sheet-bg-color: rgb(27, 27, 27, 1);
     --tertiary-bg-color: #1E1E1E;
-    --sheet-bg-color: #1B1B1B;
+    --sheet-bg-color: #181818;
     --bg-color: #010101;
     --card-bg: #393939;
     --secondary-card-bg: #5e5e5e;

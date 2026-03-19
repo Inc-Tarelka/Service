@@ -6,9 +6,8 @@ import s from './NotificationsSection.module.scss';
 
 export const NotificationsSection = observer(() => {
   const [settings, setSettings] = useState({
-    push: true,
-    email: false,
-    sms: true,
+    cooperation: true,
+    mentions: true,
   });
 
   const handleToggle = (key: keyof typeof settings) => {
@@ -20,31 +19,37 @@ export const NotificationsSection = observer(() => {
     <div className={s.section}>
       <h2 className={s.title}>Уведомления</h2>
 
-      <div className={s.card}>
+      <div className={s.list}>
         <div className={s.item}>
-          <span className={s.label}>Push-уведомления</span>
+          <div className={s.info}>
+            <span className={s.itemTitle}>Предложения о сотрудничестве</span>
+            <p className={s.itemDescription}>
+              Если у вас скрыты контакты и кто-то отправил запрос на
+              сотрудничество, вы можете изучить его профиль и открыть контакты
+              для связи.
+            </p>
+          </div>
           <Switch
-            checked={settings.push}
-            onChange={() => handleToggle('push')}
+            checked={settings.cooperation}
+            onChange={() => handleToggle('cooperation')}
             color="green"
+            size="md"
           />
         </div>
 
         <div className={s.item}>
-          <span className={s.label}>Email-рассылка</span>
+          <div className={s.info}>
+            <span className={s.itemTitle}>Отметки в публикациях</span>
+            <p className={s.itemDescription}>
+              Если кто-то отметит вас в своей публикации, вам придет запрос на
+              подтверждение отметки.
+            </p>
+          </div>
           <Switch
-            checked={settings.email}
-            onChange={() => handleToggle('email')}
+            checked={settings.mentions}
+            onChange={() => handleToggle('mentions')}
             color="green"
-          />
-        </div>
-
-        <div className={s.item}>
-          <span className={s.label}>SMS-уведомления</span>
-          <Switch
-            checked={settings.sms}
-            onChange={() => handleToggle('sms')}
-            color="green"
+            size="md"
           />
         </div>
       </div>

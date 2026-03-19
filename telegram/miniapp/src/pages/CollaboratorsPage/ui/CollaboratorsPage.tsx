@@ -12,7 +12,7 @@ import { Page } from 'widgets/Page';
 type CollaboratorTab = 'collaborators' | 'outgoing';
 
 const TABS: TabItem<CollaboratorTab>[] = [
-  { label: 'Соавторы', value: 'collaborators' },
+  { label: 'Сокомандники', value: 'collaborators' },
   { label: 'Исходящие запросы', value: 'outgoing' },
 ];
 
@@ -48,6 +48,7 @@ export const CollaboratorsPage = () => {
         tabs={TABS}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        hideMask
       >
         {activeTab === 'collaborators' && (
           <CollaboratorsList

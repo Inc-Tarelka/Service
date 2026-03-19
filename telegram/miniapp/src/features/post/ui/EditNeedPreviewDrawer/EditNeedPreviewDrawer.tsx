@@ -7,6 +7,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { SpecializationsListSkeleton } from 'features/auth/ui/ProfileForm/SpecializationsList.skeleton';
 import { useEffect, useRef, useState } from 'react';
 import { PostNeed } from 'shared/api/service/Post/types';
 import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
@@ -25,12 +26,23 @@ interface EditNeedPreviewDrawerProps {
   onDelete: () => void;
   tagsData: { value: string; label: string }[];
   need?: PostNeed | null;
+  onTagsDropdownOpen?: () => void;
+  tagsLoading?: boolean;
 }
 
 const MAX_DESCRIPTION_LENGTH = 100;
 
 export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
-  const { opened, onClose, onSave, onDelete, tagsData, need } = props;
+  const {
+    opened,
+    onClose,
+    onSave,
+    onDelete,
+    tagsData,
+    need,
+    onTagsDropdownOpen,
+    tagsLoading,
+  } = props;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -131,7 +143,6 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
         classNames={{ content: 'drawer-fulldevice' }}
         styles={{
           content: {
-            background: 'var(--sheet-bg-color)',
             borderRadius: '32px 32px 0 0',
           },
           body: { padding: 0 },
@@ -150,7 +161,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Введите название"
-                radius={24}
+                radius={16}
                 size="lg"
               />
             </div>
@@ -170,7 +181,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                   setDescription(value);
                 }}
                 placeholder="Опишите вакансию или потребность в услуге"
-                radius={24}
+                radius={16}
                 size="lg"
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 autosize
@@ -185,6 +196,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 classNames={{ input: classes.select }}
                 value={null}
                 onChange={handleAddTag}
+                onDropdownOpen={onTagsDropdownOpen}
                 rightSection={
                   <div style={{ pointerEvents: 'none', display: 'flex' }}>
                     <ChevronDownIcon />
@@ -192,7 +204,14 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                 }
                 placeholder="Выберите из списка"
                 data={availableTags}
-                radius={24}
+                nothingFoundMessage={
+                  tagsLoading ? (
+                    <SpecializationsListSkeleton />
+                  ) : (
+                    'Ничего не найдено'
+                  )
+                }
+                radius={16}
                 size="lg"
                 searchable
                 clearable={false}
@@ -253,7 +272,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
                     <RubIcon />
                   </span>
                 }
-                radius={24}
+                radius={16}
                 size="lg"
               />
             </div>
@@ -264,7 +283,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
               onClick={onClose}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <ArrowLeftIcon />
             </ActionIcon>
@@ -292,7 +311,7 @@ export const EditNeedPreviewDrawer = (props: EditNeedPreviewDrawerProps) => {
               onClick={onDelete}
               variant="outline"
               size={48}
-              radius="40"
+              radius="16"
             >
               <TrashIcon />
             </ActionIcon>

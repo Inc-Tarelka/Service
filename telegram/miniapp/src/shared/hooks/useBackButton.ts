@@ -1,6 +1,6 @@
 import WebApp from '@twa-dev/sdk';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 interface UseBackButtonProps {
@@ -53,16 +53,24 @@ interface UseBackButtonProps {
  */
 export const useBackButton = (options?: UseBackButtonProps | string) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const normalizedOptions: UseBackButtonProps =
     typeof options === 'string' ? { fallbackPath: options } : options || {};
 
   const {
-    show = true,
+    show: showOption = true,
     onBack,
     fallbackPath = RoutePath.main,
     forceNavigate = false,
   } = normalizedOptions;
+
+  const isTabRoute = [
+    RoutePath.main,
+    RoutePath.notifications,
+    RoutePath.profile,
+  ].includes(pathname);
+  const show = showOption && !isTabRoute;
 
   useEffect(() => {
     if (!show) {

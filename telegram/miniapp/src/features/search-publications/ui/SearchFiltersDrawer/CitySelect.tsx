@@ -28,7 +28,7 @@ export const CitySelect = observer(({ value, onChange }: CitySelectProps) => {
         }
         placeholder="Выберите город"
         data={citiesData}
-        radius={24}
+        radius={16}
         size="lg"
         searchable
         clearable

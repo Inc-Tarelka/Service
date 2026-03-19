@@ -129,10 +129,16 @@ export interface SearchPublication {
   cityId?: number;
   createdAt: string;
   likesCount: number;
+  isLiked?: boolean;
   coAuthors: CoAuthor[];
   images: PublicationImage[];
   tags: PublicationTag[];
   needs: PublicationNeedDetailed[];
+}
+
+export interface ToggleLikeResponse {
+  isLiked: boolean;
+  success: boolean;
 }
 
 export type SearchPublicationsResponse = SearchPublication[];
@@ -140,4 +146,54 @@ export type SearchPublicationsResponse = SearchPublication[];
 export interface ErrorResponse {
   error: string;
   message: string;
+}
+
+export interface PublicationTeamMember {
+  avatarUrl: string;
+  cityName: string;
+  firstName: string;
+  isAuthor: boolean;
+  lastName: string;
+  specialization: string;
+  userId: number;
+}
+
+export interface PublicationDetailsData extends SearchPublication {
+  authorFirstName?: string;
+  authorLastName?: string;
+  authorTelegramUrl?: string;
+  commentsCount?: number;
+  topImageUrl?: string;
+}
+
+export interface PublicationDetailsResponse {
+  needs: PublicationNeedDetailed[];
+  publication: PublicationDetailsData;
+  team: PublicationTeamMember[];
+}
+
+export interface PublicationComment {
+  id: number;
+  authorId: number;
+  authorFirstName?: string;
+  authorLastName?: string;
+  authorOrgName?: string;
+  content: string;
+  createdAt: string;
+  parentCommentId?: number;
+}
+
+export interface GetPublicationCommentsResponse {
+  comments: PublicationComment[];
+  total: number;
+}
+
+export interface CreatePublicationCommentRequest {
+  content: string;
+  parentCommentId?: number;
+}
+
+export interface GetPublicationCommentsParams {
+  limit?: number;
+  offset?: number;
 }
