@@ -31,7 +31,15 @@ type UserService interface {
 	SetWallpaperURLFromExternal(ctx context.Context, userID int64, url string) error
 
 	// Update profile fields selectively
-	UpdateUserProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error
+	UpdateUserProfile(ctx context.Context, userID int64,
+		personName *string, personSurname *string,
+		companyName *string,
+		username string,
+		cityID *int64,
+		bio *string,
+		findWork *model.FindWork,
+		education *string,
+	) error
 
 	// Delete user account
 	DeleteUser(ctx context.Context, userID int64) error
@@ -166,8 +174,28 @@ func (s *userService) SetWallpaperURLFromExternal(ctx context.Context, userID in
 }
 
 // UpdateUserProfile updates bio/find_work/education
-func (s *userService) UpdateUserProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error {
-	if err := s.tarelkaUserRepo.UpdateProfile(ctx, userID, bio, findWork, education); err != nil {
+
+func (s *userService) UpdateUserProfile(
+	ctx context.Context,
+	userID int64,
+	personName *string,
+	personSurname *string,
+	companyName *string,
+	username string,
+	cityID *int64,
+	bio *string,
+	findWork *model.FindWork,
+	education *string,
+) error {
+	if err := s.tarelkaUserRepo.UpdateProfile(ctx, userID,
+		personName, personSurname,
+		companyName,
+		username,
+		cityID,
+		bio,
+		findWork,
+		education,
+	); err != nil {
 		return err
 	}
 	// Variant A (simple): any profile update is considered a signal to move to stage 2

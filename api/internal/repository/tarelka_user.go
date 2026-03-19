@@ -29,8 +29,17 @@ type TarelkaUserRepository interface {
 	UpdateWallpaperURL(ctx context.Context, userID int64, url string) error
 	// UpdateConversation bumps user's conversation stage to at least the given value
 	UpdateConversation(ctx context.Context, userID int64, stage int) error
-	// UpdateProfile updates profile fields (bio, find_work, education). Pass nil for fields that shouldn't be changed.
-	UpdateProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error
+	// UpdateProfile updates profile fields (name/surname or company name, username, city, bio, find_work, education).
+	// Pass nil for pointer fields and empty string for username if they shouldn't be changed.
+	UpdateProfile(ctx context.Context, userID int64,
+		personName *string, personSurname *string,
+		companyName *string,
+		username string,
+		cityID *int64,
+		bio *string,
+		findWork *model.FindWork,
+		education *string,
+	) error
 	// Delete user and related rows
 	Delete(ctx context.Context, userID int64) error
 
@@ -756,11 +765,51 @@ func (r *tarelkaUserRepository) UpdateConversation(ctx context.Context, userID i
 }
 
 // UpdateProfile updates profile fields selectively
-func (r *tarelkaUserRepository) UpdateProfile(ctx context.Context, userID int64, bio *string, findWork *model.FindWork, education *string) error {
-	// Build dynamic SET clause
+func (r *tarelkaUserRepository) UpdateProfile(
+	ctx context.Context,
+	userID int64,
+	personName *string,
+	personSurname *string,
+	companyName *string,
+	username string,
+	cityID *int64,
+	bio *string,
+	findWork *model.FindWork,
+	education *string,
+) error {
 	parts := []string{}
 	args := []interface{}{}
 	idx := 1
+
+	// Обновление имени/фамилии или company_name в зав-ти от типа пользователя
+	if personName != nil {
+		parts = append(parts, "name = $"+strconv.Itoa(idx))
+		args = append(args, *personName)
+		idx++
+	}
+	if personSurname != nil {
+		parts = append(parts, "surname = $"+strconv.Itoa(idx))
+		args = append(args, *personSurname)
+		idx++
+	}
+	if companyName != nil {
+		parts = append(parts, "company_name = $"+strconv.Itoa(idx))
+		args = append(args, *companyName)
+		idx++
+	}
+
+	// username храним в tarelka_users
+	if username != "" {
+		parts = append(parts, "username = $"+strconv.Itoa(idx))
+		args = append(args, username)
+		idx++
+	}
+
+	// city: для простоты обновим user_cities, установив один основной город
+	if cityID != nil {
+		// city будет обновлён отдельным запросом ниже
+	}
+
 	if bio != nil {
 		parts = append(parts, "bio = $"+strconv.Itoa(idx))
 		args = append(args, *bio)
@@ -776,18 +825,42 @@ func (r *tarelkaUserRepository) UpdateProfile(ctx context.Context, userID int64,
 		args = append(args, *education)
 		idx++
 	}
-	if len(parts) == 0 {
+
+	// Если нет полей для обновления в самой таблице tarelka_users — просто обновим город (если нужно)
+	if len(parts) == 0 && cityID == nil {
 		return nil
 	}
-	// add user id
-	args = append(args, userID)
-	query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
-	cmd, err := r.pool.Exec(ctx, query, args...)
+
+	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	if cmd.RowsAffected() == 0 {
-		return ErrUserNotFound
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if len(parts) > 0 {
+		argsWithUser := append(args, userID)
+		query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
+		cmd, err := tx.Exec(ctx, query, argsWithUser...)
+		if err != nil {
+			return err
+		}
+		if cmd.RowsAffected() == 0 {
+			return ErrUserNotFound
+		}
+	}
+
+	if cityID != nil {
+		// Удалим старые связи и добавим одну новую
+		if _, err := tx.Exec(ctx, "DELETE FROM user_cities WHERE tarelka_user_id = $1", userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, "INSERT INTO user_cities (tarelka_user_id, city_id) VALUES ($1, $2)", userID, *cityID); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
 	}
 	return nil
 }

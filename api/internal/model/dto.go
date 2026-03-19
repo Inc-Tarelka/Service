@@ -171,12 +171,23 @@ type SetWallpaperURLRequest struct {
 	WallpaperURL string `json:"wallpaperUrl" binding:"required"`
 }
 
-// UpdateUserRequest - partial update (PATCH) for user profile
+// UpdateUserRequest - partial update (PATCH) for user profile.
+// Все поля опциональны: передаём только то, что хотим изменить.
 type UpdateUserRequest struct {
-	Bio       *string `json:"bio,omitempty"`
-	Education *string `json:"education,omitempty"`
+	// Общие поля
+	Username string  `json:"username,omitempty"`
+	CityID   *int64  `json:"cityId,omitempty"`
+	Bio      *string `json:"bio,omitempty"`
 	// Use the same enum values as model.FindWork (string values)
-	FindWork *string `json:"find_work,omitempty"`
+	FindWork  *string `json:"find_work,omitempty"`
+	Education *string `json:"education,omitempty"`
+
+	// Для PERSON: имя и фамилия
+	Name    *string `json:"name,omitempty"`
+	Surname *string `json:"surname,omitempty"`
+
+	// Для COMPANY: название
+	CompanyName *string `json:"companyName,omitempty"`
 }
 
 // UserSearchItem - упрощённый ответ для поиска пользователей

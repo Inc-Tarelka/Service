@@ -481,6 +481,8 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request"})
 		return
 	}
+
+	// Приводим статус поиска работы к внутреннему enum
 	var findWork *model.FindWork
 	if req.FindWork != nil {
 		// allow both localized and ASCII codes; map to ASCII stored values
@@ -499,7 +501,34 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 			return
 		}
 	}
-	if err := h.userService.UpdateUserProfile(c.Request.Context(), id, req.Bio, findWork, req.Education); err != nil {
+
+	// Имя/фамилия или companyName в зависимости от типа аккаунта, username, город, bio, образование
+	var personName, personSurname, companyName *string
+	if req.Name != nil {
+		personName = req.Name
+	}
+	if req.Surname != nil {
+		personSurname = req.Surname
+	}
+	if req.CompanyName != nil {
+		companyName = req.CompanyName
+	}
+
+	username := req.Username // пустая строка => не обновляем
+	cityID := req.CityID
+
+	if err := h.userService.UpdateUserProfile(
+		c.Request.Context(),
+		id,
+		personName,
+		personSurname,
+		companyName,
+		username,
+		cityID,
+		req.Bio,
+		findWork,
+		req.Education,
+	); err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
 	}
