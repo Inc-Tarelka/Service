@@ -192,11 +192,11 @@ type UpdateUserRequest struct {
 
 // UserProfilePublicationItem - краткая информация о публикации пользователя в его профиле.
 type UserProfilePublicationItem struct {
-	ID         int64                 `json:"id"`
-	LikesCount int64                 `json:"likesCount"`
-	Type       PublicationType       `json:"type"`
-	ImageURL   *string               `json:"imageUrl,omitempty"`
-	IsAuthor   bool                  `json:"isAuthor"`
+	ID         int64           `json:"id"`
+	LikesCount int64           `json:"likesCount"`
+	Type       PublicationType `json:"type"`
+	ImageURL   *string         `json:"imageUrl,omitempty"`
+	IsAuthor   bool            `json:"isAuthor"`
 }
 
 // UserProfileResponse - расширенный профиль пользователя.

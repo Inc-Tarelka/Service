@@ -50,16 +50,15 @@ type UserService interface {
 
 type userService struct {
 	tarelkaUserRepo  repository.TarelkaUserRepository
-	publicationRepo repository.PublicationRepository
+	publicationRepo  repository.PublicationRepository
 	notificationRepo repository.NotificationRepository
 	storage          StorageService
 }
 
-
 func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicationRepo repository.PublicationRepository, notificationRepo repository.NotificationRepository, storage StorageService) UserService {
 	return &userService{
 		tarelkaUserRepo:  tarelkaUserRepo,
-		publicationRepo: publicationRepo,
+		publicationRepo:  publicationRepo,
 		notificationRepo: notificationRepo,
 		storage:          storage,
 	}
