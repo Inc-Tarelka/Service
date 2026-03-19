@@ -71,7 +71,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			users := protected.Group("/users")
 			{
 				users.GET("/me", h.user.GetCurrentUser)
-				users.GET("/:id", h.user.GetUser)
+				users.GET(":id", h.user.GetUser)
+				users.GET(":id/profile", h.user.GetUserProfile)
 				users.POST("/:id/logo/presign", h.user.PresignLogoUpload)
 				users.POST("/:id/logo/confirm", h.user.ConfirmLogoUpload)
 				users.POST("/:id/logo/url", h.user.SetLogoURL)

@@ -190,6 +190,32 @@ type UpdateUserRequest struct {
 	CompanyName *string `json:"companyName,omitempty"`
 }
 
+// UserProfilePublicationItem - краткая информация о публикации пользователя в его профиле.
+type UserProfilePublicationItem struct {
+	ID         int64                 `json:"id"`
+	LikesCount int64                 `json:"likesCount"`
+	Type       PublicationType       `json:"type"`
+	ImageURL   *string               `json:"imageUrl,omitempty"`
+	IsAuthor   bool                  `json:"isAuthor"`
+}
+
+// UserProfileResponse - расширенный профиль пользователя.
+// Содержит основную информацию о пользователе, список его публикаций и агрегированные метрики.
+type UserProfileResponse struct {
+	User *TarelkaUserFull `json:"user"`
+
+	// Публикации, где пользователь является автором или соавтором.
+	// Отсортированы по дате создания (сначала новые).
+	Publications []UserProfilePublicationItem `json:"publications"`
+
+	// Число уникальных сокомандников во всех проектах пользователя.
+	TeammatesCount int64 `json:"teammatesCount"`
+	// Число непрочитанных запросов/уведомлений для пользователя.
+	OutgoingRequestsCount int64 `json:"outgoingRequestsCount"`
+	// Число проектов пользователя (где он автор или соавтор).
+	ProjectsCount int64 `json:"projectsCount"`
+}
+
 // UserSearchItem - упрощённый ответ для поиска пользователей
 // Используется в /users/search/name
 type UserSearchItem struct {

@@ -10,6 +10,8 @@ import (
 type NotificationRepository interface {
 	Create(ctx context.Context, n *model.Notification) (*model.Notification, error)
 	ListByReceiverAndType(ctx context.Context, receiverID int64, nType model.NotificationType, limit, offset int) ([]*model.Notification, error)
+	// CountUnreadByReceiver возвращает число непрочитанных уведомлений для получателя.
+	CountUnreadByReceiver(ctx context.Context, receiverID int64) (int64, error)
 }
 
 type notificationRepository struct {
@@ -99,4 +101,17 @@ func (r *notificationRepository) ListByReceiverAndType(
 	}
 
 	return res, rows.Err()
+}
+
+func (r *notificationRepository) CountUnreadByReceiver(ctx context.Context, receiverID int64) (int64, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM notifications
+		WHERE receiver_id = $1 AND is_read = FALSE
+	`
+	var count int64
+	if err := r.pool.QueryRow(ctx, query, receiverID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }

@@ -33,6 +33,11 @@ type PublicationRepository interface {
 	GetNeedByID(ctx context.Context, id int64) (*model.Need, error)
 	// GetByID returns a single publication by id with details; userID используется для вычисления поля IsLiked
 	GetByID(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
+	// GetUserPublications возвращает все публикации, в которых пользователь является автором или соавтором,
+	// отсортированные по дате создания (сначала новые).
+	GetUserPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error)
+	// GetUserProjectsCount возвращает число проектов (type = 'PROJECT'), где пользователь автор или соавтор.
+	GetUserProjectsCount(ctx context.Context, userID int64) (int64, error)
 }
 
 type publicationRepository struct {
@@ -41,6 +46,76 @@ type publicationRepository struct {
 
 func NewPublicationRepository(pool *pgxpool.Pool) PublicationRepository {
 	return &publicationRepository{pool: pool}
+}
+
+// GetUserPublications возвращает все публикации пользователя (как автора и соавтора)
+// вместе с числом лайков и URL изображения с приоритетом 0.
+func (r *publicationRepository) GetUserPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error) {
+	query := `
+		WITH user_publications AS (
+			SELECT p.id, p.type, p.created_at, TRUE AS is_author
+			FROM publications p
+			WHERE p.author_id = $1
+			UNION ALL
+			SELECT p.id, p.type, p.created_at, FALSE AS is_author
+			FROM publication_co_authors ca
+			JOIN publications p ON p.id = ca.publication_id
+			WHERE ca.user_id = $1
+		)
+		SELECT
+			up.id,
+			up.type,
+			COALESCE(lc.cnt, 0) AS likes_count,
+			ti.url AS image_url,
+			up.is_author,
+			up.created_at
+		FROM user_publications up
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*)::BIGINT AS cnt
+			FROM publication_likes pl
+			WHERE pl.publication_id = up.id
+		) lc ON TRUE
+		LEFT JOIN LATERAL (
+			SELECT url
+			FROM publication_images pi
+			WHERE pi.publication_id = up.id AND pi.position = 0
+			ORDER BY pi.id
+			LIMIT 1
+		) ti ON TRUE
+		ORDER BY up.created_at DESC, up.id DESC
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]model.UserPublicationShort, 0)
+	for rows.Next() {
+		var item model.UserPublicationShort
+		if err := rows.Scan(&item.ID, &item.Type, &item.LikesCount, &item.ImageURL, &item.IsAuthor, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, item)
+	}
+	return res, rows.Err()
+}
+
+// GetUserProjectsCount возвращает число уникальных проектов (PROJECT),
+// где пользователь является автором или соавтором.
+func (r *publicationRepository) GetUserProjectsCount(ctx context.Context, userID int64) (int64, error) {
+	query := `
+		SELECT COUNT(DISTINCT p.id)
+		FROM publications p
+		LEFT JOIN publication_co_authors ca ON ca.publication_id = p.id
+		WHERE p.type = 'PROJECT' AND (p.author_id = $1 OR ca.user_id = $1)
+	`
+	var count int64
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // GetByID returns a single publication by id with aggregated likes/comments and top image.

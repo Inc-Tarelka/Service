@@ -68,6 +68,8 @@ type TarelkaUserRepository interface {
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
+	// GetTeammatesCount возвращает число уникальных сокомандников пользователя во всех проектах.
+	GetTeammatesCount(ctx context.Context, userID int64) (int64, error)
 }
 
 type tarelkaUserRepository struct {
@@ -76,6 +78,40 @@ type tarelkaUserRepository struct {
 
 func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 	return &tarelkaUserRepository{pool: pool}
+}
+
+// GetTeammatesCount считает уникальных сокомандников пользователя во всех проектах (type = 'PROJECT').
+// Сокомандники — это все остальные участники проектов, где пользователь является автором или соавтором.
+func (r *tarelkaUserRepository) GetTeammatesCount(ctx context.Context, userID int64) (int64, error) {
+	query := `
+		WITH user_projects AS (
+			SELECT p.id
+			FROM publications p
+			WHERE p.type = 'PROJECT' AND p.author_id = $1
+			UNION
+			SELECT pca.publication_id AS id
+			FROM publication_co_authors pca
+			JOIN publications p ON p.id = pca.publication_id
+			WHERE p.type = 'PROJECT' AND pca.user_id = $1
+		),
+		project_participants AS (
+			SELECT author_id AS user_id
+			FROM publications
+			WHERE id IN (SELECT id FROM user_projects)
+			UNION
+			SELECT user_id
+			FROM publication_co_authors
+			WHERE publication_id IN (SELECT id FROM user_projects)
+		)
+		SELECT COUNT(DISTINCT user_id) AS teammates_count
+		FROM project_participants
+		WHERE user_id <> $1
+	`
+	var count int64
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error) {

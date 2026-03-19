@@ -1882,7 +1882,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Получение информации о пользователе по ID",
+                "description": "Получение базовой информации о пользователе по ID",
                 "produces": [
                     "application/json"
                 ],
@@ -2161,6 +2161,64 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Расширенная информация о пользователе по ID: данные профиля, публикации и агрегированные метрики.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Профиль пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3506,6 +3564,13 @@
                 "phone": {
                     "type": "string"
                 },
+                "projectTopImages": {
+                    "description": "ProjectTopImages содержит URL главных изображений (position = 0)\nпоследних (по created_at) до трёх проектов пользователя.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "specializations": {
                     "type": "array",
                     "items": {
@@ -3539,12 +3604,77 @@
                 "bio": {
                     "type": "string"
                 },
+                "cityId": {
+                    "type": "integer"
+                },
+                "companyName": {
+                    "description": "Для COMPANY: название",
+                    "type": "string"
+                },
                 "education": {
                     "type": "string"
                 },
                 "find_work": {
                     "description": "Use the same enum values as model.FindWork (string values)",
                     "type": "string"
+                },
+                "name": {
+                    "description": "Для PERSON: имя и фамилия",
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Общие поля",
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserProfilePublicationItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "outgoingRequestsCount": {
+                    "description": "Число непрочитанных запросов/уведомлений для пользователя.",
+                    "type": "integer"
+                },
+                "projectsCount": {
+                    "description": "Число проектов пользователя (где он автор или соавтор).",
+                    "type": "integer"
+                },
+                "publications": {
+                    "description": "Публикации, где пользователь является автором или соавтором.\nОтсортированы по дате создания (сначала новые).",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UserProfilePublicationItem"
+                    }
+                },
+                "teammatesCount": {
+                    "description": "Число уникальных сокомандников во всех проектах пользователя.",
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.TarelkaUserFull"
                 }
             }
         },

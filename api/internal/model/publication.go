@@ -200,3 +200,13 @@ type AttachPublicationImagesRequest struct {
 type AttachPublicationImagesResponse struct {
 	Images []PublicationImage `json:"images"`
 }
+
+// UserPublicationShort используется для выборки публикаций пользователя в его профиле.
+type UserPublicationShort struct {
+	ID         int64           `json:"id" db:"id"`
+	Type       PublicationType `json:"type" db:"type"`
+	LikesCount int64           `json:"likesCount" db:"likes_count"`
+	ImageURL   *string         `json:"imageUrl,omitempty" db:"image_url"`
+	IsAuthor   bool            `json:"isAuthor" db:"is_author"`
+	CreatedAt  time.Time       `json:"-" db:"created_at"`
+}
