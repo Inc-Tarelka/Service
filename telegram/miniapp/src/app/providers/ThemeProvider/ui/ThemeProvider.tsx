@@ -2,8 +2,6 @@ import { MantineProvider, useMantineTheme } from '@mantine/core';
 import { ReactNode, useMemo, useState } from 'react';
 import { mantineTheme } from '../../MantineProvider/mantine-theme';
 import { Theme, ThemeContext } from '../lib/ThemeContext';
-
-// Импорт стилей Mantine
 import '@mantine/core/styles.css';
 
 interface ThemeProviderProps {

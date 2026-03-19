@@ -70,7 +70,7 @@ export const OfferCollaborationDrawer = ({
           <Textarea
             placeholder="Напишите сообщение..."
             value={comment}
-            maxLength={50}
+            maxLength={200}
             onChange={(e) => setComment(e.target.value)}
             autosize
             minRows={5}

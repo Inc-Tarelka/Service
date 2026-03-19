@@ -45,17 +45,10 @@ export const ResponseDrawer = (props: ResponseDrawerProps) => {
       size="auto"
       withCloseButton={false}
       radius={32}
-      transitionProps={{
-        transition: 'slide-up',
-        duration: 300,
-        timingFunction: 'ease',
-      }}
       overlayProps={{ blur: 3, backgroundOpacity: 0.5 }}
       styles={{
         content: {
-          background: 'var(--tertiary-bg-color)',
-          overflow: 'hidden',
-          position: 'relative',
+          content: 'drawer-fulldevice',
         },
         body: {
           display: 'flex',

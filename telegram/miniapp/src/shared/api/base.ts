@@ -250,7 +250,8 @@ function createPrivateInstance(): AxiosInstance {
 
       // 2. Обработка 403 (Server Down / Forbidden)
       if (error.response?.status === 403) {
-        console.log('403 Forbidden - server connection pool issue');
+        // Логируем только важное событие - проблемы с пулом соединений сервера
+        console.error('403 Forbidden - server connection pool issue');
 
         isServerDown = true;
         serverDownTimestamp = Date.now();
@@ -259,8 +260,6 @@ function createPrivateInstance(): AxiosInstance {
         const maxRetries = 3;
 
         if (retryCount < maxRetries) {
-          console.log(`Retrying request... (${retryCount + 1}/${maxRetries})`);
-
           (error.config as any)['__retryCount'] = retryCount + 1;
           const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
 

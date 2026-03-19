@@ -1,4 +1,4 @@
-import { Box, Group, Text } from '@mantine/core';
+import { Box, Group } from '@mantine/core';
 import type {
   CoauthorSearchUser,
   SearchUser,
@@ -38,17 +38,11 @@ export const CollaboratorItem = (props: CollaboratorItemProps) => {
           style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
         />
         <Box className={classes.userInfo}>
-          <Text color="white" className={classes.cardTitle}>
-            {fullName}
-          </Text>
+          <span className={classes.cardTitle}>{fullName}</span>
           {username && (
-            <Text className={classes.cardDescription}>@{username}</Text>
+            <span className={classes.cardDescription}>@{username}</span>
           )}
-          {meta && (
-            <Text color="white" className={classes.info}>
-              {meta}
-            </Text>
-          )}
+          {meta && <span className={classes.info}>{meta}</span>}
         </Box>
       </Group>
     </Box>
