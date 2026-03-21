@@ -46,23 +46,81 @@ type UserService interface {
 
 	// Delete user account
 	DeleteUser(ctx context.Context, userID int64) error
+
+	// GetUserProfile возвращает расширенный профиль пользователя с публикациями и метриками.
+	GetUserProfile(ctx context.Context, id int64) (*model.UserProfileResponse, error)
 }
 
 type userService struct {
-	tarelkaUserRepo repository.TarelkaUserRepository
-	storage         StorageService
+	tarelkaUserRepo  repository.TarelkaUserRepository
+	publicationRepo  repository.PublicationRepository
+	notificationRepo repository.NotificationRepository
+	storage          StorageService
 }
 
-func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, storage StorageService) UserService {
+func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicationRepo repository.PublicationRepository, notificationRepo repository.NotificationRepository, storage StorageService) UserService {
 	return &userService{
-		tarelkaUserRepo: tarelkaUserRepo,
-		storage:         storage,
+		tarelkaUserRepo:  tarelkaUserRepo,
+		publicationRepo:  publicationRepo,
+		notificationRepo: notificationRepo,
+		storage:          storage,
 	}
 }
 
 // GetUser получение полной информации о пользователе
 func (s *userService) GetUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error) {
 	return s.tarelkaUserRepo.GetFullUser(ctx, id)
+}
+
+// GetUserProfile строит расширенный профиль пользователя.
+func (s *userService) GetUserProfile(ctx context.Context, id int64) (*model.UserProfileResponse, error) {
+	user, err := s.tarelkaUserRepo.GetFullUser(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Публикации пользователя (автор и соавтор)
+	pubShorts, err := s.publicationRepo.GetUserPublications(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	pubItems := make([]model.UserProfilePublicationItem, 0, len(pubShorts))
+	for _, p := range pubShorts {
+		item := model.UserProfilePublicationItem{
+			ID:         p.ID,
+			LikesCount: p.LikesCount,
+			Type:       p.Type,
+			ImageURL:   p.ImageURL,
+			IsAuthor:   p.IsAuthor,
+		}
+		pubItems = append(pubItems, item)
+	}
+
+	// Число сокомандников
+	teammatesCount, err := s.tarelkaUserRepo.GetTeammatesCount(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Число непрочитанных уведомлений для пользователя
+	unreadCount, err := s.notificationRepo.CountUnreadByReceiver(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Число проектов пользователя
+	projectsCount, err := s.publicationRepo.GetUserProjectsCount(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UserProfileResponse{
+		User:                  user,
+		Publications:          pubItems,
+		TeammatesCount:        teammatesCount,
+		OutgoingRequestsCount: unreadCount,
+		ProjectsCount:         projectsCount,
+	}, nil
 }
 
 // GetUsersByTelegramID получение всех tarelka аккаунтов для telegram пользователя
