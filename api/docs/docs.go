@@ -739,6 +739,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/publications/my/projects": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список публикаций типа PROJECT, где текущий пользователь является автором.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Список проектов текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserPublicationShort"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications/needs/search": {
             "get": {
                 "security": [
@@ -2180,6 +2220,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{id}/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Расширенная информация о пользователе по ID: данные профиля, публикации и агрегированные метрики.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Профиль пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}/wallpaper/confirm": {
             "post": {
                 "security": [
@@ -3583,6 +3681,69 @@ const docTemplate = `{
                 "username": {
                     "description": "Общие поля",
                     "type": "string"
+                }
+            }
+        },
+        "model.UserProfilePublicationItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "outgoingRequestsCount": {
+                    "type": "integer"
+                },
+                "projectsCount": {
+                    "type": "integer"
+                },
+                "publications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UserProfilePublicationItem"
+                    }
+                },
+                "teammatesCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.TarelkaUserFull"
+                }
+            }
+        },
+        "model.UserPublicationShort": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
                 }
             }
         },

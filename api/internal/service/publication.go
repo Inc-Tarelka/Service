@@ -30,6 +30,8 @@ type PublicationService interface {
 	GetNeed(ctx context.Context, id int64) (*model.Need, error)
 	// GetPublication returns single publication by id; userID нужен для поля IsLiked
 	GetPublication(ctx context.Context, id int64, userID *int64) (*model.Publication, []model.PublicationTeamMember, []model.Need, error)
+	// GetUserProjectPublications возвращает проекты пользователя (где он автор), cо счётчиком лайков и картинкой с приоритетом 0
+	GetUserProjectPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error)
 }
 
 type publicationService struct {
@@ -238,4 +240,20 @@ func (s *publicationService) SearchNeeds(ctx context.Context, f model.NeedSearch
 		return nil, errors.New("budget_negative")
 	}
 	return s.repo.SearchNeeds(ctx, f, limit, offset)
+}
+
+// GetUserProjectPublications возвращает только PROJECT-публикации, где пользователь является автором
+// (репозиторий возвращает и авторские, и соавторские публикации, здесь фильтруем только авторские и только PROJECT).
+func (s *publicationService) GetUserProjectPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error) {
+	all, err := s.repo.GetUserPublications(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]model.UserPublicationShort, 0, len(all))
+	for _, p := range all {
+		if p.Type == model.PublicationTypeProject && p.IsAuthor {
+			res = append(res, p)
+		}
+	}
+	return res, nil
 }

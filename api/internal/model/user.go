@@ -78,3 +78,21 @@ type TarelkaUserFull struct {
 	// последних (по created_at) до трёх проектов пользователя.
 	ProjectTopImages []string `json:"projectTopImages,omitempty"`
 }
+
+// UserProfilePublicationItem описывает короткую информацию о публикации в профиле пользователя.
+type UserProfilePublicationItem struct {
+	ID         int64           `json:"id"`
+	Type       PublicationType `json:"type"`
+	LikesCount int64           `json:"likesCount"`
+	ImageURL   *string         `json:"imageUrl,omitempty"`
+	IsAuthor   bool            `json:"isAuthor"`
+}
+
+// UserProfileResponse — расширенный профиль пользователя для страницы профиля.
+type UserProfileResponse struct {
+	User                  *TarelkaUserFull             `json:"user"`
+	Publications          []UserProfilePublicationItem `json:"publications"`
+	TeammatesCount        int64                        `json:"teammatesCount"`
+	OutgoingRequestsCount int64                        `json:"outgoingRequestsCount"`
+	ProjectsCount         int64                        `json:"projectsCount"`
+}
