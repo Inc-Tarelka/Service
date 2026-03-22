@@ -4,6 +4,7 @@ export {
   deleteAccount,
   getProfile,
   getUserById,
+  getUserExtendedProfile,
   presignUserLogo,
   presignUserWallpaper,
   setUserLogoUrl,
@@ -12,11 +13,13 @@ export {
 } from './api';
 export type {
   DeleteAccountResponse,
+  ExpandedUserProfile,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,
   UserMediaPresignRequest,
   UserMediaPresignResponse,
   UserMediaUrlResponse,
+  UserProfilePublication,
   UserWallpaperConfirmResponse,
 } from './types';

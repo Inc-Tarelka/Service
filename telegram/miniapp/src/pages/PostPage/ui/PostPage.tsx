@@ -21,13 +21,13 @@ import type { CreatePublicationRequest } from 'shared/api/service/Publication';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import { Page } from 'widgets/Page';
 import { DEFAULT_STEP, PostStep, VALID_STEPS } from '../lib/constants';
 import classes from './PostPage.module.scss';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const PostPage = observer(() => {
   const { galleryStore, postStore, publicationStore } = useStore();

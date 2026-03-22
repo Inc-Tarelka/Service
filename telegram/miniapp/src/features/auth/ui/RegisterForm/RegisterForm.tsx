@@ -83,6 +83,19 @@ export const RegisterForm = observer(
       <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
+          {(() => {
+            const startParam = WebApp.initDataUnsafe?.start_param;
+            const parsedId = startParam
+              ? Number(startParam.replace('senderID', ''))
+              : undefined;
+            const senderId =
+              parsedId && !isNaN(parsedId) ? parsedId : undefined;
+            return senderId ? (
+              <div className={s.referralHint}>
+                По приглашению пользователя: ID {senderId}
+              </div>
+            ) : null;
+          })()}
 
           <div className={s.inputGroup}>
             <span className={s.label}>Телефон</span>

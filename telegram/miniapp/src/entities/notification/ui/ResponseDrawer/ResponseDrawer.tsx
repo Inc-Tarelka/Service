@@ -9,6 +9,8 @@ import {
 } from '@mantine/core';
 import { XIcon } from 'shared/assets/icons/x';
 import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
+import { useNavigate } from 'react-router-dom';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import classes from './ResponseDrawer.module.scss';
 
 interface Sender {
@@ -31,11 +33,21 @@ interface ResponseDrawerProps {
   sender: Sender;
   service: LinkedItem;
   comment: string;
-  onMessage?: () => void;
 }
 
 export const ResponseDrawer = (props: ResponseDrawerProps) => {
-  const { opened, onClose, need, sender, service, comment, onMessage } = props;
+  const { opened, onClose, need, sender, service, comment } = props;
+  const navigate = useNavigate();
+
+  const handleSenderClick = () => {
+    navigate(RoutePath[AppRoutes.USER_PROFILE].replace(':id', '2'));
+    onClose();
+  };
+
+  const handleServiceClick = () => {
+    navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', '86'));
+    onClose();
+  };
 
   return (
     <Drawer
@@ -77,7 +89,11 @@ export const ResponseDrawer = (props: ResponseDrawerProps) => {
 
             <Stack gap={8}>
               <Text className={classes.sectionLabel}>Отправитель</Text>
-              <Box className={classes.infoCard}>
+              <Box
+                className={classes.infoCard}
+                onClick={handleSenderClick}
+                style={{ cursor: 'pointer' }}
+              >
                 <Group gap={12} wrap="nowrap">
                   <img
                     src={sender.avatarUrl ?? defaultUserSvg}
@@ -97,7 +113,11 @@ export const ResponseDrawer = (props: ResponseDrawerProps) => {
 
             <Stack gap={8}>
               <Text className={classes.sectionLabel}>Привязанная услуга</Text>
-              <Box className={classes.infoCard}>
+              <Box
+                className={classes.infoCard}
+                onClick={handleServiceClick}
+                style={{ cursor: 'pointer' }}
+              >
                 <Group gap={12} wrap="nowrap">
                   <Box className={classes.thumbnail}>
                     {service.thumbnailUrl && (
@@ -140,7 +160,7 @@ export const ResponseDrawer = (props: ResponseDrawerProps) => {
           radius={16}
           h={48}
           style={{ flex: 1 }}
-          onClick={onMessage}
+          onClick={onClose}
           className={classes.messageButton}
         >
           Написать

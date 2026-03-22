@@ -27,7 +27,12 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.lhr.life'],
+    allowedHosts: [
+      '.trycloudflare.com',
+      '.ngrok-free.app',
+      '.ngrok-free.dev',
+      '.lhr.life',
+    ],
   },
   resolve: {
     alias: {

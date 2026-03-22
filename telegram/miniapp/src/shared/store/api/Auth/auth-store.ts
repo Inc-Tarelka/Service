@@ -166,7 +166,20 @@ export class AuthStore {
     data: PreRegisterRequest,
   ): Promise<number | null> => {
     try {
-      const promise = preRegisterRequest(data);
+      const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+      const parsedId = startParam
+        ? Number(startParam.replace('senderID', ''))
+        : undefined;
+      const senderId = parsedId && !isNaN(parsedId) ? parsedId : undefined;
+      const payload = {
+        ...data,
+        account: {
+          ...data.account,
+          ...(senderId ? { senderId } : {}),
+        },
+      };
+
+      const promise = preRegisterRequest(payload);
       this.preRegisterData = fromPromise(promise);
 
       const response = await promise;
@@ -209,7 +222,20 @@ export class AuthStore {
     data: TelegramRegisterRequest,
   ): Promise<boolean> => {
     try {
-      const promise = telegramRegisterRequest(data);
+      const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+      const parsedId = startParam
+        ? Number(startParam.replace('senderID', ''))
+        : undefined;
+      const senderId = parsedId && !isNaN(parsedId) ? parsedId : undefined;
+      const payload = {
+        ...data,
+        account: {
+          ...data.account,
+          ...(senderId ? { senderId } : {}),
+        },
+      };
+
+      const promise = telegramRegisterRequest(payload);
       this.registerData = fromPromise(promise);
 
       const response = await promise;

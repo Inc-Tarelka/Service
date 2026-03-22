@@ -1,9 +1,9 @@
 import { UserRole } from 'shared/consts/userRoles';
 
 export interface UserStats {
-  collaborations: number;
-  wantsToWork: number;
-  projects: number;
+  teammatesCount: number;
+  outgoingRequestsCount: number;
+  projectsCount: number;
 }
 
 export interface PersonData {
@@ -102,4 +102,22 @@ export interface UserMediaUrlRequest {
 export interface UserMediaUrlResponse {
   data: string;
   success: boolean;
+}
+
+// ===== Expanded User Profile =====
+
+export interface UserProfilePublication {
+  id: number;
+  likesCount: number;
+  type: 'PROJECT' | 'SERVICE';
+  imageUrl?: string;
+  isAuthor: boolean;
+}
+
+export interface ExpandedUserProfile {
+  user: User;
+  publications: UserProfilePublication[];
+  teammatesCount: number;
+  outgoingRequestsCount: number;
+  projectsCount: number;
 }

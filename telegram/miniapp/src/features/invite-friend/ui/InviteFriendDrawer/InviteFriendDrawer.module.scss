@@ -1,0 +1,61 @@
+.drawerContent {
+  background: var(--card-bg) !important;
+  border-top-left-radius: 40px !important;
+  border-top-right-radius: 40px !important;
+  color: var(--text-color) !important;
+}
+
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 24px 16px !important;
+  position: relative;
+}
+
+.dragHandle {
+  background: var(--tertiary-text-color);
+  border-radius: 10px;
+  height: 5px;
+  left: 50%;
+  opacity: 0.5;
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  width: 36px;
+}
+
+.title {
+  color: var(--text-color);
+  font: var(--font-h2);
+  font-weight: 600;
+  margin: 16px 0 0;
+}
+
+.description {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 400;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.linksCount {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 400;
+  margin: 4px 0 8px;
+}
+
+.button {
+  margin-top: auto;
+
+  :global(.mantine-Button-label) {
+    color: var(--button-text-color, #1a1a1a);
+  }
+}
+
+.countNumber {
+  font-weight: 600;
+}

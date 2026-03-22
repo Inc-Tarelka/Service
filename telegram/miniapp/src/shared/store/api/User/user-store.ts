@@ -46,7 +46,15 @@ export class UserStore {
   };
 
   setLocalOverride = (overrides: Partial<User>) => {
-    this._localOverrides = { ...this._localOverrides, ...overrides };
+    const normalized = { ...overrides };
+    const cacheBuster = `?v=${Date.now()}`;
+    if (normalized.avatarUrl) {
+      normalized.avatarUrl = normalized.avatarUrl.split('?')[0] + cacheBuster;
+    }
+    if (normalized.logo_url) {
+      normalized.logo_url = normalized.logo_url.split('?')[0] + cacheBuster;
+    }
+    this._localOverrides = { ...this._localOverrides, ...normalized };
   };
 
   clearLocalOverrides = () => {
@@ -62,7 +70,6 @@ export class UserStore {
         updateProfile(data, userId),
       );
       await this.updateProfileData;
-      await this.getProfileAction();
       return true;
     } catch (error) {
       console.error('Failed to update profile:', error);

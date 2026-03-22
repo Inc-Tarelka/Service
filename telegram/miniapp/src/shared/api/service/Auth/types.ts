@@ -64,6 +64,7 @@ export interface TelegramRegisterRequest {
     username: string;
     phone: string;
     password: string;
+    senderId?: number;
   };
   phoneVerification: PhoneVerification;
   specializationIds: number[];
@@ -81,6 +82,7 @@ export interface PreRegisterRequest {
     name?: string;
     surname?: string;
     companyName?: string;
+    senderId?: number;
   };
 }
 

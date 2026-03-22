@@ -15,11 +15,11 @@ import {
   RegisterForm,
   VALID_STEPS,
 } from 'features/auth';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import classNames from 'shared/library/ClassNames/classNames';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const AuthPage = observer(() => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,9 +28,13 @@ export const AuthPage = observer(() => {
   const { authStore } = useStore();
 
   const rawStep = searchParams.get('step');
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  const isReferral = startParam && startParam.startsWith('senderID');
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
-    : DEFAULT_STEP;
+    : isReferral
+      ? 'register'
+      : DEFAULT_STEP;
 
   const showBackButton = step !== DEFAULT_STEP;
 

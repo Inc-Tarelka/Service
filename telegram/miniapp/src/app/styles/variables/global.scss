@@ -47,6 +47,17 @@
     --secondary-card-bg: #5e5e5e;
 }
 
+// Spacing system
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+
 html, body {
     height: 100%;
     overflow: hidden;

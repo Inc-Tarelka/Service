@@ -2,6 +2,7 @@ import { API_URL } from 'shared/api/api_url';
 import { baseInstanceV1 } from 'shared/api/base';
 import type {
   DeleteAccountResponse,
+  ExpandedUserProfile,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,
@@ -94,3 +95,7 @@ export const setUserWallpaperUrl = async (id: number, wallpaperUrl: string) =>
       { wallpaperUrl },
     )
   ).data;
+
+// =============================== EXTENDED PROFILE ===============================
+export const getUserExtendedProfile = async (id: string) =>
+  await baseInstanceV1.get<ExpandedUserProfile>(API_URL.user_profile(id));

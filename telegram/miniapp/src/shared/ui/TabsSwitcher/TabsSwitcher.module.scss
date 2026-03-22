@@ -1,6 +1,6 @@
 .container {
   flex-shrink: 0;
-  padding: 16px;
+  padding: 16px 16px 0;
 }
 
 .tabsWrapper {
@@ -99,6 +99,9 @@
 .viewport {
   overflow: clip;
   padding-top: 4px;
+
+  // Allows vertical scroll to propagate to parent, while JS detects horizontal swipes
+  touch-action: pan-y;
 }
 
 .track {

@@ -21,17 +21,17 @@ export const UserProfilePage = observer(() => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { userProfileStore, userStore } = useStore();
+  const { userProfileStore } = useStore();
 
   useBackToSearch();
 
   useEffect(() => {
     if (id) {
-      userProfileStore.getUserProfileAction(id);
+      userProfileStore.getUserExtendedProfileAction(id);
     }
   }, [id, userProfileStore]);
 
-  if (userProfileStore.isLoading) {
+  if (userProfileStore.isExtendedLoading || userProfileStore.isLoading) {
     return <UserProfilePageSkeleton />;
   }
 
@@ -69,7 +69,11 @@ export const UserProfilePage = observer(() => {
             switch (tab) {
               case 'publications':
                 return (
-                  <PublicationsList publications={userStore.publications} />
+                  <PublicationsList
+                    publications={
+                      userProfileStore.extendedProfile?.publications || []
+                    }
+                  />
                 );
               case 'info':
                 return <ProfileInfoSection user={user} isPublicView={true} />;

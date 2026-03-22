@@ -9,6 +9,8 @@ import {
 } from '@mantine/core';
 import { XIcon } from 'shared/assets/icons/x';
 import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
+import { useNavigate } from 'react-router-dom';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import classes from './CollaborationDrawer.module.scss';
 
 interface Sender {
@@ -30,11 +32,21 @@ interface CollaborationDrawerProps {
   sender: Sender;
   project: LinkedItem;
   comment: string;
-  onMessage?: () => void;
 }
 
 export const CollaborationDrawer = (props: CollaborationDrawerProps) => {
-  const { opened, onClose, sender, project, comment, onMessage } = props;
+  const { opened, onClose, sender, project, comment } = props;
+  const navigate = useNavigate();
+
+  const handleSenderClick = () => {
+    navigate(RoutePath[AppRoutes.USER_PROFILE].replace(':id', '2'));
+    onClose();
+  };
+
+  const handleProjectClick = () => {
+    navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', '86'));
+    onClose();
+  };
 
   return (
     <Drawer
@@ -71,7 +83,11 @@ export const CollaborationDrawer = (props: CollaborationDrawerProps) => {
           <Stack gap={16}>
             <Stack gap={8}>
               <Text className={classes.sectionLabel}>Отправитель</Text>
-              <Box className={classes.infoCard}>
+              <Box
+                className={classes.infoCard}
+                onClick={handleSenderClick}
+                style={{ cursor: 'pointer' }}
+              >
                 <Group gap={12} wrap="nowrap">
                   <img
                     src={sender.avatarUrl ?? defaultUserSvg}
@@ -91,7 +107,11 @@ export const CollaborationDrawer = (props: CollaborationDrawerProps) => {
 
             <Stack gap={8}>
               <Text className={classes.sectionLabel}>Привязанный проект</Text>
-              <Box className={classes.infoCard}>
+              <Box
+                className={classes.infoCard}
+                onClick={handleProjectClick}
+                style={{ cursor: 'pointer' }}
+              >
                 <Group gap={12} wrap="nowrap">
                   <Box className={classes.thumbnail}>
                     {project.thumbnailUrl && (
@@ -134,7 +154,7 @@ export const CollaborationDrawer = (props: CollaborationDrawerProps) => {
           radius={16}
           h={48}
           style={{ flex: 1 }}
-          onClick={onMessage}
+          onClick={onClose}
           className={classes.messageButton}
         >
           Написать

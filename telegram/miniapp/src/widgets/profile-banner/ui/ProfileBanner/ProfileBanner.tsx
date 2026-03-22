@@ -64,9 +64,9 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
               <UserStats
                 stats={
                   user.stats ?? {
-                    collaborations: 0,
-                    wantsToWork: 0,
-                    projects: 0,
+                    teammatesCount: 0,
+                    outgoingRequestsCount: 0,
+                    projectsCount: 0,
                   }
                 }
               />

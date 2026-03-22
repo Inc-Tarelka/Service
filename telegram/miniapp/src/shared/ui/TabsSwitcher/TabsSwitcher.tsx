@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useViewport } from 'shared/hooks/useViewport';
 import classes from './TabsSwitcher.module.scss';
 
 export interface TabItem<T extends string> {
@@ -50,6 +51,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     contentPaddingTop,
     stickyTop,
   } = props;
+  const { isDesktop } = useViewport();
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
   const currentTab = activeTab !== undefined ? activeTab : internalTab;
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
@@ -224,9 +226,11 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
   const independentScroll =
     stickyTopCss !== undefined && renderTab !== undefined;
 
+  const paddingBottomCss = isDesktop ? '0px' : 'var(--TB-padding, 0px)';
+
   const viewportStyle: React.CSSProperties | undefined = independentScroll
     ? {
-        height: `calc(100dvh - ${stickyTopCss} - ${tabsBarHeight}px - var(--TB-padding, 0px))`,
+        height: `calc(100dvh - ${stickyTopCss} - ${tabsBarHeight}px - ${paddingBottomCss} - var(--total-navbar-height, 0px))`,
         overflow: 'hidden',
       }
     : undefined;
@@ -308,6 +312,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
                         overflowY: 'auto',
                         height: '100%',
                         paddingTop: contentPaddingTop,
+                        overscrollBehavior: 'contain',
                       }
                     : {}),
                 }}

@@ -13,7 +13,16 @@
 .title {
   color: var(--text-color);
   font: var(--font-h1);
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.referralHint {
+  background: var(--tertiary-bg-color);
+  border-radius: 8px;
+  color: var(--accent-light);
+  font: var(--font-caption);
+  padding: 8px 12px;
+  text-align: center;
 }
 
 .typeSelector {

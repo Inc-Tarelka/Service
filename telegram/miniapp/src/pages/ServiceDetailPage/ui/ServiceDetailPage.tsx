@@ -9,12 +9,12 @@ import { ServiceCommentsDrawer } from 'features/post/ui/ServiceCommentsDrawer/Se
 import { ResponseToNeedDrawer } from 'features/respond-to-need/ui/ResponseToNeedDrawer/ResponseToNeedDrawer';
 import { NeedDetailsDrawer } from 'features/view-need/ui/NeedDetailsDrawer/NeedDetailsDrawer';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
-import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { MOCK_SERVICE_DETAIL } from 'shared/mocks/serviceDetailMocks';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { Page } from 'widgets/Page';
 import s from './ServiceDetailPage.module.scss';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const ServiceDetailPage = observer(() => {
   const { id } = useParams<{ id: string }>();

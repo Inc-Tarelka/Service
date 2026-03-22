@@ -19,6 +19,7 @@ export const API_URL = {
 
   profile: () => '/users/me',
   user: (id: string | number) => `/users/${id}`,
+  user_profile: (id: string | number) => `/users/${id}/profile`,
 
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,

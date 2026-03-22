@@ -247,7 +247,6 @@ export const AvatarUploadDrawer = observer((props: AvatarUploadDrawerProps) => {
             logo_url: userMediaStore.logoUrl,
           });
         }
-        userStore.getProfileAction();
         onClose();
       },
       'image/jpeg',

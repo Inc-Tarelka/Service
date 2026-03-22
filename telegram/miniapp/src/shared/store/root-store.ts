@@ -14,9 +14,11 @@ import { UserProfileStore } from './api/User/user-profile-store';
 import { UserStore } from './api/User/user-store';
 import { SearchUsersStore } from './api/UserSearch/search-users-store';
 import { GalleryStore } from './gallery-store';
+import { ProfileEditorStore } from './interactions/profile-editor-store';
 import { ScrollRecoveryStore } from './interactions/scroll-recovery-store';
 import { ViewportStore } from './viewport-store';
 import { WebAppStore } from './web-app-store';
+import { ReferralStore } from './api/Referral/referral-store';
 
 export class RootStore {
   webAppStore = new WebAppStore();
@@ -36,6 +38,8 @@ export class RootStore {
   searchUsersStore = new SearchUsersStore();
   searchInteractionsStore = new SearchInteractionsStore(this);
   scrollRecoveryStore = new ScrollRecoveryStore();
+  profileEditorStore = new ProfileEditorStore();
   needsStore = new NeedsStore();
   publicationCommentsStore = new PublicationCommentsStore(this);
+  referralStore = new ReferralStore();
 }
