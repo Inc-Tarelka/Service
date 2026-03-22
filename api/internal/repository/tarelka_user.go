@@ -70,6 +70,9 @@ type TarelkaUserRepository interface {
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
+	// GetTeammatesCount возвращает число «сокомандников» пользователя —
+	// других пользователей, с которыми у него есть общие публикации (как автора, так и соавтора).
+	GetTeammatesCount(ctx context.Context, userID int64) (int64, error)
 }
 
 type tarelkaUserRepository struct {
@@ -388,6 +391,42 @@ func (r *tarelkaUserRepository) GetCities(ctx context.Context, userID int64) ([]
 		cities = append(cities, c)
 	}
 	return cities, nil
+}
+
+// GetTeammatesCount возвращает количество уникальных пользователей,
+// с которыми у данного пользователя есть общие публикации (проекты/услуги).
+// Под общими публикациями понимаются случаи, когда пользователь является
+// автором или соавтором одной и той же публикации вместе с другим пользователем.
+func (r *tarelkaUserRepository) GetTeammatesCount(ctx context.Context, userID int64) (int64, error) {
+	query := `
+		WITH user_publications AS (
+			SELECT id AS publication_id
+			FROM publications
+			WHERE author_id = $1
+			UNION
+			SELECT publication_id
+			FROM publication_co_authors
+			WHERE user_id = $1
+		), teammates AS (
+			-- авторы этих же публикаций
+			SELECT DISTINCT p.author_id AS teammate_id
+			FROM publications p
+			JOIN user_publications up ON up.publication_id = p.id
+			WHERE p.author_id <> $1
+			UNION
+			-- соавторы этих же публикаций
+			SELECT DISTINCT ca.user_id AS teammate_id
+			FROM publication_co_authors ca
+			JOIN user_publications up ON up.publication_id = ca.publication_id
+			WHERE ca.user_id <> $1
+		)
+		SELECT COUNT(*)::BIGINT FROM teammates;
+	`
+	var cnt int64
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&cnt); err != nil {
+		return 0, err
+	}
+	return cnt, nil
 }
 
 // GetLastProjectTopImages возвращает до 3 URL главных изображений (position = 0)
