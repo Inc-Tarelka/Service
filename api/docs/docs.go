@@ -2798,6 +2798,17 @@ const docTemplate = `{
                 "FindWorkOpenToOffer"
             ]
         },
+        "model.InviteAccountType": {
+            "type": "string",
+            "enum": [
+                "DEFAULT",
+                "CLUB_PARTICIPANT"
+            ],
+            "x-enum-varnames": [
+                "InviteAccountTypeDefault",
+                "InviteAccountTypeClubParticipant"
+            ]
+        },
         "model.LoginRequest": {
             "type": "object",
             "required": [
@@ -3387,6 +3398,10 @@ const docTemplate = `{
                 "phoneVerification": {
                     "$ref": "#/definitions/model.PhoneVerification"
                 },
+                "senderId": {
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен, если включён закрытый режим регистрации.",
+                    "type": "string"
+                },
                 "specializationIds": {
                     "type": "array",
                     "items": {
@@ -3527,6 +3542,18 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "invite_account_type": {
+                    "description": "InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.InviteAccountType"
+                        }
+                    ]
+                },
+                "invite_referral_count": {
+                    "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
+                    "type": "integer"
+                },
                 "logo_url": {
                     "type": "string"
                 },
@@ -3599,6 +3626,18 @@ const docTemplate = `{
                     ]
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "invite_account_type": {
+                    "description": "InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.InviteAccountType"
+                        }
+                    ]
+                },
+                "invite_referral_count": {
+                    "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
                     "type": "integer"
                 },
                 "logo_url": {
@@ -3730,6 +3769,9 @@ const docTemplate = `{
         "model.UserPublicationShort": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -3741,6 +3783,9 @@ const docTemplate = `{
                 },
                 "likesCount": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 },
                 "type": {
                     "$ref": "#/definitions/model.PublicationType"

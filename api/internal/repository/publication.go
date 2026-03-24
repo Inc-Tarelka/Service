@@ -50,14 +50,15 @@ func NewPublicationRepository(pool *pgxpool.Pool) PublicationRepository {
 
 // GetUserPublications возвращает все публикации пользователя (как автора и соавтора)
 // вместе с числом лайков и URL изображения с приоритетом 0.
+
 func (r *publicationRepository) GetUserPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error) {
 	query := `
 		WITH user_publications AS (
-			SELECT p.id, p.type, p.created_at, TRUE AS is_author
+			SELECT p.id, p.type, p.created_at, TRUE AS is_author, p.name, p.description
 			FROM publications p
 			WHERE p.author_id = $1
 			UNION ALL
-			SELECT p.id, p.type, p.created_at, FALSE AS is_author
+			SELECT p.id, p.type, p.created_at, FALSE AS is_author, p.name, p.description
 			FROM publication_co_authors ca
 			JOIN publications p ON p.id = ca.publication_id
 			WHERE ca.user_id = $1
@@ -68,6 +69,8 @@ func (r *publicationRepository) GetUserPublications(ctx context.Context, userID 
 			COALESCE(lc.cnt, 0) AS likes_count,
 			ti.url AS image_url,
 			up.is_author,
+			up.name,
+			up.description,
 			up.created_at
 		FROM user_publications up
 		LEFT JOIN LATERAL (
@@ -94,7 +97,16 @@ func (r *publicationRepository) GetUserPublications(ctx context.Context, userID 
 	res := make([]model.UserPublicationShort, 0)
 	for rows.Next() {
 		var item model.UserPublicationShort
-		if err := rows.Scan(&item.ID, &item.Type, &item.LikesCount, &item.ImageURL, &item.IsAuthor, &item.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&item.ID,
+			&item.Type,
+			&item.LikesCount,
+			&item.ImageURL,
+			&item.IsAuthor,
+			&item.Name,
+			&item.Description,
+			&item.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		res = append(res, item)

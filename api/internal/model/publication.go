@@ -202,11 +202,14 @@ type AttachPublicationImagesResponse struct {
 }
 
 // UserPublicationShort используется для выборки публикаций пользователя в его профиле.
+// Для проектов нам нужны также имя и описание, поэтому добавляем соответствующие поля.
 type UserPublicationShort struct {
-	ID         int64           `json:"id" db:"id"`
-	Type       PublicationType `json:"type" db:"type"`
-	LikesCount int64           `json:"likesCount" db:"likes_count"`
-	ImageURL   *string         `json:"imageUrl,omitempty" db:"image_url"`
-	IsAuthor   bool            `json:"isAuthor" db:"is_author"`
-	CreatedAt  time.Time       `json:"-" db:"created_at"`
+	ID          int64           `json:"id" db:"id"`
+	Type        PublicationType `json:"type" db:"type"`
+	LikesCount  int64           `json:"likesCount" db:"likes_count"`
+	ImageURL    *string         `json:"imageUrl,omitempty" db:"image_url"`
+	IsAuthor    bool            `json:"isAuthor" db:"is_author"`
+	Name        string          `json:"name" db:"name"`
+	Description string          `json:"description" db:"description"`
+	CreatedAt   time.Time       `json:"-" db:"created_at"`
 }

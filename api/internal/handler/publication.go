@@ -649,8 +649,8 @@ func (h *PublicationHandler) GetMyProjectPublications(c *gin.Context) {
 	for _, it := range items {
 		resp = append(resp, gin.H{
 			"id":          it.ID,
-			"name":        "", // имени и описания нет в UserPublicationShort; можно дорасширить модель при необходимости
-			"description": "",
+			"name":        it.Name,
+			"description": it.Description,
 			"image":       it.ImageURL,
 		})
 	}
