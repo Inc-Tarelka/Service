@@ -100,6 +100,24 @@ func (h *AuthHandler) RegisterViaTelegram(c *gin.Context) {
 		case errors.Is(err, service.ErrInvalidReferences):
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_references"})
 		default:
+			// Маппим строковые коды invite-ошибок из сервиса в HTTP-статусы
+			msg := err.Error()
+			if strings.Contains(msg, "invite_required") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_required"})
+				return
+			}
+			if strings.Contains(msg, "invite_not_configured") {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "invite_not_configured"})
+				return
+			}
+			if strings.Contains(msg, "invalid_sender_id") {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_sender_id"})
+				return
+			}
+			if strings.Contains(msg, "invite_limit_reached") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_limit_reached"})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		}
 		return

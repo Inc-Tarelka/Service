@@ -27,6 +27,7 @@ type Deps struct {
 	TelegramBotToken     string
 	TelegramGatewayToken string
 	TelegramGatewayURL   string
+	InviteSecret         string
 	VerificationTokenTTL time.Duration
 	Storage              StorageService
 }
@@ -47,6 +48,7 @@ func NewServices(deps Deps) *Services {
 			deps.TelegramBotToken,
 			deps.TelegramGatewayToken,
 			deps.TelegramGatewayURL,
+			deps.InviteSecret,
 		),
 		User:         NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Storage),
 		Reference:    NewReferenceService(deps.Repos.Reference),

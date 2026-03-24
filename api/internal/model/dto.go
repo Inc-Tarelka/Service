@@ -8,6 +8,9 @@ type RegisterRequest struct {
 	DirectionIDs      []int64           `json:"directionIds"`
 	CityIDs           []int64           `json:"cityIds"`
 	PhoneVerification PhoneVerification `json:"phoneVerification,omitempty"`
+	// senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
+	// Обязателен, если включён закрытый режим регистрации.
+	SenderID string `json:"senderId,omitempty"`
 }
 
 // AccountData - данные аккаунта при регистрации
