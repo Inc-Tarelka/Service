@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -56,6 +57,8 @@ type AuthService interface {
 	SendPhoneVerification(ctx context.Context, phone string) (*model.SendPhoneVerificationResponse, error)
 	// VerifyPhoneCode выполняет раннюю проверку кода верификации через Telegram Gateway
 	VerifyPhoneCode(ctx context.Context, requestID, code string) (*model.VerifyCodeResponse, error)
+	// ValidateInviteAndIncrement проверяет senderID и увеличивает счётчик приглашений.
+	ValidateInviteAndIncrement(ctx context.Context, senderID string) error
 	// BeginPasswordReset отправляет код на телефон, привязанный к пользователю (по username)
 	BeginPasswordReset(ctx context.Context, username string) (*model.SendPhoneVerificationResponse, error)
 	// ResetPasswordWithCode проверяет код через Gateway, сверяет телефон и меняет пароль
@@ -75,6 +78,8 @@ type authService struct {
 	botToken        string
 	gatewayToken    string
 	gatewayURL      string
+	// inviteSecret используется для подписи/проверки senderID.
+	inviteSecret string
 }
 
 func NewAuthService(
@@ -89,6 +94,7 @@ func NewAuthService(
 	botToken string,
 	gatewayToken string,
 	gatewayURL string,
+	inviteSecret string,
 ) AuthService {
 	return &authService{
 		tgUserRepo:      tgUserRepo,
@@ -102,7 +108,71 @@ func NewAuthService(
 		botToken:        botToken,
 		gatewayToken:    gatewayToken,
 		gatewayURL:      gatewayURL,
+		inviteSecret:    inviteSecret,
 	}
+}
+
+// ValidateInviteAndIncrement проверяет senderID и увеличивает счётчик приглашённых у инвайтера.
+// Правила:
+//   - если senderID пустой или inviteSecret не задан — возвращаем ошибку
+//   - декодируем senderID в telegramID
+//   - находим пользователя по tg_user_id
+//   - атомарно инкрементим invite_referral_count с учётом лимита.
+func (s *authService) ValidateInviteAndIncrement(ctx context.Context, senderID string) error {
+	if strings.TrimSpace(senderID) == "" {
+		return fmt.Errorf("invite_required")
+	}
+	if s.inviteSecret == "" {
+		return fmt.Errorf("invite_not_configured")
+	}
+
+	tgID, err := decodeSenderID(senderID, s.inviteSecret)
+	if err != nil {
+		return fmt.Errorf("invalid_sender_id")
+	}
+
+	inviter, err := s.tarelkaUserRepo.FindByTgUserID(ctx, tgID)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = s.tarelkaUserRepo.IncreaseInviteCountWithLimit(ctx, inviter.ID)
+	if err != nil {
+		// если лимит исчерпан или пользователя нет — считаем, что инвайт недействителен
+		return fmt.Errorf("invite_limit_reached")
+	}
+	return nil
+}
+
+// encodeSenderID кодирует telegramID в безопасную строку senderID.
+// Формат: base64url("<tgID>:<hex(hmac_sha256(secret, tgID))>")
+func encodeSenderID(tgID int64, secret string) string {
+	data := fmt.Sprintf("%d", tgID)
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(data))
+	sig := hex.EncodeToString(h.Sum(nil))
+	plain := fmt.Sprintf("%s:%s", data, sig)
+	return base64.RawURLEncoding.EncodeToString([]byte(plain))
+}
+
+// decodeSenderID декодирует senderID обратно в telegramID и проверяет подпись.
+func decodeSenderID(senderID, secret string) (int64, error) {
+	buf, err := base64.RawURLEncoding.DecodeString(senderID)
+	if err != nil {
+		return 0, err
+	}
+	parts := strings.SplitN(string(buf), ":", 2)
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid format")
+	}
+	data, sigHex := parts[0], parts[1]
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(data))
+	expectedSig := hex.EncodeToString(h.Sum(nil))
+	if !hmac.Equal([]byte(expectedSig), []byte(sigHex)) {
+		return 0, fmt.Errorf("invalid signature")
+	}
+	return strconv.ParseInt(data, 10, 64)
 }
 
 // PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
@@ -189,6 +259,16 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 // RegisterViaTelegram регистрация через Telegram Mini App
 
 func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
+	// 0. Проверка и применение инвайта (senderID), если он передан
+	if strings.TrimSpace(req.SenderID) == "" {
+		// В закрытом режиме можно потребовать обязательный senderID.
+		// Сейчас возвращаем явную ошибку, чтобы фронт показал экран «нужен инвайт».
+		return nil, fmt.Errorf("invite_required")
+	}
+	if err := s.ValidateInviteAndIncrement(ctx, req.SenderID); err != nil {
+		return nil, err
+	}
+
 	// 1. Валидация initData
 	telegramID, err := s.validateInitData(req.InitData)
 	if err != nil {

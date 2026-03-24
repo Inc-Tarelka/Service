@@ -12,6 +12,17 @@ const (
 	AccountTypeCompany AccountType = "COMPANY"
 )
 
+// InviteAccountType определяет приглашательный статус пользователя
+// (используется для ограничения количества регистраций по ссылке).
+// DEFAULT        — обычный пользователь (может пригласить до 5 человек)
+// CLUB_PARTICIPANT — «клубный» пользователь с неограниченным числом приглашений.
+type InviteAccountType string
+
+const (
+	InviteAccountTypeDefault         InviteAccountType = "DEFAULT"
+	InviteAccountTypeClubParticipant InviteAccountType = "CLUB_PARTICIPANT"
+)
+
 // TgUser - Telegram пользователь (владелец)
 type TgUser struct {
 	TelegramID int64     `json:"telegram_id" db:"telegram_id"`
@@ -40,7 +51,11 @@ type TarelkaUser struct {
 	Conversation   int     `json:"conversation" db:"conversation"`
 	// ConversationUpdatedAt — when conversation stage was last changed
 	ConversationUpdatedAt time.Time `json:"conversation_updated_at" db:"conversation_updated_at"`
-	CreatedAt             time.Time `json:"created_at" db:"created_at"`
+	// InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)
+	InviteAccountType InviteAccountType `json:"invite_account_type" db:"invite_account_type"`
+	// InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке
+	InviteReferralCount int       `json:"invite_referral_count" db:"invite_referral_count"`
+	CreatedAt           time.Time `json:"created_at" db:"created_at"`
 }
 
 // FindWork — вариант поиска работы

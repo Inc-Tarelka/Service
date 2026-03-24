@@ -13,6 +13,7 @@ type Config struct {
 	TelegramBotToken     string
 	TelegramGatewayToken string
 	TelegramGatewayURL   string
+	InviteSecret         string
 	AccessTokenTTL       time.Duration
 	RefreshTokenTTL      time.Duration
 	// CORS configuration
@@ -42,6 +43,7 @@ func Load() *Config {
 		TelegramBotToken:     getEnv("TELEGRAM_BOT_TOKEN", ""),
 		TelegramGatewayToken: getEnv("TELEGRAM_GATEWAY_TOKEN", ""),
 		TelegramGatewayURL:   getEnv("TELEGRAM_GATEWAY_URL", "https://gatewayapi.telegram.org"),
+		InviteSecret:         getEnv("TELEGRAM_MINIAPP_SECRET", ""),
 		AccessTokenTTL:       parseDuration(getEnv("ACCESS_TOKEN_TTL", "15m")),
 		RefreshTokenTTL:      parseDuration(getEnv("REFRESH_TOKEN_TTL", "168h")), // 7 days
 		// Defaults suitable for development; can be overridden via env:
