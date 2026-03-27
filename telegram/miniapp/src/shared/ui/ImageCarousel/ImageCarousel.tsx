@@ -1,7 +1,8 @@
-import { Image } from '@mantine/core';
-import { AnimatePresence, motion } from 'motion/react';
+import { Carousel } from '@mantine/carousel';
+import { Skeleton } from '@mantine/core';
 import { useCallback, useState } from 'react';
 import TrashIcon from 'shared/assets/icons/trash';
+import '@mantine/carousel/styles.css';
 import classes from './ImageCarousel.module.scss';
 
 interface ImageCarouselProps {
@@ -12,29 +13,35 @@ interface ImageCarouselProps {
   showDeleteButton?: boolean;
 }
 
-const variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 320 : -320,
-    opacity: 0,
-    scale: 0.9,
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 320 : -320,
-    opacity: 0,
-    scale: 0.9,
-  }),
-};
+interface SlideImageProps {
+  src: string;
+  alt: string;
+  preloaded: boolean;
+  onLoad: (url: string) => void;
+}
 
-const swipeConfidenceThreshold = 10000;
-const swipePower = (offset: number, velocity: number) => {
-  return Math.abs(offset) * velocity;
+const SlideImage = (props: SlideImageProps) => {
+  const { src, alt, preloaded, onLoad } = props;
+
+  return (
+    <div className={classes.slideInner}>
+      {/* Skeleton держит высоту в потоке пока картинка не загружена */}
+      <Skeleton
+        className={classes.skeleton}
+        radius={0}
+        animate
+        style={{ display: preloaded ? 'none' : undefined }}
+      />
+      {/* Картинка абсолютно поверх скелетона пока грузится, потом встаёт в поток */}
+      <img
+        src={src}
+        alt={alt}
+        draggable={false}
+        className={`${classes.image} ${preloaded ? classes.imageLoaded : classes.imageLoading}`}
+        onLoad={() => onLoad(src)}
+      />
+    </div>
+  );
 };
 
 export const ImageCarousel = (props: ImageCarouselProps) => {
@@ -46,48 +53,31 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
     showDeleteButton = false,
   } = props;
 
-  const [[internalIndex, direction], setPage] = useState<[number, number]>([
-    0, 0,
-  ]);
+  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
+  const [internalIndex, setInternalIndex] = useState(0);
   const activeIndex = controlledIndex ?? internalIndex;
 
-  const paginate = useCallback(
-    (newDirection: number) => {
-      let newIndex = activeIndex + newDirection;
+  const handleImageLoad = useCallback((url: string) => {
+    setLoadedUrls((prev) => new Set([...prev, url]));
+  }, []);
 
-      if (newIndex < 0) {
-        newIndex = images.length - 1;
-      } else if (newIndex >= images.length) {
-        newIndex = 0;
-      }
-
-      if (onIndexChange) {
-        onIndexChange(newIndex);
-      }
-      setPage([newIndex, newDirection]);
-    },
-    [activeIndex, images.length, onIndexChange],
-  );
-
-  const handleDotClick = useCallback(
+  const handleSlideChange = useCallback(
     (index: number) => {
-      const dir = index > activeIndex ? 1 : -1;
-      if (onIndexChange) {
-        onIndexChange(index);
-      }
-      setPage([index, dir]);
+      setInternalIndex(index);
+      onIndexChange?.(index);
     },
-    [onIndexChange, activeIndex],
+    [onIndexChange],
   );
 
   const handleDelete = useCallback(() => {
-    if (onDelete) {
-      onDelete(activeIndex);
-      if (activeIndex >= images.length - 1 && activeIndex > 0) {
-        if (onIndexChange) onIndexChange(activeIndex - 1);
-        else setPage([activeIndex - 1, -1]);
-      }
-    }
+    if (!onDelete) return;
+    onDelete(activeIndex);
+    const newIndex =
+      activeIndex >= images.length - 1 && activeIndex > 0
+        ? activeIndex - 1
+        : activeIndex;
+    setInternalIndex(newIndex);
+    onIndexChange?.(newIndex);
   }, [onDelete, activeIndex, images.length, onIndexChange]);
 
   if (images.length === 0) {
@@ -95,70 +85,42 @@ export const ImageCarousel = (props: ImageCarouselProps) => {
   }
 
   return (
-    <div className={classes.carousel}>
-      <div className={classes.imageContainer}>
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.div
-            key={activeIndex}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-            }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(_, { offset, velocity }) => {
-              const swipe = swipePower(offset.x, velocity.x);
-
-              if (swipe < -swipeConfidenceThreshold) {
-                paginate(1);
-              } else if (swipe > swipeConfidenceThreshold) {
-                paginate(-1);
-              } else if (Math.abs(offset.x) > 50) {
-                paginate(offset.x > 0 ? -1 : 1);
-              }
-            }}
-            className={classes.motionWrapper}
-            style={{ position: 'relative', width: '100%' }}
-          >
-            <Image
-              src={images[activeIndex]}
-              alt={`Image ${activeIndex + 1}`}
-              className={classes.image}
-              fit="contain"
-              draggable={false}
+    <div className={classes.wrapper}>
+      <Carousel
+        withControls={false}
+        withIndicators={images.length > 1}
+        emblaOptions={{ loop: true }}
+        initialSlide={activeIndex}
+        onSlideChange={handleSlideChange}
+        classNames={{
+          root: classes.carousel,
+          viewport: classes.viewport,
+          container: classes.container,
+          slide: classes.slide,
+          indicators: classes.indicators,
+          indicator: classes.indicator,
+        }}
+      >
+        {images.map((url, index) => (
+          <Carousel.Slide key={url}>
+            <SlideImage
+              src={url}
+              alt={`Image ${index + 1}`}
+              preloaded={loadedUrls.has(url)}
+              onLoad={handleImageLoad}
             />
-          </motion.div>
-        </AnimatePresence>
+          </Carousel.Slide>
+        ))}
+      </Carousel>
 
-        {showDeleteButton && onDelete && (
-          <button
-            className={classes.deleteButton}
-            onClick={handleDelete}
-            type="button"
-          >
-            <TrashIcon />
-          </button>
-        )}
-      </div>
-
-      {images.length > 1 && (
-        <div className={classes.dots}>
-          {images.map((_, index) => (
-            <button
-              key={index}
-              className={`${classes.dot} ${index === activeIndex ? classes.active : ''}`}
-              onClick={() => handleDotClick(index)}
-              type="button"
-              aria-label={`Go to image ${index + 1}`}
-            />
-          ))}
-        </div>
+      {showDeleteButton && onDelete && (
+        <button
+          className={classes.deleteButton}
+          onClick={handleDelete}
+          type="button"
+        >
+          <TrashIcon />
+        </button>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
-import { Button, Flex, Text } from '@mantine/core';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import { Button, Stack, Text } from '@mantine/core';
+import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
+import ChatErrorIcon from 'shared/assets/icons/ChatError';
 import classNames from 'shared/library/ClassNames/classNames';
 import s from './ErrorPage.module.scss';
 
@@ -8,32 +9,30 @@ interface ErrorPageProps {
 }
 
 export const ErrorPage = ({ className }: ErrorPageProps) => {
-  const reloadPage = () => {
-    location.reload();
-  };
-
-  const goToMainPage = () => {
-    window.location.href = RoutePath.main;
+  const goBack = () => {
+    window.history.back();
   };
 
   return (
-    <div className={classNames(s.PageError, {}, [className])}>
-      <div className={s.content}>
-        <Text className={s.title}>Ошибка</Text>
-        <Text className={s.text}>Произошла непредвиденная ошибка</Text>
-        <Flex gap="1rem" justify="center" align="center">
-          <Button
-            className={s.button}
-            variant="default"
-            onClick={reloadPage}
-            size="compact-md"
-          >
-            Обновить
-          </Button>
-          <Button variant="default" onClick={goToMainPage} size="compact-md">
-            На главную
-          </Button>
-        </Flex>
+    <div className={classNames(s.page, {}, [className])}>
+      <div className={s.center}>
+        <Stack align="center" gap={12}>
+          <ChatErrorIcon size={36} color="var(--accent-color)" />
+          <Text className={s.text}>
+            {'Что-то пошло не так,\nмы уже ищем причину'}
+          </Text>
+        </Stack>
+      </div>
+
+      <div className={s.bottom}>
+        <Button
+          className={s.button}
+          leftSection={<ArrowLeftIcon />}
+          onClick={goBack}
+          fullWidth
+        >
+          Назад
+        </Button>
       </div>
     </div>
   );

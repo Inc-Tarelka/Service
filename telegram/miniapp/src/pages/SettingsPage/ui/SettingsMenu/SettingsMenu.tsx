@@ -114,6 +114,7 @@ export const SettingsMenu = observer(
           onDelete={handleLogout}
           fullWidth
           title="Вы уверены, что хотите выйти?"
+          confirmLabel="Выйти"
         />
 
         <InviteFriendDrawer

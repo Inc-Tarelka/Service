@@ -57,4 +57,10 @@ export const API_URL = {
 
   // Search
   search_coauthors: () => '/users/search/name',
+
+  // Notifications
+  notifications_collaboration: () => '/notifications/collaboration',
+
+  // My projects
+  my_projects: () => '/publications/my/projects',
 };

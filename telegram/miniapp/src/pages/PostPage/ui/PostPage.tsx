@@ -63,8 +63,13 @@ export const PostPage = observer(() => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      galleryStore.addPhotos(Array.from(files));
-      openGallerySheet();
+      const imageFiles = Array.from(files).filter((f) =>
+        f.type.startsWith('image/'),
+      );
+      if (imageFiles.length > 0) {
+        galleryStore.addPhotos(imageFiles);
+        openGallerySheet();
+      }
     }
     e.target.value = '';
   };
@@ -201,7 +206,7 @@ export const PostPage = observer(() => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic,image/heif,image/bmp,image/tiff"
         multiple
         className={classes.fileInput}
         onChange={handleFileChange}
@@ -271,7 +276,9 @@ export const PostPage = observer(() => {
             variant="filled"
             size="lg"
             disabled={
-              !postStore.formValues.title || !postStore.formValues.cityId
+              !postStore.formValues.title ||
+              !postStore.formValues.cityId ||
+              selectedImages.length === 0
             }
             bg="var(--accent-color)"
             c="var(--bg-color)"

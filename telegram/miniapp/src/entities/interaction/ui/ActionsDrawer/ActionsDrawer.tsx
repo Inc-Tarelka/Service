@@ -15,6 +15,7 @@ interface ActionsDrawerProps {
   onClose: () => void;
   onDelete?: () => void;
   title?: string;
+  confirmLabel?: string;
   noTitle?: boolean;
   fullWidth?: boolean;
   actions?: ActionItem[];
@@ -27,6 +28,7 @@ export const ActionsDrawer = (props: ActionsDrawerProps) => {
     onClose,
     onDelete,
     title = 'Вы уверены?',
+    confirmLabel = 'Удалить',
     noTitle,
     fullWidth,
     actions,
@@ -100,7 +102,7 @@ export const ActionsDrawer = (props: ActionsDrawerProps) => {
               onClick={handleDelete}
               notDark
             >
-              Удалить
+              {confirmLabel}
             </Button>
 
             <Button

@@ -1,33 +1,66 @@
-.carousel {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
+.wrapper {
   position: relative;
-  touch-action: pan-y;
   width: 100%;
 }
 
-.imageContainer {
-  overflow: hidden;
+.carousel {
+  width: 100%;
+}
+
+.viewport {
+  width: 100%;
+}
+
+.container {
+  align-items: stretch;
+}
+
+.slide {
+  width: 100%;
+}
+
+.slideInner {
   position: relative;
-  touch-action: pan-y;
+  width: 100%;
+}
+
+// Скелетон в потоке — задаёт высоту контейнеру через aspect-ratio пока не загружена картинка
+.skeleton {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+// Пока картинка грузится — поверх скелетона абсолютно, не влияет на поток
+.imageLoading {
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+}
+
+// После загрузки — встаёт в поток, естественные размеры, плавно появляется
+.imageLoaded {
+  display: block;
+  height: auto;
+  opacity: 1;
+  transition: opacity 0.3s ease;
   width: 100%;
 }
 
 .image {
   display: block;
-  height: auto;
-  width: 100%;
 }
 
-.dots {
+.indicators {
   display: flex;
   gap: 4px;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
-.dot {
+.indicator {
   background: var(--secondary-card-bg);
   border: none;
   border-radius: 50%;
@@ -37,13 +70,9 @@
   transition: all 0.2s ease;
   width: 8px;
 
-  &:hover {
-    background: var(--text-color-secondary);
+  &[data-active] {
+    background: var(--text-color);
   }
-}
-
-.dot.active {
-  background: var(--text-color);
 }
 
 .deleteButton {

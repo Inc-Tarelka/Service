@@ -52,6 +52,7 @@ export interface SearchUser {
   company?: Company;
   specializations?: Specialization[];
   cities?: City[];
+  projectTopImages?: string[];
 }
 
 export type SearchUsersResponse = SearchUser[];

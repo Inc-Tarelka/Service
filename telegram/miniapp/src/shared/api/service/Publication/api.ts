@@ -5,6 +5,7 @@ import type {
   CreatePublicationRequest,
   GetPublicationCommentsParams,
   GetPublicationCommentsResponse,
+  MyProject,
   PresignRequest,
   PresignResponse,
   Publication,
@@ -78,5 +79,11 @@ export const createPublicationComment = async (
     API_URL.publication_comment_post(publicationId.toString()),
     request,
   );
+  return response.data;
+};
+
+// =========== MY PROJECTS ===========
+export const getMyProjects = async (): Promise<MyProject[]> => {
+  const response = await baseInstanceV1.get<MyProject[]>(API_URL.my_projects());
   return response.data;
 };

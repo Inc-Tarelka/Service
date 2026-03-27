@@ -197,3 +197,13 @@ export interface GetPublicationCommentsParams {
   limit?: number;
   offset?: number;
 }
+
+export interface MyProject {
+  description: string;
+  id: number;
+  image: string | null;
+  isAuthor: boolean;
+  likesCount: number;
+  name: string;
+  type: 'PROJECT';
+}

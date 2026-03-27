@@ -1,0 +1,13 @@
+.wrapper {
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.skeletonOverlay {
+  left: 0;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}

@@ -8,17 +8,14 @@ interface ProfileListingItemProps {
   onClick?: (id: number) => void;
 }
 
-// Mocked project images
-const MOCKED_IMAGES = [
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2864&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?q=80&w=2864&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2864&auto=format&fit=crop',
-];
-
 export const ProfileListingItem = (props: ProfileListingItemProps) => {
   const { user, onClick } = props;
   const { name, userId, specializations, cities, logoUrl, username } =
     getProfileDisplayData(user);
+
+  const projectImages = (user.projectTopImages ?? [])
+    .filter((url) => url.startsWith('http'))
+    .slice(0, 3);
 
   return (
     <div
@@ -40,16 +37,18 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
         </div>
       </div>
 
-      <div className={s.projects}>
-        {MOCKED_IMAGES.map((imgUrl, index) => (
-          <img
-            key={index}
-            src={imgUrl}
-            className={s.projectImage}
-            alt={`Project ${index + 1}`}
-          />
-        ))}
-      </div>
+      {projectImages.length > 0 && (
+        <div className={s.projects}>
+          {projectImages.map((imgUrl, index) => (
+            <img
+              key={index}
+              src={imgUrl}
+              className={s.projectImage}
+              alt={`Project ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

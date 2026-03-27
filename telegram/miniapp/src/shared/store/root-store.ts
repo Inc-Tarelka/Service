@@ -1,4 +1,5 @@
 import { authStore } from './api/Auth/auth-store';
+import { NotificationCollaborationStore } from './api/Notification/notification-collaboration-store';
 import { SearchInteractionsStore } from './api/Interaction/search-interactions-store';
 import { NeedsStore } from './api/Needs/needs-store';
 import { PostStore } from './api/Post/post-store';
@@ -42,4 +43,5 @@ export class RootStore {
   needsStore = new NeedsStore();
   publicationCommentsStore = new PublicationCommentsStore(this);
   referralStore = new ReferralStore();
+  notificationCollaborationStore = new NotificationCollaborationStore();
 }
