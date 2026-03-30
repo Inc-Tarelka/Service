@@ -43,9 +43,19 @@ type RegisterResponse struct {
 
 // PreRegisterRequest - предварительный шаг регистрации (stage 0)
 // Создаёт базовую учётку с username/phone/password и initData без проверки кода телефона и без выдачи токенов.
+// На этом шаге также проверяется инвайт (senderId) и списывается 1 приглашение у пригласившего.
 type PreRegisterRequest struct {
 	InitData string      `json:"initData" binding:"required"`
 	Account  AccountData `json:"account" binding:"required"`
+	// senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
+	// Обязателен в текущей конфигурации (закрытый режим регистрации).
+	SenderID string `json:"senderId" binding:"required"`
+}
+
+// InviteLinkResponse - ответ с данными для формирования пригласительной ссылки
+type InviteLinkResponse struct {
+	// SenderID — зашифрованный идентификатор пригласителя, который нужно передавать в startapp
+	SenderID string `json:"senderId"`
 }
 
 // PreRegisterResponse - ответ на предварительную регистрацию

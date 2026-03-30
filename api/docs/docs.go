@@ -465,6 +465,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/createInviteLink": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Генерирует senderId для текущего пользователя для формирования Telegram Mini App ссылки (?startapp=senderId)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Создать пригласительную ссылку",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.InviteLinkResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/needs/{id}": {
             "get": {
                 "security": [
@@ -2809,6 +2852,15 @@ const docTemplate = `{
                 "InviteAccountTypeClubParticipant"
             ]
         },
+        "model.InviteLinkResponse": {
+            "type": "object",
+            "properties": {
+                "senderId": {
+                    "description": "SenderID — зашифрованный идентификатор пригласителя, который нужно передавать в startapp",
+                    "type": "string"
+                }
+            }
+        },
         "model.LoginRequest": {
             "type": "object",
             "required": [
@@ -3066,13 +3118,18 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "account",
-                "initData"
+                "initData",
+                "senderId"
             ],
             "properties": {
                 "account": {
                     "$ref": "#/definitions/model.AccountData"
                 },
                 "initData": {
+                    "type": "string"
+                },
+                "senderId": {
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен в текущей конфигурации (закрытый режим регистрации).",
                     "type": "string"
                 }
             }

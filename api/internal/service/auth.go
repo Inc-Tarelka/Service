@@ -48,6 +48,8 @@ type AuthService interface {
 	RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error)
 	// PreRegister создаёт базового пользователя (stage 0) по initData и учётным данным
 	PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error)
+	// GenerateInviteSenderID генерирует senderId для текущего пользователя для формирования инвайт-ссылки.
+	GenerateInviteSenderID(ctx context.Context, userID int64) (string, error)
 	Login(ctx context.Context, req *model.LoginRequest) (*model.LoginResponse, error)
 	RefreshTokens(ctx context.Context, refreshToken string) (*model.RefreshResponse, error)
 	ValidateAccessToken(token string) (*model.JWTClaims, error)
@@ -175,9 +177,30 @@ func decodeSenderID(senderID, secret string) (int64, error) {
 	return strconv.ParseInt(data, 10, 64)
 }
 
+// GenerateInviteSenderID генерирует senderId для формирования инвайт-ссылки для указанного пользователя.
+// Для DEFAULT-пользователя дополнительно проверяется, что лимит приглашённых ещё не исчерпан
+// (invite_referral_count < 5). Для CLUB_PARTICIPANT ограничений нет.
+func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) (string, error) {
+	if s.inviteSecret == "" {
+		return "", fmt.Errorf("invite_not_configured")
+	}
+
+	user, err := s.tarelkaUserRepo.FindByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+
+	if user.InviteAccountType == model.InviteAccountTypeDefault && user.InviteReferralCount >= 5 {
+		return "", fmt.Errorf("invite_limit_reached")
+	}
+
+	return encodeSenderID(user.TgUserID, s.inviteSecret), nil
+}
+
 // PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
 // На этом шаге:
 //   - валидируем initData и получаем telegramID
+//   - проверяем и списываем инвайт по senderId (если включён закрытый режим)
 //   - проверяем уникальность username
 //   - создаём или находим tg_user
 //   - хэшируем пароль
@@ -185,6 +208,11 @@ func decodeSenderID(senderID, secret string) (int64, error) {
 //
 // Токены здесь НЕ выдаются.
 func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error) {
+	// 0. Проверка и применение инвайта (senderID)
+	if err := s.ValidateInviteAndIncrement(ctx, req.SenderID); err != nil {
+		return nil, err
+	}
+
 	// 1. Валидация initData и извлечение telegramID
 	telegramID, err := s.validateInitData(req.InitData)
 	if err != nil {
@@ -259,15 +287,7 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 // RegisterViaTelegram регистрация через Telegram Mini App
 
 func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
-	// 0. Проверка и применение инвайта (senderID), если он передан
-	if strings.TrimSpace(req.SenderID) == "" {
-		// В закрытом режиме можно потребовать обязательный senderID.
-		// Сейчас возвращаем явную ошибку, чтобы фронт показал экран «нужен инвайт».
-		return nil, fmt.Errorf("invite_required")
-	}
-	if err := s.ValidateInviteAndIncrement(ctx, req.SenderID); err != nil {
-		return nil, err
-	}
+	// 0. Инвайт уже был проверен и применён на этапе pre-register, здесь ничего не делаем.
 
 	// 1. Валидация initData
 	telegramID, err := s.validateInitData(req.InitData)

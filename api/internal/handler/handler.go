@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/Inc-Tarelka/api/internal/service"
@@ -67,6 +68,9 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		protected := api.Group("")
 		protected.Use(h.authMiddleware())
 		{
+			// Invite links
+			protected.GET("/createInviteLink", h.CreateInviteLink)
+
 			// Users
 			users := protected.Group("/users")
 			{
@@ -122,6 +126,48 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			}
 		}
 	}
+}
+
+// CreateInviteLink godoc
+// @Summary Создать пригласительную ссылку
+// @Description Генерирует senderId для текущего пользователя для формирования Telegram Mini App ссылки (?startapp=senderId)
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} model.InviteLinkResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /createInviteLink [get]
+func (h *Handler) CreateInviteLink(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID, ok := uid.(int64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	senderID, err := h.authService.GenerateInviteSenderID(c.Request.Context(), userID)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "invite_not_configured") {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "invite_not_configured"})
+			return
+		}
+		if strings.Contains(msg, "invite_limit_reached") {
+			// Количество доступных приглашений закончилось
+			c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_limit_reached"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.InviteLinkResponse{SenderID: senderID})
 }
 
 // authMiddleware middleware для проверки авторизации

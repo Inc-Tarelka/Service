@@ -230,6 +230,13 @@ definitions:
     x-enum-varnames:
     - InviteAccountTypeDefault
     - InviteAccountTypeClubParticipant
+  model.InviteLinkResponse:
+    properties:
+      senderId:
+        description: SenderID — зашифрованный идентификатор пригласителя, который
+          нужно передавать в startapp
+        type: string
+    type: object
   model.LoginRequest:
     properties:
       password:
@@ -404,9 +411,15 @@ definitions:
         $ref: '#/definitions/model.AccountData'
       initData:
         type: string
+      senderId:
+        description: |-
+          senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
+          Обязателен в текущей конфигурации (закрытый режим регистрации).
+        type: string
     required:
     - account
     - initData
+    - senderId
     type: object
   model.PreRegisterResponse:
     properties:
@@ -1221,6 +1234,34 @@ paths:
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       summary: Регистрация через Telegram
+      tags:
+      - auth
+  /createInviteLink:
+    get:
+      description: Генерирует senderId для текущего пользователя для формирования
+        Telegram Mini App ссылки (?startapp=senderId)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.InviteLinkResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать пригласительную ссылку
       tags:
       - auth
   /needs/{id}:
