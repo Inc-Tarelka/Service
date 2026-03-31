@@ -55,7 +55,6 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           accountType,
           verificationRequestId,
           verificationCode,
-          userId,
         } = authStore.tempData;
 
         if (
@@ -91,13 +90,10 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         });
 
         if (success) {
-          await userStore.updateProfileAction(
-            {
-              firstName: values.name,
-              lastName: values.lastName,
-            },
-            userId,
-          );
+          await userStore.updateProfileAction({
+            firstName: values.name,
+            lastName: values.lastName,
+          });
           onSuccess(values);
         } else {
           setErrors({ name: 'Ошибка регистрации. Попробуйте снова.' });

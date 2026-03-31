@@ -7,30 +7,28 @@ import classes from './InviteFriendDrawer.module.scss';
 interface InviteFriendDrawerProps {
   opened: boolean;
   onClose: () => void;
-  linksCount?: number;
 }
 
 export const InviteFriendDrawer = observer(
-  ({ opened, onClose, linksCount = 5 }: InviteFriendDrawerProps) => {
-    const { referralStore, userStore } = useStore();
-
-    const userId =
-      window.Telegram?.WebApp?.initDataUnsafe?.user?.id ||
-      userStore.profile?.id;
+  ({ opened, onClose }: InviteFriendDrawerProps) => {
+    const { referralStore } = useStore();
 
     useEffect(() => {
-      if (opened && userId && !referralStore.inviteLink) {
-        referralStore.generateInviteLinkAction(userId);
+      if (
+        opened &&
+        !referralStore.inviteLink &&
+        !referralStore.isLimitReached
+      ) {
+        referralStore.generateInviteLinkAction();
       }
-    }, [opened, userId, referralStore]);
+    }, [opened, referralStore]);
 
     const handleShare = () => {
-      const shareUrl =
-        referralStore.inviteLink ||
-        `https://t.me/Tarelka_dev_weak_bot?startapp=senderID${userId}`;
+      if (!referralStore.inviteLink) return;
+
       const text = 'Присоединяйся к Tarelka!';
       const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(
-        shareUrl,
+        referralStore.inviteLink,
       )}&text=${encodeURIComponent(text)}`;
 
       if (window.Telegram?.WebApp) {
@@ -40,6 +38,11 @@ export const InviteFriendDrawer = observer(
       }
       onClose();
     };
+
+    const isDisabled =
+      referralStore.isLimitReached ||
+      referralStore.isLoading ||
+      !!referralStore.error;
 
     return (
       <Drawer
@@ -63,10 +66,13 @@ export const InviteFriendDrawer = observer(
           зарегистрироваться в приложении.
         </p>
 
-        <p className={classes.linksCount}>
-          Осталось ссылок:{' '}
-          <span className={classes.countNumber}>{linksCount}</span>
-        </p>
+        {referralStore.isLimitReached && (
+          <p className={classes.linksCount}>Лимит приглашений исчерпан</p>
+        )}
+
+        {referralStore.error && (
+          <p className={classes.linksCount}>{referralStore.error}</p>
+        )}
 
         <Button
           fullWidth
@@ -74,7 +80,7 @@ export const InviteFriendDrawer = observer(
           radius="xl"
           className={classes.button}
           onClick={handleShare}
-          disabled={linksCount === 0 || referralStore.isLoading}
+          disabled={isDisabled}
           loading={referralStore.isLoading}
         >
           Поделиться ссылкой

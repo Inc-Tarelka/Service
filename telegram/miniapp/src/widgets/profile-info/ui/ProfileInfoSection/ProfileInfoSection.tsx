@@ -1,5 +1,6 @@
 import { Box, Stack } from '@mantine/core';
 import { User } from 'shared/api/service/User/types';
+import { UserRole } from 'shared/consts/userRoles';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
 import s from './ProfileInfoSection.module.scss';
 
@@ -7,6 +8,10 @@ interface ProfileInfoSectionProps {
   user?: User;
   isPublicView?: boolean;
 }
+
+const getMembershipStatus = (role?: UserRole) => {
+  return role === UserRole.ADMIN ? 'Член Клуба' : 'Претендент в члены клуба';
+};
 
 export const ProfileInfoSection = ({
   user = MOCK_USER,
@@ -18,9 +23,7 @@ export const ProfileInfoSection = ({
           <h4 className={s.title}>Членство</h4>
           <div className={s.grid}>
             <span className={s.label}>Статус</span>
-            <span className={s.value}>
-              {user.status || 'Претендент в члены клуба'}
-            </span>
+            <span className={s.value}>{getMembershipStatus(user.role)}</span>
 
             <span className={s.label}>Кто пригласил</span>
             <span className={s.valueBold}>Иванов Иван Иванович</span>

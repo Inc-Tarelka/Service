@@ -59,12 +59,12 @@ export interface PhoneVerification {
 
 export interface TelegramRegisterRequest {
   initData: string;
+  senderId?: string;
   account: {
     type: ApiAccountType;
     username: string;
     phone: string;
     password: string;
-    senderId?: number;
   };
   phoneVerification: PhoneVerification;
   specializationIds: number[];
@@ -74,6 +74,7 @@ export interface TelegramRegisterRequest {
 
 export interface PreRegisterRequest {
   initData: string;
+  senderId?: string;
   account: {
     type: ApiAccountType;
     username: string;
@@ -82,7 +83,6 @@ export interface PreRegisterRequest {
     name?: string;
     surname?: string;
     companyName?: string;
-    senderId?: number;
   };
 }
 

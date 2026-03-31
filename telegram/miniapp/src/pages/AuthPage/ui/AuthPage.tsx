@@ -29,7 +29,7 @@ export const AuthPage = observer(() => {
 
   const rawStep = searchParams.get('step');
   const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-  const isReferral = startParam && startParam.startsWith('senderID');
+  const isReferral = !!startParam;
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
     : isReferral

@@ -1,3 +1,3 @@
-export interface GenerateInviteLinkResponse {
-  link: string;
+export interface CreateInviteLinkResponse {
+  senderId: string;
 }

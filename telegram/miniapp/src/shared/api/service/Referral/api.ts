@@ -1,13 +1,11 @@
-import type { GenerateInviteLinkResponse } from './types';
+import { API_URL } from 'shared/api/api_url';
+import { baseInstanceV1 } from 'shared/api/base';
+import type { CreateInviteLinkResponse } from './types';
 
-export const generateInviteLink = async (
-  userId: number | string,
-): Promise<GenerateInviteLinkResponse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        link: `https://t.me/Tarelka_dev_weak_bot?startapp=senderID${userId}`,
-      });
-    }, 500);
-  });
-};
+export const createInviteLinkRequest =
+  async (): Promise<CreateInviteLinkResponse> => {
+    const response = await baseInstanceV1.get<CreateInviteLinkResponse>(
+      API_URL.create_invite_link(),
+    );
+    return response.data;
+  };

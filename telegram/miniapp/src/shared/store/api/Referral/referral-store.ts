@@ -1,34 +1,65 @@
-import { makeAutoObservable } from 'mobx';
-import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
-import type { GenerateInviteLinkResponse } from 'shared/api/service/Referral';
-import { generateInviteLink } from 'shared/api/service/Referral/api';
+import { AxiosError } from 'axios';
+import { makeAutoObservable, runInAction } from 'mobx';
+import { createInviteLinkRequest } from 'shared/api/service/Referral/api';
+
+const BOT_INVITE_BASE = 'https://t.me/mydebbugingbot';
 
 export class ReferralStore {
-  inviteLinkData?: IPromiseBasedObservable<GenerateInviteLinkResponse>;
-  linksCount: number = 5;
+  senderId: string | null = null;
+  isLoading = false;
+  isLimitReached = false;
+  error: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  generateInviteLinkAction = async (userId: number | string) => {
+  get inviteLink(): string | null {
+    if (!this.senderId) return null;
+    return `${BOT_INVITE_BASE}?startapp=${this.senderId}`;
+  }
+
+  generateInviteLinkAction = async () => {
+    if (this.isLoading) return;
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
     try {
-      this.inviteLinkData = fromPromise(generateInviteLink(userId));
-    } catch (error) {
-      console.error('Failed to generate invite link:', error);
+      const response = await createInviteLinkRequest();
+      runInAction(() => {
+        this.senderId = response.senderId;
+        this.isLimitReached = false;
+      });
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ error?: string }>;
+      const errorCode = axiosErr.response?.data?.error;
+
+      runInAction(() => {
+        if (
+          axiosErr.response?.status === 403 &&
+          errorCode === 'invite_limit_reached'
+        ) {
+          this.isLimitReached = true;
+        } else {
+          this.error = 'Не удалось создать ссылку. Попробуйте позже.';
+        }
+      });
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
     }
   };
 
-  get isLoading() {
-    return this.inviteLinkData?.state === 'pending';
-  }
-
-  get inviteLink() {
-    if (this.inviteLinkData?.state === 'fulfilled') {
-      return this.inviteLinkData.value.link;
-    }
-    return null;
-  }
+  reset = () => {
+    this.senderId = null;
+    this.isLoading = false;
+    this.isLimitReached = false;
+    this.error = null;
+  };
 }
 
 export const referralStore = new ReferralStore();
