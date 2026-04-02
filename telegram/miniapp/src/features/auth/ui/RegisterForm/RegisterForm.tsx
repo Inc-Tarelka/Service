@@ -38,7 +38,8 @@ export const RegisterForm = observer(
       schema: registerSchema,
       onSubmit: async (values) => {
         const success = await authStore.preRegisterAndSendCodeAction({
-          initData: WebApp.initData || '',
+          initData:
+            'query_id=AAEf3kQfAAAAAB_eRB_s5YZ4&user=%7B%22id%22%3A524607007%2C%22first_name%22%3A%22%D0%98%D0%BB%D1%8C%D1%8F%22%2C%22last_name%22%3A%22%D0%9A%D0%B8%D1%81%D0%B5%D0%BB%D1%91%D0%B2%22%2C%22username%22%3A%22Vegetablefinder%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FvB29BixlKdczdf4UGp8tEIq7GmZ1UMlOO0vrGwdljmE.svg%22%7D&auth_date=1775077586&signature=eCepqLfGEd6RGqcibWWPBLfk77z_9esICxwXg_mnfIt19Inob6CAPqLoW3fZL0Ye85pNz-CMaLjeNm-_LxFPBw&hash=f63275a5c831aad9a1da114272365ea60b4056db7a58796070c5d58183690bc5',
           account: {
             type: AccountType.PERSON,
             username: values.login,

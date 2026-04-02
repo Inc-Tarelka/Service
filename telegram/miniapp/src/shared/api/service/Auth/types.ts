@@ -74,7 +74,7 @@ export interface TelegramRegisterRequest {
 
 export interface PreRegisterRequest {
   initData: string;
-  senderId?: string;
+  senderId: string;
   account: {
     type: ApiAccountType;
     username: string;

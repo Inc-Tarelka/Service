@@ -163,17 +163,13 @@ export class AuthStore {
   };
 
   preRegisterAction = async (
-    data: PreRegisterRequest,
+    data: Omit<PreRegisterRequest, 'senderId'>,
   ): Promise<number | null> => {
     try {
       const senderId =
-        window.Telegram?.WebApp?.initDataUnsafe?.start_param || undefined;
-      const payload: PreRegisterRequest = {
-        ...data,
-        ...(senderId ? { senderId } : {}),
-      };
-
-      const promise = preRegisterRequest(payload);
+        window.Telegram?.WebApp?.initDataUnsafe?.start_param ??
+        'NTI0NjA3MDA3OjI1YzI3OWUxNWJlNTAyMGU0Mzg3YmMzYzNiMDg2Njc2Yjk3ZDkzNmJjOWZmNjQzYTlmZmZjYjk3OTVkYzQ5MDI';
+      const promise = preRegisterRequest({ ...data, senderId });
       this.preRegisterData = fromPromise(promise);
 
       const response = await promise;
@@ -184,7 +180,6 @@ export class AuthStore {
     }
   };
 
-  // Composite action: pre-register + send SMS in one step
   preRegisterAndSendCodeAction = async (params: {
     initData: string;
     account: PreRegisterRequest['account'];
