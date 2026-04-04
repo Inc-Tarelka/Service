@@ -80,6 +80,8 @@ type TarelkaUserRepository interface {
 	// GetTeammatesCount возвращает число «сокомандников» пользователя —
 	// других пользователей, с которыми у него есть общие публикации (как автора, так и соавтора).
 	GetTeammatesCount(ctx context.Context, userID int64) (int64, error)
+	// GetTeammates возвращает список сокомандников по той же логике, что и GetTeammatesCount.
+	GetTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error)
 }
 
 type tarelkaUserRepository struct {
@@ -574,6 +576,90 @@ func (r *tarelkaUserRepository) GetTeammatesCount(ctx context.Context, userID in
 		return 0, err
 	}
 	return cnt, nil
+}
+
+// GetTeammates возвращает список сокомандников пользователя по той же логике,
+// что и GetTeammatesCount: все уникальные пользователи, с которыми есть общие
+// публикации (как автора, так и соавтора).
+func (r *tarelkaUserRepository) GetTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error) {
+	query := `
+		WITH user_publications AS (
+			SELECT id AS publication_id
+			FROM publications
+			WHERE author_id = $1
+			UNION
+			SELECT publication_id
+			FROM publication_co_authors
+			WHERE user_id = $1
+		), teammates AS (
+			-- авторы этих же публикаций
+			SELECT DISTINCT p.author_id AS teammate_id
+			FROM publications p
+			JOIN user_publications up ON up.publication_id = p.id
+			WHERE p.author_id <> $1
+			UNION
+			-- соавторы этих же публикаций
+			SELECT DISTINCT ca.user_id AS teammate_id
+			FROM publication_co_authors ca
+			JOIN user_publications up ON up.publication_id = ca.publication_id
+			WHERE ca.user_id <> $1
+		)
+		SELECT 
+			u.id,
+			COALESCE(tp.name, ''),
+			COALESCE(tp.surname, ''),
+			u.telegram_url,
+			(
+				SELECT s.name
+				FROM user_specializations us
+				JOIN specializations s ON s.id = us.specialization_id
+				WHERE us.tarelka_user_id = u.id
+				ORDER BY us.specialization_id
+				LIMIT 1
+			) AS specialization,
+			(
+				SELECT c.name
+				FROM user_cities uc
+				JOIN cities c ON c.id = uc.city_id
+				WHERE uc.tarelka_user_id = u.id
+				ORDER BY uc.city_id
+				LIMIT 1
+			) AS city_name
+		FROM teammates t
+		JOIN tarelka_users u ON u.id = t.teammate_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		ORDER BY tp.name, tp.surname, u.id
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]model.TeammateItem, 0)
+	for rows.Next() {
+		var (
+			id    int64
+			fname string
+			lname string
+			tgURL *string
+			spec  *string
+			city  *string
+		)
+		if err := rows.Scan(&id, &fname, &lname, &tgURL, &spec, &city); err != nil {
+			return nil, err
+		}
+		items = append(items, model.TeammateItem{
+			ID:             id,
+			FirstName:      fname,
+			LastName:       lname,
+			TelegramURL:    tgURL,
+			Specialization: spec,
+			City:           city,
+		})
+	}
+	return items, rows.Err()
 }
 
 // GetLastProjectTopImages возвращает до 3 URL главных изображений (position = 0)

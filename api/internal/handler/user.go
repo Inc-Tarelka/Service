@@ -78,6 +78,38 @@ func (h *UserHandler) GetMyProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
+// GetMyTeammates godoc
+// @Summary Список сокомандников текущего пользователя
+// @Description Сокомандники определяются так же, как в teammatesCount профиля: пользователи, с которыми есть общие публикации (как автора, так и соавтора).
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} model.TeammateItem
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/me/teammates [get]
+func (h *UserHandler) GetMyTeammates(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	userID, ok := uid.(int64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	teammates, err := h.userService.GetUserTeammates(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, teammates)
+}
+
 // GetUser godoc
 // @Summary Получить пользователя
 // @Description Получение информации о пользователе по ID

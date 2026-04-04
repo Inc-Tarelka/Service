@@ -49,6 +49,8 @@ type UserService interface {
 
 	// GetUserProfile возвращает расширенный профиль пользователя с публикациями и метриками.
 	GetUserProfile(ctx context.Context, id int64) (*model.UserProfileResponse, error)
+	// GetUserTeammates возвращает список сокомандников пользователя.
+	GetUserTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error)
 }
 
 type userService struct {
@@ -70,6 +72,11 @@ func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicatio
 // GetUser получение полной информации о пользователе
 func (s *userService) GetUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error) {
 	return s.tarelkaUserRepo.GetFullUser(ctx, id)
+}
+
+// GetUserTeammates возвращает список сокомандников пользователя по логике teammatesCount.
+func (s *userService) GetUserTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error) {
+	return s.tarelkaUserRepo.GetTeammates(ctx, userID)
 }
 
 // GetUserProfile строит расширенный профиль пользователя.

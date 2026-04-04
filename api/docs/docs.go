@@ -1773,6 +1773,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/me/teammates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Сокомандники определяются так же, как в teammatesCount профиля: пользователи, с которыми есть общие публикации (как автора, так и соавтора).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Список сокомандников текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TeammateItem"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/search/filters": {
             "get": {
                 "security": [
@@ -3779,6 +3819,29 @@ const docTemplate = `{
                 },
                 "wallpaper_url": {
                     "description": "Wallpaper (cover image) URL — stored in S3 similarly to LogoURL",
+                    "type": "string"
+                }
+            }
+        },
+        "model.TeammateItem": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "specialization": {
+                    "type": "string"
+                },
+                "telegramUrl": {
                     "type": "string"
                 }
             }

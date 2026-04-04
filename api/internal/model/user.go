@@ -111,3 +111,15 @@ type UserProfileResponse struct {
 	OutgoingRequestsCount int64                        `json:"outgoingRequestsCount"`
 	ProjectsCount         int64                        `json:"projectsCount"`
 }
+
+// TeammateItem описывает «сокомандника» пользователя — другого пользователя,
+// с которым есть общие публикации (как автора, так и соавтора).
+// Логика определения совпадает с расчётом teammatesCount в профиле.
+type TeammateItem struct {
+	ID             int64   `json:"id"`
+	FirstName      string  `json:"firstName"`
+	LastName       string  `json:"lastName"`
+	TelegramURL    *string `json:"telegramUrl,omitempty"`
+	Specialization *string `json:"specialization,omitempty"`
+	City           *string `json:"city,omitempty"`
+}
