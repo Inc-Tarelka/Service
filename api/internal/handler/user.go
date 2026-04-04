@@ -45,6 +45,39 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// GetMyProfile godoc
+// @Summary Мой профиль
+// @Description Расширенная информация о текущем пользователе: данные профиля, публикации и агрегированные метрики.
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} model.UserProfileResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/me/profile [get]
+func (h *UserHandler) GetMyProfile(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	userID, ok := uid.(int64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	profile, err := h.userService.GetUserProfile(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
+
 // GetUser godoc
 // @Summary Получить пользователя
 // @Description Получение информации о пользователе по ID

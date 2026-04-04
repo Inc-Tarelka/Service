@@ -93,11 +93,14 @@ func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 // FindByTgUserID возвращает пользователя по Telegram ID владельца.
 func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int64) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at,
-		       invite_account_type, invite_referral_count
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count
 		FROM tarelka_users WHERE tg_user_id = $1
 	`
 	var user model.TarelkaUser
+	var fw *string
 	err := r.pool.QueryRow(ctx, query, tgUserID).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -106,6 +109,10 @@ func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
 		&user.TelegramChatID,
 		&user.Conversation,
@@ -120,6 +127,10 @@ func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int
 		}
 		return nil, err
 	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
+	}
 	return &user, nil
 }
 
@@ -127,9 +138,13 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 	query := `
 		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, invite_account_type, invite_referral_count)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at, invite_account_type, invite_referral_count
+		RETURNING id, tg_user_id, type, username, phone, password_hash,
+		          logo_url, wallpaper_url, bio, education, find_work,
+		          telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		          created_at, invite_account_type, invite_referral_count
 	`
 
+	var fw *string
 	err := r.pool.QueryRow(ctx, query,
 		user.TgUserID,
 		user.Type,
@@ -150,6 +165,10 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
 		&user.TelegramChatID,
 		&user.Conversation,
@@ -161,16 +180,24 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 	if err != nil {
 		return nil, err
 	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
+	}
 	return user, nil
 }
 
 func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at, invite_account_type, invite_referral_count
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count
 		FROM tarelka_users WHERE id = $1
 	`
 
 	var user model.TarelkaUser
+	var fw *string
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -179,6 +206,10 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
 		&user.TelegramChatID,
 		&user.Conversation,
@@ -193,16 +224,24 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		}
 		return nil, err
 	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
+	}
 	return &user, nil
 }
 
 func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username string) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, conversation_updated_at, created_at, invite_account_type, invite_referral_count
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count
 		FROM tarelka_users WHERE username = $1
 	`
 
 	var user model.TarelkaUser
+	var fw *string
 	err := r.pool.QueryRow(ctx, query, username).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -211,6 +250,10 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
 		&user.TelegramChatID,
 		&user.Conversation,
@@ -224,6 +267,10 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 			return nil, ErrUserNotFound
 		}
 		return nil, err
+	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
 	}
 	return &user, nil
 }
