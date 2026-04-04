@@ -121,12 +121,19 @@ func (s *userService) GetUserProfile(ctx context.Context, id int64) (*model.User
 		return nil, err
 	}
 
+	// Информация о пригласителе (sender), если есть
+	sender, err := s.tarelkaUserRepo.GetSenderInfo(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.UserProfileResponse{
 		User:                  user,
 		Publications:          pubItems,
 		TeammatesCount:        teammatesCount,
 		OutgoingRequestsCount: unreadCount,
 		ProjectsCount:         projectsCount,
+		Sender:                sender,
 	}, nil
 }
 

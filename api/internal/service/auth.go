@@ -114,6 +114,36 @@ func NewAuthService(
 	}
 }
 
+// validateInviteAndIncrement внутренний помощник, который повторяет логику ValidateInviteAndIncrement,
+// но дополнительно возвращает ID пользователя-пригласителя. Используется при pre-register,
+// чтобы сохранить связь sender -> invited user.
+func (s *authService) validateInviteAndIncrement(ctx context.Context, senderID string) (int64, error) {
+	if strings.TrimSpace(senderID) == "" {
+		return 0, fmt.Errorf("invite_required")
+	}
+	if s.inviteSecret == "" {
+		return 0, fmt.Errorf("invite_not_configured")
+	}
+
+	tgID, err := decodeSenderID(senderID, s.inviteSecret)
+	if err != nil {
+		return 0, fmt.Errorf("invalid_sender_id")
+	}
+
+	inviter, err := s.tarelkaUserRepo.FindByTgUserID(ctx, tgID)
+	if err != nil {
+		return 0, err
+	}
+
+	_, _, err = s.tarelkaUserRepo.IncreaseInviteCountWithLimit(ctx, inviter.ID)
+	if err != nil {
+		// если лимит исчерпан или пользователя нет — считаем, что инвайт недействителен
+		return 0, fmt.Errorf("invite_limit_reached")
+	}
+
+	return inviter.ID, nil
+}
+
 // ValidateInviteAndIncrement проверяет senderID и увеличивает счётчик приглашённых у инвайтера.
 // Правила:
 //   - если senderID пустой или inviteSecret не задан — возвращаем ошибку
@@ -121,29 +151,8 @@ func NewAuthService(
 //   - находим пользователя по tg_user_id
 //   - атомарно инкрементим invite_referral_count с учётом лимита.
 func (s *authService) ValidateInviteAndIncrement(ctx context.Context, senderID string) error {
-	if strings.TrimSpace(senderID) == "" {
-		return fmt.Errorf("invite_required")
-	}
-	if s.inviteSecret == "" {
-		return fmt.Errorf("invite_not_configured")
-	}
-
-	tgID, err := decodeSenderID(senderID, s.inviteSecret)
-	if err != nil {
-		return fmt.Errorf("invalid_sender_id")
-	}
-
-	inviter, err := s.tarelkaUserRepo.FindByTgUserID(ctx, tgID)
-	if err != nil {
-		return err
-	}
-
-	_, _, err = s.tarelkaUserRepo.IncreaseInviteCountWithLimit(ctx, inviter.ID)
-	if err != nil {
-		// если лимит исчерпан или пользователя нет — считаем, что инвайт недействителен
-		return fmt.Errorf("invite_limit_reached")
-	}
-	return nil
+	_, err := s.validateInviteAndIncrement(ctx, senderID)
+	return err
 }
 
 // encodeSenderID кодирует telegramID в безопасную строку senderID.
@@ -208,8 +217,9 @@ func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) 
 //
 // Токены здесь НЕ выдаются.
 func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error) {
-	// 0. Проверка и применение инвайта (senderID)
-	if err := s.ValidateInviteAndIncrement(ctx, req.SenderID); err != nil {
+	// 0. Проверка и применение инвайта (senderID) + получение ID пригласителя
+	inviterID, err := s.validateInviteAndIncrement(ctx, req.SenderID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -252,12 +262,13 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 
 	// 6. Создание tarelka_user с conversation = 0
 	user := &model.TarelkaUser{
-		TgUserID:     tgUser.TelegramID,
-		Type:         req.Account.Type,
-		Username:     req.Account.Username,
-		Phone:        phonePtr,
-		PasswordHash: string(passwordHash),
-		Conversation: 0,
+		TgUserID:        tgUser.TelegramID,
+		Type:            req.Account.Type,
+		Username:        req.Account.Username,
+		Phone:           phonePtr,
+		PasswordHash:    string(passwordHash),
+		Conversation:    0,
+		InvitedByUserID: &inviterID,
 	}
 
 	user, err = s.tarelkaUserRepo.Create(ctx, user)

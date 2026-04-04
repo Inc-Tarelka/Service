@@ -54,8 +54,10 @@ type TarelkaUser struct {
 	// InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)
 	InviteAccountType InviteAccountType `json:"invite_account_type" db:"invite_account_type"`
 	// InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке
-	InviteReferralCount int       `json:"invite_referral_count" db:"invite_referral_count"`
-	CreatedAt           time.Time `json:"created_at" db:"created_at"`
+	InviteReferralCount int `json:"invite_referral_count" db:"invite_referral_count"`
+	// InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть
+	InvitedByUserID *int64    `json:"invitedByUserId,omitempty" db:"invited_by_user_id"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
 }
 
 // FindWork — вариант поиска работы
@@ -94,6 +96,13 @@ type TarelkaUserFull struct {
 	ProjectTopImages []string `json:"projectTopImages,omitempty"`
 }
 
+// SenderInfo — краткая информация о пригласителе (sender), который инициировал регистрацию.
+type SenderInfo struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+}
+
 // UserProfilePublicationItem описывает короткую информацию о публикации в профиле пользователя.
 type UserProfilePublicationItem struct {
 	ID         int64           `json:"id"`
@@ -110,6 +119,9 @@ type UserProfileResponse struct {
 	TeammatesCount        int64                        `json:"teammatesCount"`
 	OutgoingRequestsCount int64                        `json:"outgoingRequestsCount"`
 	ProjectsCount         int64                        `json:"projectsCount"`
+	// Sender содержит краткую информацию о пользователе, по чьей инвайт-ссылке произошла регистрация.
+	// Может быть nil, если пользователь зарегистрировался без инвайта или связь не зафиксирована.
+	Sender *SenderInfo `json:"sender,omitempty"`
 }
 
 // TeammateItem описывает «сокомандника» пользователя — другого пользователя,

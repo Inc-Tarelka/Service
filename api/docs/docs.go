@@ -3583,6 +3583,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.SenderInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                }
+            }
+        },
         "model.SetLogoURLRequest": {
             "type": "object",
             "required": [
@@ -3694,6 +3708,10 @@ const docTemplate = `{
                     "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
                     "type": "integer"
                 },
+                "invitedByUserId": {
+                    "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
+                    "type": "integer"
+                },
                 "logo_url": {
                     "type": "string"
                 },
@@ -3778,6 +3796,10 @@ const docTemplate = `{
                 },
                 "invite_referral_count": {
                     "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
+                    "type": "integer"
+                },
+                "invitedByUserId": {
+                    "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
                     "type": "integer"
                 },
                 "logo_url": {
@@ -3920,6 +3942,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.UserProfilePublicationItem"
                     }
+                },
+                "sender": {
+                    "description": "Sender содержит краткую информацию о пользователе, по чьей инвайт-ссылке произошла регистрация.\nМожет быть nil, если пользователь зарегистрировался без инвайта или связь не зафиксирована.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SenderInfo"
+                        }
+                    ]
                 },
                 "teammatesCount": {
                     "type": "integer"

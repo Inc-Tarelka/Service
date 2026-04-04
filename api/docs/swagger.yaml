@@ -664,6 +664,15 @@ definitions:
       requestId:
         type: string
     type: object
+  model.SenderInfo:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      surname:
+        type: string
+    type: object
   model.SetLogoURLRequest:
     properties:
       logoUrl:
@@ -736,6 +745,10 @@ definitions:
         description: InviteReferralCount — сколько пользователей уже зарегалось по
           его инвайт‑ссылке
         type: integer
+      invitedByUserId:
+        description: InvitedByUserID — идентификатор пользователя-пригласителя (sender),
+          если есть
+        type: integer
       logo_url:
         type: string
       phone:
@@ -792,6 +805,10 @@ definitions:
       invite_referral_count:
         description: InviteReferralCount — сколько пользователей уже зарегалось по
           его инвайт‑ссылке
+        type: integer
+      invitedByUserId:
+        description: InvitedByUserID — идентификатор пользователя-пригласителя (sender),
+          если есть
         type: integer
       logo_url:
         type: string
@@ -890,6 +907,12 @@ definitions:
         items:
           $ref: '#/definitions/model.UserProfilePublicationItem'
         type: array
+      sender:
+        allOf:
+        - $ref: '#/definitions/model.SenderInfo'
+        description: |-
+          Sender содержит краткую информацию о пользователе, по чьей инвайт-ссылке произошла регистрация.
+          Может быть nil, если пользователь зарегистрировался без инвайта или связь не зафиксирована.
       teammatesCount:
         type: integer
       user:

@@ -71,6 +71,9 @@ type TarelkaUserRepository interface {
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
+	// GetSenderInfo возвращает краткую информацию о пригласителе (sender) для указанного пользователя.
+	// Если пользователь был создан без инвайта или пригласитель не найден, возвращает (nil, nil).
+	GetSenderInfo(ctx context.Context, userID int64) (*model.SenderInfo, error)
 	// Invite system helpers
 	GetInviteAccountType(ctx context.Context, userID int64) (model.InviteAccountType, error)
 	UpdateInviteAccountType(ctx context.Context, userID int64, t model.InviteAccountType) error
@@ -98,7 +101,7 @@ func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int
 		SELECT id, tg_user_id, type, username, phone, password_hash,
 		       logo_url, wallpaper_url, bio, education, find_work,
 		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
-		       created_at, invite_account_type, invite_referral_count
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
 		FROM tarelka_users WHERE tg_user_id = $1
 	`
 	var user model.TarelkaUser
@@ -122,6 +125,7 @@ func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int
 		&user.CreatedAt,
 		&user.InviteAccountType,
 		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -138,12 +142,12 @@ func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int
 
 func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error) {
 	query := `
-		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, invite_account_type, invite_referral_count)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, invite_account_type, invite_referral_count, invited_by_user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id, tg_user_id, type, username, phone, password_hash,
 		          logo_url, wallpaper_url, bio, education, find_work,
 		          telegram_url, telegram_chat_id, conversation, conversation_updated_at,
-		          created_at, invite_account_type, invite_referral_count
+		          created_at, invite_account_type, invite_referral_count, invited_by_user_id
 	`
 
 	var fw *string
@@ -159,6 +163,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		user.Conversation,
 		user.InviteAccountType,
 		user.InviteReferralCount,
+		user.InvitedByUserID,
 	).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -178,6 +183,7 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		&user.CreatedAt,
 		&user.InviteAccountType,
 		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		return nil, err
@@ -194,7 +200,7 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		SELECT id, tg_user_id, type, username, phone, password_hash,
 		       logo_url, wallpaper_url, bio, education, find_work,
 		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
-		       created_at, invite_account_type, invite_referral_count
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
 		FROM tarelka_users WHERE id = $1
 	`
 
@@ -219,6 +225,7 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		&user.CreatedAt,
 		&user.InviteAccountType,
 		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -238,7 +245,7 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		SELECT id, tg_user_id, type, username, phone, password_hash,
 		       logo_url, wallpaper_url, bio, education, find_work,
 		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
-		       created_at, invite_account_type, invite_referral_count
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
 		FROM tarelka_users WHERE username = $1
 	`
 
@@ -263,6 +270,7 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		&user.CreatedAt,
 		&user.InviteAccountType,
 		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -307,6 +315,34 @@ func (r *tarelkaUserRepository) GetFullUser(ctx context.Context, id int64) (*mod
 	fullUser.Cities, _ = r.GetCities(ctx, id)
 
 	return fullUser, nil
+}
+
+// GetSenderInfo возвращает краткую информацию о пригласителе (sender) для указанного пользователя.
+// Если пользователь создан без инвайта или пригласитель не найден, возвращает (nil, nil).
+func (r *tarelkaUserRepository) GetSenderInfo(ctx context.Context, userID int64) (*model.SenderInfo, error) {
+	query := `
+		SELECT u.id, tp.name, tp.surname
+		FROM tarelka_users child
+		JOIN tarelka_users u ON child.invited_by_user_id = u.id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		WHERE child.id = $1
+	`
+	var (
+		id          int64
+		name, sname *string
+	)
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&id, &name, &sname)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.SenderInfo{
+		ID:      id,
+		Name:    valueOrEmpty(name),
+		Surname: valueOrEmpty(sname),
+	}, nil
 }
 
 // GetInviteAccountType возвращает приглашательный статус пользователя.
