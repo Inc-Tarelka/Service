@@ -33,13 +33,6 @@ export default defineConfig({
       '.ngrok-free.dev',
       '.lhr.life',
     ],
-    proxy: {
-      '/api': {
-        target: 'https://tarelka-api.ru',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   },
   resolve: {
     alias: {

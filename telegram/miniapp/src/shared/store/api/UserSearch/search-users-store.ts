@@ -59,7 +59,9 @@ export class SearchUsersStore {
   }
 
   get users() {
-    return this.searchData?.state === 'fulfilled' ? this.searchData.value : [];
+    if (this.searchData?.state !== 'fulfilled') return [];
+    const value = this.searchData.value;
+    return Array.isArray(value) ? value : [];
   }
 
   get isLoaded() {
@@ -71,9 +73,9 @@ export class SearchUsersStore {
   }
 
   get coauthors() {
-    return this.coauthorData?.state === 'fulfilled'
-      ? this.coauthorData.value
-      : [];
+    if (this.coauthorData?.state !== 'fulfilled') return [];
+    const value = this.coauthorData.value;
+    return Array.isArray(value) ? value : [];
   }
 
   get isCoauthorsLoading() {

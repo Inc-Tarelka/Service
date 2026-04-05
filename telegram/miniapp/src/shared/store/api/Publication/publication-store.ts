@@ -4,8 +4,10 @@ import {
   PresignItem,
   PresignRequest,
   Publication,
+  UpdatePublicationRequest,
   createPublication,
   presignImages,
+  updatePublication,
 } from 'shared/api/service/Publication';
 
 export type LoadingStep =
@@ -123,6 +125,60 @@ export class PublicationStore {
     }
 
     return publicUrls;
+  };
+
+  updatePublicationAction = async (
+    id: number,
+    imageFiles: File[],
+    existingImageUrls: string[],
+    publicationData: Omit<UpdatePublicationRequest, 'imageUrls'>,
+  ): Promise<void> => {
+    try {
+      this.isLoading = true;
+      this.error = null;
+      this.uploadProgress = 0;
+
+      let newImageUrls: string[] = [];
+
+      if (imageFiles.length > 0) {
+        this.loadingStep = 'presigning';
+
+        const presignRequest: PresignRequest = {
+          files: imageFiles.map((file) => ({
+            contentType: file.type || 'image/jpeg',
+          })),
+        };
+
+        const presignResponse = await presignImages(presignRequest);
+        this.uploadProgress = 25;
+
+        this.loadingStep = 'uploading';
+        newImageUrls = await this.uploadFilesToS3(
+          imageFiles,
+          presignResponse.items,
+        );
+        this.uploadProgress = 75;
+      }
+
+      this.loadingStep = 'creating';
+
+      const finalRequest: UpdatePublicationRequest = {
+        ...publicationData,
+        imageUrls: [...existingImageUrls, ...newImageUrls],
+      };
+
+      const publication = await updatePublication(id, finalRequest);
+      this.createdPublication = publication;
+      this.uploadProgress = 100;
+      this.loadingStep = 'success';
+    } catch (error) {
+      this.error =
+        error instanceof Error ? error.message : 'Неизвестная ошибка';
+      this.loadingStep = 'idle';
+      throw error;
+    } finally {
+      this.isLoading = false;
+    }
   };
 
   reset = (): void => {

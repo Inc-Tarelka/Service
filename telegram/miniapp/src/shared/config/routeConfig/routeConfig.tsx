@@ -1,5 +1,6 @@
 import { AuthPage } from 'pages/AuthPage';
 import { CollaboratorsPage } from 'pages/CollaboratorsPage';
+import { EditPostPage } from 'pages/EditPostPage';
 import { MainPage } from 'pages/MainPage';
 import { NotFoundPage } from 'pages/NotFoundPage';
 import { NotificationsPage } from 'pages/NotificationsPage';
@@ -24,6 +25,7 @@ export enum AppRoutes {
   USER_PROFILE = 'user_profile',
   COLLABORATORS = 'collaborators',
   POST = 'post',
+  EDIT_POST = 'edit_post',
   SETTINGS = 'settings',
   NOTIFICATIONS = 'notifications',
   SERVICE_DETAIL = 'service_detail',
@@ -39,6 +41,7 @@ export const RoutePath: Record<AppRoutes, string> = {
   [AppRoutes.USER_PROFILE]: '/profile/:id',
   [AppRoutes.COLLABORATORS]: '/collaborators',
   [AppRoutes.POST]: '/post',
+  [AppRoutes.EDIT_POST]: '/post/edit/:id',
   [AppRoutes.SETTINGS]: '/settings', // /settings?section=profile|security|notifications|terms
   [AppRoutes.NOTIFICATIONS]: '/notifications',
   [AppRoutes.SERVICE_DETAIL]: '/service/:id',
@@ -82,6 +85,12 @@ export const routeConfig: Record<AppRoutes, RouteProps & MyAppRoutes> = {
     hideNavbar: true,
     hideLayout: true,
     element: <PostPage />,
+  },
+  [AppRoutes.EDIT_POST]: {
+    path: RoutePath.edit_post,
+    hideNavbar: true,
+    hideLayout: true,
+    element: <EditPostPage />,
   },
   [AppRoutes.SETTINGS]: {
     path: RoutePath.settings,

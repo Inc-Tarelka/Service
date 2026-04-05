@@ -3,6 +3,7 @@ import { baseInstanceV1 } from 'shared/api/base';
 import type {
   DeleteAccountResponse,
   ExpandedUserProfile,
+  TeammatesResponse,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,
@@ -99,3 +100,11 @@ export const setUserWallpaperUrl = async (id: number, wallpaperUrl: string) =>
 // =============================== EXTENDED PROFILE ===============================
 export const getUserExtendedProfile = async (id: string) =>
   await baseInstanceV1.get<ExpandedUserProfile>(API_URL.user_profile(id));
+
+// =============================== MY EXTENDED PROFILE ===============================
+export const getMyExtendedProfile = async () =>
+  await baseInstanceV1.get<ExpandedUserProfile>(API_URL.me_profile());
+
+// =============================== MY TEAMMATES ===============================
+export const getMyTeammates = async () =>
+  await baseInstanceV1.get<TeammatesResponse>(API_URL.me_teammates());

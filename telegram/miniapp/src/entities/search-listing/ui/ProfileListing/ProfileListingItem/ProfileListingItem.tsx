@@ -17,6 +17,11 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
     .filter((url) => url.startsWith('http'))
     .slice(0, 3);
 
+  const handleProjectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick?.(userId);
+  };
+
   return (
     <div
       className={s.container}
@@ -45,6 +50,9 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
               src={imgUrl}
               className={s.projectImage}
               alt={`Project ${index + 1}`}
+              onClick={handleProjectClick}
+              role="button"
+              tabIndex={0}
             />
           ))}
         </div>

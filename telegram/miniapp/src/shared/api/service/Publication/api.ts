@@ -14,6 +14,7 @@ import type {
   SearchPublicationsParams,
   SearchPublicationsResponse,
   ToggleLikeResponse,
+  UpdatePublicationRequest,
 } from './types';
 
 // =========== S3 PRESIGN IMAGE ===========
@@ -87,3 +88,15 @@ export const getMyProjects = async (): Promise<MyProject[]> => {
   const response = await baseInstanceV1.get<MyProject[]>(API_URL.my_projects());
   return response.data;
 };
+
+// =========== UPDATE PUBLICATION ===========
+export const updatePublication = async (
+  id: number,
+  request: UpdatePublicationRequest,
+): Promise<Publication> =>
+  (
+    await baseInstanceV1.put<Publication>(
+      API_URL.update_publication(id.toString()),
+      request,
+    )
+  ).data;

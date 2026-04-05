@@ -17,7 +17,7 @@ import type {
 } from 'shared/api/service/PublicationServicesSearch';
 import CommentIcon from 'shared/assets/icons/comment';
 import EditIcon from 'shared/assets/icons/edit';
-import EyeOpenIcon from 'shared/assets/icons/EyeOpen';
+import EyeOffIcon from 'shared/assets/icons/EyeOff';
 import LikeIcon from 'shared/assets/icons/like';
 import MoreHorizontalIcon from 'shared/assets/icons/MoreHorizontalIcon';
 import ShareIcon from 'shared/assets/icons/share';
@@ -36,6 +36,8 @@ interface ServiceListingDetailsProps {
   onCommentClick?: () => void;
   onLike?: (id: number) => void;
   onTeamMemberClick?: (id: number) => void;
+  isOwner?: boolean;
+  onEdit?: () => void;
 }
 
 const formatCount = (count: number): string | number => {
@@ -66,6 +68,8 @@ export const ServiceListingDetails = observer(
       onCommentClick,
       onLike,
       onTeamMemberClick,
+      isOwner,
+      onEdit,
     } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
@@ -118,13 +122,6 @@ export const ServiceListingDetails = observer(
         <div className={s.infoSection}>
           <div className={s.badgesContainer}>
             <div className={s.badgesLeft}>
-              <div className={s.badge}>
-                <EyeOpenIcon />
-                <span className={s.count}>
-                  {formatCount(service.viewsCount ?? 0)}
-                </span>
-              </div>
-
               <div
                 className={`${s.badge} ${isLiked ? s.likedBadge : ''}`}
                 onClick={handleLikeClick}
@@ -154,9 +151,11 @@ export const ServiceListingDetails = observer(
               <div className={s.iconBtn}>
                 <ShareIcon />
               </div>
-              <div className={s.iconBtn} onClick={openActions}>
-                <MoreHorizontalIcon />
-              </div>
+              {isOwner && (
+                <div className={s.iconBtn} onClick={openActions}>
+                  <MoreHorizontalIcon />
+                </div>
+              )}
             </div>
           </div>
 
@@ -231,22 +230,36 @@ export const ServiceListingDetails = observer(
           opened={actionsDrawerOpened}
           onClose={closeActions}
           noTitle
-          size={130}
+          size={isOwner ? 185 : 80}
           actions={[
-            {
-              label: 'Редактировать',
-              icon: <EditIcon />,
-              onClick: () => {},
-            },
-            {
-              label: 'Удалить',
-              icon: <TrashIcon color="var(--red)" />,
-              variant: 'danger',
-              onClick: () => {
-                closeActions();
-                openDelete();
-              },
-            },
+            ...(isOwner
+              ? [
+                  {
+                    label: 'Редактировать',
+                    icon: <EditIcon />,
+                    onClick: () => {
+                      closeActions();
+                      onEdit?.();
+                    },
+                  },
+                  {
+                    label: 'Скрыть из профиля',
+                    icon: <EyeOffIcon />,
+                    onClick: () => {
+                      closeActions();
+                    },
+                  },
+                  {
+                    label: 'Удалить',
+                    icon: <TrashIcon color="var(--red)" />,
+                    variant: 'danger' as const,
+                    onClick: () => {
+                      closeActions();
+                      openDelete();
+                    },
+                  },
+                ]
+              : []),
           ]}
         />
 

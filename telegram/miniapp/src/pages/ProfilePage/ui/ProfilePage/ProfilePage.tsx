@@ -5,6 +5,8 @@ import { PublicationsList } from 'entities/publication';
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
@@ -16,11 +18,16 @@ import { ProfilePageSkeleton } from './ProfilePage.skeleton';
 export const ProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const { userStore } = useStore();
+  const navigate = useNavigate();
 
   useBackToSearch();
 
+  const handlePublicationClick = (id: number) => {
+    navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(id)));
+  };
+
   useEffect(() => {
-    userStore.getProfileAction();
+    userStore.getMyExtendedProfileAction();
   }, [userStore]);
 
   if (userStore.isLoadingProfile) {
@@ -52,7 +59,10 @@ export const ProfilePage = observer(() => {
             switch (tab) {
               case 'publications':
                 return (
-                  <PublicationsList publications={userStore.publications} />
+                  <PublicationsList
+                    publications={userStore.publications}
+                    onItemClick={handlePublicationClick}
+                  />
                 );
               case 'info':
                 return <ProfileInfoSection user={user} />;

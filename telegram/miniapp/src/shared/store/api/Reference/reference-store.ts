@@ -74,7 +74,7 @@ export class ReferenceStore {
       const promise = getPublicationTagsRequest();
       this.publicationTagsData = fromPromise(promise);
       const data = await promise;
-      this.publicationTags = data;
+      this.publicationTags = Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error loading publication tags:', error);
     }

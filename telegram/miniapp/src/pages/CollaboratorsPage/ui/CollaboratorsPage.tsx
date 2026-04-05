@@ -1,11 +1,12 @@
+import { useStore } from 'app/StoreProvider';
 import { CollaboratorsList } from 'entities/collaborator';
+import { CollaboratorsListSkeleton } from 'entities/collaborator/ui/CollaboratorsList/CollaboratorsList.skeleton';
+import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useBackButton } from 'shared/hooks/useBackButton';
-import {
-  MOCK_COLLABORATORS,
-  MOCK_OUTGOING_REQUESTS,
-} from 'shared/mocks/collaboratorMocks';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import { MOCK_OUTGOING_REQUESTS } from 'shared/mocks/collaboratorMocks';
 import { TabItem, TabsSwitcher } from 'shared/ui/TabsSwitcher/TabsSwitcher';
 import { Page } from 'widgets/Page';
 
@@ -16,13 +17,22 @@ const TABS: TabItem<CollaboratorTab>[] = [
   { label: 'Исходящие запросы', value: 'outgoing' },
 ];
 
-export const CollaboratorsPage = () => {
+export const CollaboratorsPage = observer(() => {
   useBackButton();
+  const { userStore } = useStore();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as CollaboratorTab | null;
   const [activeTab, setActiveTab] = useState<CollaboratorTab>(
     tabFromUrl === 'outgoing' ? 'outgoing' : 'collaborators',
   );
+
+  const teammates = userStore.teammates;
+  const isLoadingTeammates = userStore.isLoadingTeammates;
+
+  useEffect(() => {
+    userStore.getTeammatesAction();
+  }, []);
 
   useEffect(() => {
     if (
@@ -39,7 +49,7 @@ export const CollaboratorsPage = () => {
   };
 
   const handleItemClick = (id: string) => {
-    console.log('Clicked collaborator:', id);
+    navigate(RoutePath.user_profile.replace(':id', id));
   };
 
   return (
@@ -52,9 +62,11 @@ export const CollaboratorsPage = () => {
         renderTab={(tab) => {
           switch (tab) {
             case 'collaborators':
-              return (
+              return isLoadingTeammates ? (
+                <CollaboratorsListSkeleton />
+              ) : (
                 <CollaboratorsList
-                  collaborators={MOCK_COLLABORATORS}
+                  collaborators={teammates}
                   onItemClick={handleItemClick}
                 />
               );
@@ -72,5 +84,5 @@ export const CollaboratorsPage = () => {
       />
     </Page>
   );
-};
+});
 export default CollaboratorsPage;

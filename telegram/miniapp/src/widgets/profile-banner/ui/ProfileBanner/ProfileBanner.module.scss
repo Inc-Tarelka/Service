@@ -65,3 +65,13 @@
   font: var(--font-body);
   font-weight: 400;
 }
+
+.memberBadge {
+  background-color: var(--accent-color);
+  border-radius: 100px;
+  color: #fff;
+  font: var(--font-caption);
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 10px;
+}

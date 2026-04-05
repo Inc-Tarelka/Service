@@ -40,6 +40,18 @@ export interface CreatePublicationRequest {
   needs?: PublicationNeed[];
 }
 
+export interface UpdatePublicationRequest {
+  name?: string;
+  type?: 'PROJECT' | 'SERVICE';
+  description?: string;
+  imageUrls?: string[];
+  cityId?: number;
+  tagIds?: number[];
+  coAuthorIds?: number[];
+  needs?: PublicationNeed[];
+  isHidden?: boolean;
+}
+
 export interface Publication {
   id: number;
   name: string;

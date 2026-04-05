@@ -194,8 +194,8 @@
 
 .detailValue {
   color: var(--text-color);
+  overflow-wrap: anywhere;
   text-align: right;
-  word-break: break-word;
 }
 
 .detailRowTags {

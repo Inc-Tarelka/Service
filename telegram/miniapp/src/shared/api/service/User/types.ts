@@ -27,6 +27,12 @@ export interface Direction {
   name: string;
 }
 
+export interface Sender {
+  id: number;
+  name: string;
+  surname: string;
+}
+
 export type FindWorkStatus = 'LOOKING' | 'NOT_LOOKING' | 'OPEN_TO_OFFERS';
 
 export interface User {
@@ -61,6 +67,8 @@ export interface User {
   status?: string;
   specialization?: string;
   conversation?: number;
+  invite_account_type?: string;
+  sender?: Sender;
 }
 
 export interface DeleteAccountResponse {
@@ -104,6 +112,19 @@ export interface UserMediaUrlResponse {
   success: boolean;
 }
 
+// ===== Teammate =====
+
+export interface Teammate {
+  id: number;
+  firstName: string;
+  lastName: string;
+  city: string;
+  specialization: string;
+  telegramUrl: string;
+}
+
+export type TeammatesResponse = Teammate[];
+
 // ===== Expanded User Profile =====
 
 export interface UserProfilePublication {
@@ -117,6 +138,7 @@ export interface UserProfilePublication {
 export interface ExpandedUserProfile {
   user: User;
   publications: UserProfilePublication[];
+  sender?: Sender;
   teammatesCount: number;
   outgoingRequestsCount: number;
   projectsCount: number;

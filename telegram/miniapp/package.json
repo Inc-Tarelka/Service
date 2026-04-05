@@ -11,7 +11,7 @@
     "stylelint:fix": "stylelint \"**/*.{css,scss}\" --fix",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "serv": "cloudflared tunnel --url http://localhost:5173 --protocol http2",
+    "serv": "cloudflared tunnel --url http://localhost:5173",
     "servq": "cloudflared tunnel --url http://localhost:5173 --protocol quic",
     "servl": "ssh -R 80:localhost:5173 localhost.run",
     "servg": "ngrok http http://localhost:5173",

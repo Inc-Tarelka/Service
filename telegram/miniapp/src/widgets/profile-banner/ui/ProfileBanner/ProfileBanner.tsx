@@ -58,6 +58,12 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
               <span className={classes.profession}>
                 {user.profession}, {user.city}
               </span>
+              {user.invite_account_type &&
+                user.invite_account_type !== 'DEFAULT' && (
+                  <span className={classes.memberBadge}>
+                    Президент члена клуба
+                  </span>
+                )}
             </Stack>
 
             <Box mt="md" w="100%">

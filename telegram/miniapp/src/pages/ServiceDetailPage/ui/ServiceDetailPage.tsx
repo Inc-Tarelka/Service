@@ -55,6 +55,16 @@ export const ServiceDetailPage = observer(() => {
     publicationDetailsStore.toggleLikeAction(publicationId);
   };
 
+  const currentUserId = userStore.profile?.id;
+  const isOwner =
+    !!currentUserId && String(currentUserId) === String(storeService?.authorId);
+
+  const handleEditClick = () => {
+    if (id) {
+      navigate(RoutePath[AppRoutes.EDIT_POST].replace(':id', id));
+    }
+  };
+
   const handleTeamMemberClick = (userId: number) => {
     const currentUserId = userStore.profile?.id;
     const isOwner = currentUserId && String(currentUserId) === String(userId);
@@ -102,6 +112,8 @@ export const ServiceDetailPage = observer(() => {
         onNeedClick={(needId: number) => setSelectedNeedId(needId)}
         onLike={handleLike}
         onTeamMemberClick={handleTeamMemberClick}
+        isOwner={isOwner}
+        onEdit={handleEditClick}
       />
       <ServiceCommentsDrawer
         opened={commentsOpened}

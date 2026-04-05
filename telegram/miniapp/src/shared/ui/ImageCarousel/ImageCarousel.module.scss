@@ -4,49 +4,66 @@
 }
 
 .carousel {
+  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
 }
 
 .viewport {
+  height: 100%;
+
+  // Отключаем стандартный скролл для плавности
+  overflow: hidden;
   width: 100%;
 }
 
 .container {
-  align-items: stretch;
+  align-items: center;
+  height: 100%;
+
+  // Плавная трансформация при драге и анимации
+  will-change: transform;
 }
 
 .slide {
+  height: 100%;
   width: 100%;
 }
 
 .slideInner {
+  height: 100%;
   position: relative;
   width: 100%;
 }
 
-// Скелетон в потоке — задаёт высоту контейнеру через aspect-ratio пока не загружена картинка
 .skeleton {
-  aspect-ratio: 4 / 3;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
   width: 100%;
 }
 
-// Пока картинка грузится — поверх скелетона абсолютно, не влияет на поток
 .imageLoading {
   height: 100%;
   inset: 0;
-  object-fit: cover;
   opacity: 0;
   position: absolute;
   width: 100%;
+  will-change: opacity;
 }
 
-// После загрузки — встаёт в поток, естественные размеры, плавно появляется
 .imageLoaded {
+  backface-visibility: hidden;
   display: block;
   height: auto;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transform: translateZ(0);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
+  will-change: opacity;
 }
 
 .image {

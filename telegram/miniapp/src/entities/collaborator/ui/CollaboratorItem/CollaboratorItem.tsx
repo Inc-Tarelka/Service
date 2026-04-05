@@ -1,17 +1,14 @@
 import { Box, Group } from '@mantine/core';
-import type {
-  CoauthorSearchUser,
-  SearchUser,
-} from 'shared/api/service/UserSearch/types';
 import defaultUserSvg from 'shared/assets/images/defaultUser.svg';
 import {
+  AnyCollaborator,
   formatCollaboratorMeta,
   formatCollaboratorName,
 } from '../../lib/formatCollaborator';
 import classes from './CollaboratorItem.module.scss';
 
 interface CollaboratorItemProps {
-  collaborator: SearchUser | CoauthorSearchUser;
+  collaborator: AnyCollaborator;
   onClick?: (id: string) => void;
 }
 

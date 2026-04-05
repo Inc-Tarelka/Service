@@ -8,7 +8,8 @@ import {
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
@@ -22,6 +23,11 @@ export const UserProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { userProfileStore } = useStore();
+  const navigate = useNavigate();
+
+  const handlePublicationClick = (pubId: number) => {
+    navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(pubId)));
+  };
 
   useBackToSearch();
 
@@ -73,10 +79,17 @@ export const UserProfilePage = observer(() => {
                     publications={
                       userProfileStore.extendedProfile?.publications || []
                     }
+                    onItemClick={handlePublicationClick}
                   />
                 );
               case 'info':
-                return <ProfileInfoSection user={user} isPublicView={true} />;
+                return (
+                  <ProfileInfoSection
+                    user={user}
+                    sender={userProfileStore.extendedProfile?.sender}
+                    isPublicView={true}
+                  />
+                );
               default:
                 return null;
             }
