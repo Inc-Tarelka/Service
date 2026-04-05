@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -131,10 +130,6 @@ func (h *NotificationHandler) CreateNeedResponse(c *gin.Context) {
 		// Для несуществующей потребности репозиторий возвращает ошибку с текстом "need not found".
 		if err.Error() == "need not found" {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
-			return
-		}
-		if errors.Is(err, service.ErrInvalidNeedPublication) {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_need_publication"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})

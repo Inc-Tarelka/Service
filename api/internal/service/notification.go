@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -22,9 +21,6 @@ type NotificationService interface {
 	SendNeedResponseNotification(ctx context.Context, creatorID, publicationID, needID int64, message *string) (*model.Notification, error)
 	ListNeedResponseNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
 }
-
-// ErrInvalidNeedPublication возвращается, если указанная потребность не относится к указанной публикации.
-var ErrInvalidNeedPublication = errors.New("need does not belong to publication")
 
 type notificationService struct {
 	notifRepo       repository.NotificationRepository
@@ -111,19 +107,16 @@ func (s *notificationService) SendNeedResponseNotification(
 	creatorID, publicationID, needID int64,
 	message *string,
 ) (*model.Notification, error) {
-	// 1. Проверяем, что потребность существует и принадлежит указанной публикации
+	// 1. Проверяем, что потребность существует
 	need, err := s.publicationRepo.GetNeedByID(ctx, needID)
 	if err != nil {
 		// Репозиторий возвращает ошибку с текстом "need not found" для несуществующей потребности.
 		// Не заворачиваем её, чтобы хендлер мог различать 404 по строке.
 		return nil, err
 	}
-	if need.PublicationID != publicationID {
-		return nil, ErrInvalidNeedPublication
-	}
 
-	// 2. Получаем публикацию, чтобы узнать автора (получателя уведомления)
-	pub, _, _, err := s.publicationRepo.GetByID(ctx, publicationID, nil)
+	// 2. Получаем публикацию, к которой привязана потребность, чтобы узнать автора (получателя уведомления)
+	pub, _, _, err := s.publicationRepo.GetByID(ctx, need.PublicationID, nil)
 	if err != nil {
 		return nil, err
 	}
