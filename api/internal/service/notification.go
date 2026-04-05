@@ -20,6 +20,10 @@ type NotificationService interface {
 	// Отклик на потребность
 	SendNeedResponseNotification(ctx context.Context, creatorID, publicationID, needID int64, message *string) (*model.Notification, error)
 	ListNeedResponseNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
+
+	// Приглашение в команду (соавторы проекта)
+	SendTeamInviteNotification(ctx context.Context, creatorID, publicationID, receiverID int64) (*model.Notification, error)
+	RespondToTeamInvite(ctx context.Context, receiverID, notificationID int64, isApprove bool) (*model.Notification, error)
 }
 
 type notificationService struct {
@@ -161,6 +165,92 @@ func buildNeedResponseMessage(n *model.Notification, msg *string) string {
 		return base + ":\n\n" + *msg
 	}
 	return base
+}
+
+// SendTeamInviteNotification создаёт уведомление-приглашение стать соавтором проекта
+// и отправляет Telegram-сообщение получателю.
+func (s *notificationService) SendTeamInviteNotification(
+	ctx context.Context,
+	creatorID, publicationID, receiverID int64,
+) (*model.Notification, error) {
+	// Проверяем, что публикация существует и является PROJECT, а creatorID — её автор
+	pub, _, _, err := s.publicationRepo.GetByID(ctx, publicationID, nil)
+	if err != nil {
+		return nil, err
+	}
+	if pub.Type != model.PublicationTypeProject {
+		return nil, fmt.Errorf("invalid_publication_type")
+	}
+	if pub.AuthorID != creatorID {
+		return nil, fmt.Errorf("not_author_of_publication")
+	}
+
+	notif := &model.Notification{
+		Type:          model.NotificationTypeTeamInvite,
+		PublicationID: &publicationID,
+		CreatorID:     creatorID,
+		ReceiverID:    receiverID,
+		IsRead:        false,
+	}
+
+	created, err := s.notifRepo.Create(ctx, notif)
+	if err != nil {
+		return nil, err
+	}
+
+	receiver, err := s.tarelkaUserRepo.FindByID(ctx, receiverID)
+	if err != nil {
+		return created, nil
+	}
+
+	chatID := fmt.Sprintf("%d", receiver.TgUserID)
+	text := buildTeamInviteMessage(pub)
+	_ = s.sendTelegramMessage(ctx, chatID, text)
+
+	return created, nil
+}
+
+// RespondToTeamInvite фиксирует реакцию получателя на приглашение в команду
+// и, в случае положительного ответа, добавляет пользователя в соавторы проекта.
+func (s *notificationService) RespondToTeamInvite(
+	ctx context.Context,
+	receiverID, notificationID int64,
+	isApprove bool,
+) (*model.Notification, error) {
+	// Загружаем уведомление, чтобы убедиться в типе и получателе
+	n, err := s.notifRepo.GetByID(ctx, notificationID)
+	if err != nil {
+		return nil, err
+	}
+	if n.Type != model.NotificationTypeTeamInvite {
+		return nil, fmt.Errorf("invalid_notification_type")
+	}
+	if n.ReceiverID != receiverID {
+		return nil, fmt.Errorf("forbidden")
+	}
+	if n.IsApprove != nil {
+		return nil, fmt.Errorf("already_responded")
+	}
+
+	// Обновляем флаг is_approve и помечаем уведомление прочитанным
+	updated, err := s.notifRepo.SetApproval(ctx, notificationID, receiverID, isApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	// При положительном ответе добавляем пользователя в соавторы проекта
+	if isApprove {
+		if updated.PublicationID == nil {
+			return updated, nil
+		}
+		_ = s.publicationRepo.AddCoAuthor(ctx, *updated.PublicationID, receiverID)
+	}
+
+	return updated, nil
+}
+
+func buildTeamInviteMessage(pub *model.Publication) string {
+	return fmt.Sprintf("Вас пригласили стать участником проекта \"%s\" в Tarelka", pub.Name)
 }
 
 func (s *notificationService) sendTelegramMessage(ctx context.Context, chatID, text string) error {

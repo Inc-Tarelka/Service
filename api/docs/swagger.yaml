@@ -60,6 +60,26 @@ definitions:
     - needId
     - publicationId
     type: object
+  handler.TeamInviteRequest:
+    properties:
+      publicationId:
+        type: integer
+      receiverId:
+        type: integer
+    required:
+    - publicationId
+    - receiverId
+    type: object
+  handler.TeamInviteResponseRequest:
+    properties:
+      isApprove:
+        type: boolean
+      notificationId:
+        type: integer
+    required:
+    - isApprove
+    - notificationId
+    type: object
   model.AccountData:
     properties:
       companyName:
@@ -354,6 +374,8 @@ definitions:
         type: integer
       id:
         type: integer
+      isApprove:
+        type: boolean
       isRead:
         type: boolean
       message:
@@ -372,11 +394,13 @@ definitions:
     - Collaboration
     - Response
     - Notice
+    - TeamInvite
     type: string
     x-enum-varnames:
     - NotificationTypeCollaboration
     - NotificationTypeResponse
     - NotificationTypeNotice
+    - NotificationTypeTeamInvite
   model.PasswordForgotRequest:
     properties:
       username:
@@ -1497,6 +1521,96 @@ paths:
       security:
       - BearerAuth: []
       summary: Отправить отклик на потребность
+      tags:
+      - notifications
+  /notifications/team-invite:
+    post:
+      consumes:
+      - application/json
+      description: Создает уведомление типа TeamInvite (сокомандники) и отправляет
+        Telegram-сообщение получателю
+      parameters:
+      - description: Параметры приглашения в команду
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TeamInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.NotificationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Отправить приглашение в команду проекта
+      tags:
+      - notifications
+  /notifications/team-invite/response:
+    post:
+      consumes:
+      - application/json
+      description: Фиксирует реакцию пользователя на приглашение и при одобрении добавляет
+        его в соавторы проекта
+      parameters:
+      - description: Ответ на приглашение в команду
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TeamInviteResponseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NotificationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Ответить на приглашение в команду проекта
       tags:
       - notifications
   /publications:

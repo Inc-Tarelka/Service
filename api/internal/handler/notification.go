@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Inc-Tarelka/api/internal/model"
+	"github.com/Inc-Tarelka/api/internal/repository"
 	"github.com/Inc-Tarelka/api/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +30,18 @@ type NeedResponseRequest struct {
 	PublicationID int64   `json:"publicationId" binding:"required"`
 	NeedID        int64   `json:"needId" binding:"required"`
 	Message       *string `json:"message" binding:"omitempty,max=1000"`
+}
+
+// TeamInviteRequest описывает тело запроса для приглашения пользователя в команду проекта
+type TeamInviteRequest struct {
+	PublicationID int64 `json:"publicationId" binding:"required"`
+	ReceiverID    int64 `json:"receiverId" binding:"required"`
+}
+
+// TeamInviteResponseRequest — тело запроса для ответа на приглашение в команду
+type TeamInviteResponseRequest struct {
+	NotificationID int64 `json:"notificationId" binding:"required"`
+	IsApprove      bool  `json:"isApprove" binding:"required"`
 }
 
 // CreateCollaboration godoc
@@ -240,6 +253,155 @@ func (h *NotificationHandler) ListNeedResponses(c *gin.Context) {
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
 		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// CreateTeamInvite godoc
+// @Summary Отправить приглашение в команду проекта
+// @Description Создает уведомление типа TeamInvite (сокомандники) и отправляет Telegram-сообщение получателю
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body TeamInviteRequest true "Параметры приглашения в команду"
+// @Success 201 {object} model.NotificationResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/team-invite [post]
+func (h *NotificationHandler) CreateTeamInvite(c *gin.Context) {
+	creatorIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	creatorID := creatorIDVal.(int64)
+
+	var req TeamInviteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	notif, err := h.svc.SendTeamInviteNotification(
+		c.Request.Context(),
+		creatorID,
+		req.PublicationID,
+		req.ReceiverID,
+	)
+	if err != nil {
+		msg := err.Error()
+		if msg == "invalid_publication_type" {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_publication_type"})
+			return
+		}
+		if msg == "not_author_of_publication" {
+			c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "forbidden"})
+			return
+		}
+		if msg == repository.ErrPublicationNotFound.Error() {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := model.NotificationResponse{
+		ID:            notif.ID,
+		Type:          notif.Type,
+		PublicationID: notif.PublicationID,
+		CreatedAtISO:  notif.CreatedAt.Format(time.RFC3339),
+		CreatorID:     notif.CreatorID,
+		ReceiverID:    notif.ReceiverID,
+		Message:       notif.Message,
+		NeedID:        notif.NeedID,
+		IsRead:        notif.IsRead,
+		IsApprove:     notif.IsApprove,
+	}
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+// RespondTeamInvite godoc
+// @Summary Ответить на приглашение в команду проекта
+// @Description Фиксирует реакцию пользователя на приглашение и при одобрении добавляет его в соавторы проекта
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body TeamInviteResponseRequest true "Ответ на приглашение в команду"
+// @Success 200 {object} model.NotificationResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/team-invite/response [post]
+func (h *NotificationHandler) RespondTeamInvite(c *gin.Context) {
+	receiverIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	receiverID := receiverIDVal.(int64)
+
+	var req TeamInviteResponseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	notif, err := h.svc.RespondToTeamInvite(
+		c.Request.Context(),
+		receiverID,
+		req.NotificationID,
+		req.IsApprove,
+	)
+	if err != nil {
+		msg := err.Error()
+		if msg == "invalid_notification_type" {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_notification_type"})
+			return
+		}
+		if msg == "forbidden" {
+			c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "forbidden"})
+			return
+		}
+		if msg == "already_responded" {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "already_responded"})
+			return
+		}
+		// для простоты считаем, что любая ошибка выборки/обновления без детальной классификации — это 404 или 500
+		if msg == "no rows in result set" {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := model.NotificationResponse{
+		ID:            notif.ID,
+		Type:          notif.Type,
+		PublicationID: notif.PublicationID,
+		CreatedAtISO:  notif.CreatedAt.Format(time.RFC3339),
+		CreatorID:     notif.CreatorID,
+		ReceiverID:    notif.ReceiverID,
+		Message:       notif.Message,
+		NeedID:        notif.NeedID,
+		IsRead:        notif.IsRead,
+		IsApprove:     notif.IsApprove,
 	}
 
 	c.JSON(http.StatusOK, resp)

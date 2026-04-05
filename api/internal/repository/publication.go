@@ -38,6 +38,8 @@ type PublicationRepository interface {
 	GetUserPublications(ctx context.Context, userID int64) ([]model.UserPublicationShort, error)
 	// GetUserProjectsCount возвращает число проектов (type = 'PROJECT'), где пользователь автор или соавтор.
 	GetUserProjectsCount(ctx context.Context, userID int64) (int64, error)
+	// AddCoAuthor добавляет пользователя в соавторы проекта.
+	AddCoAuthor(ctx context.Context, pubID int64, userID int64) error
 }
 
 type publicationRepository struct {
@@ -704,6 +706,19 @@ func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, auth
 		return nil, err
 	}
 	return out, nil
+}
+
+// AddCoAuthor добавляет пользователя в соавторы публикации-проекта.
+// Если публикации не существует или она не PROJECT, запись не создаётся.
+// Повторные вызовы для той же пары (pubID, userID) безопасны за счёт ON CONFLICT DO NOTHING.
+func (r *publicationRepository) AddCoAuthor(ctx context.Context, pubID int64, userID int64) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO publication_co_authors (publication_id, user_id)
+		SELECT $1, $2
+		WHERE EXISTS (SELECT 1 FROM publications WHERE id = $1 AND type = 'PROJECT')
+		ON CONFLICT DO NOTHING
+	`, pubID, userID)
+	return err
 }
 
 // GetServiceComments возвращает список комментариев услуги (включая ответы на комментарии, относящиеся к этой услуге)

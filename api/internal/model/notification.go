@@ -8,6 +8,8 @@ const (
 	NotificationTypeCollaboration NotificationType = "Collaboration"
 	NotificationTypeResponse      NotificationType = "Response"
 	NotificationTypeNotice        NotificationType = "Notice"
+	// NotificationTypeTeamInvite — приглашение стать соавтором/сокомандником проекта
+	NotificationTypeTeamInvite NotificationType = "TeamInvite"
 )
 
 type Notification struct {
@@ -20,6 +22,8 @@ type Notification struct {
 	Message       *string          `json:"message,omitempty"`
 	NeedID        *int64           `json:"needId,omitempty"`
 	IsRead        bool             `json:"isRead"`
+	// IsApprove — реакция получателя на приглашение в команду (true/false для TeamInvite, null для других типов)
+	IsApprove *bool `json:"isApprove,omitempty"`
 }
 
 type NotificationResponse struct {
@@ -32,4 +36,5 @@ type NotificationResponse struct {
 	Message       *string          `json:"message,omitempty"`
 	NeedID        *int64           `json:"needId,omitempty"`
 	IsRead        bool             `json:"isRead"`
+	IsApprove     *bool            `json:"isApprove,omitempty"`
 }

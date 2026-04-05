@@ -786,6 +786,144 @@
                 }
             }
         },
+        "/notifications/team-invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает уведомление типа TeamInvite (сокомандники) и отправляет Telegram-сообщение получателю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Отправить приглашение в команду проекта",
+                "parameters": [
+                    {
+                        "description": "Параметры приглашения в команду",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TeamInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/team-invite/response": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Фиксирует реакцию пользователя на приглашение и при одобрении добавляет его в соавторы проекта",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Ответить на приглашение в команду проекта",
+                "parameters": [
+                    {
+                        "description": "Ответ на приглашение в команду",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TeamInviteResponseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications": {
             "post": {
                 "security": [
@@ -2826,6 +2964,36 @@
                 }
             }
         },
+        "handler.TeamInviteRequest": {
+            "type": "object",
+            "required": [
+                "publicationId",
+                "receiverId"
+            ],
+            "properties": {
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.TeamInviteResponseRequest": {
+            "type": "object",
+            "required": [
+                "isApprove",
+                "notificationId"
+            ],
+            "properties": {
+                "isApprove": {
+                    "type": "boolean"
+                },
+                "notificationId": {
+                    "type": "integer"
+                }
+            }
+        },
         "model.AccountData": {
             "type": "object",
             "required": [
@@ -3271,6 +3439,9 @@
                 "id": {
                     "type": "integer"
                 },
+                "isApprove": {
+                    "type": "boolean"
+                },
                 "isRead": {
                     "type": "boolean"
                 },
@@ -3296,12 +3467,14 @@
             "enum": [
                 "Collaboration",
                 "Response",
-                "Notice"
+                "Notice",
+                "TeamInvite"
             ],
             "x-enum-varnames": [
                 "NotificationTypeCollaboration",
                 "NotificationTypeResponse",
-                "NotificationTypeNotice"
+                "NotificationTypeNotice",
+                "NotificationTypeTeamInvite"
             ]
         },
         "model.PasswordForgotRequest": {
