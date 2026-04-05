@@ -1775,6 +1775,32 @@ paths:
       summary: Список проектов текущего пользователя
       tags:
       - publications
+  /publications/my/services:
+    get:
+      description: Возвращает список публикаций типа SERVICE, где текущий пользователь
+        является автором.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.UserPublicationShort'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Список сервисов текущего пользователя
+      tags:
+      - publications
   /publications/needs/search:
     get:
       description: Поиск потребностей по городу, названию, тегам публикации, тегам

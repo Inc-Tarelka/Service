@@ -816,6 +816,46 @@
                 }
             }
         },
+        "/publications/my/services": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список публикаций типа SERVICE, где текущий пользователь является автором.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Список сервисов текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserPublicationShort"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/publications/needs/search": {
             "get": {
                 "security": [

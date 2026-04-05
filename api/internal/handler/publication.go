@@ -658,6 +658,44 @@ func (h *PublicationHandler) GetMyProjectPublications(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetMyServicePublications godoc
+// @Summary Список сервисов текущего пользователя
+// @Description Возвращает список публикаций типа SERVICE, где текущий пользователь является автором.
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} model.UserPublicationShort
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/my/services [get]
+func (h *PublicationHandler) GetMyServicePublications(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID := uid.(int64)
+
+	items, err := h.svc.GetUserServicePublications(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	// Приводим к требуемому ответу: id, name, description, image (priority 0)
+	resp := make([]gin.H, 0, len(items))
+	for _, it := range items {
+		resp = append(resp, gin.H{
+			"id":          it.ID,
+			"name":        it.Name,
+			"description": it.Description,
+			"image":       it.ImageURL,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // SearchNeeds godoc
 // @Summary Поиск потребностей
 // @Description Поиск потребностей по городу, названию, тегам публикации, тегам потребности, дате и максимальному бюджету
