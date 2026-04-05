@@ -30,7 +30,7 @@ export const OfferCollaborationDrawer = (
 ) => {
   const { userId, isOpen, onClose } = props;
   const { theme } = useTheme();
-  const { notificationCollaborationStore } = useStore();
+  const { notificationsStore } = useStore();
 
   const [comment, setComment] = useState('');
   const [selectedProject, setSelectedProject] = useState<MyProject | null>(
@@ -59,18 +59,17 @@ export const OfferCollaborationDrawer = (
 
   const handleSubmit = async () => {
     if (!selectedProject) return;
-    const success =
-      await notificationCollaborationStore.sendCollaborationAction({
-        message: comment,
-        publicationId: selectedProject.id,
-        receiverId: Number(userId),
-      });
+    const success = await notificationsStore.sendCollaborationAction({
+      message: comment,
+      publicationId: selectedProject.id,
+      receiverId: Number(userId),
+    });
     if (success) {
       handleClose();
     }
   };
 
-  const { isSending } = notificationCollaborationStore;
+  const { isSending } = notificationsStore;
   const canSubmit = !!selectedProject && !isSending;
 
   return (

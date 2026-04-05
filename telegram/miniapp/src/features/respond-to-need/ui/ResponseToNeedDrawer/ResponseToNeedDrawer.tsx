@@ -12,9 +12,10 @@ import { useStore } from 'app/StoreProvider';
 import { useEffect, useState } from 'react';
 import PlusIcon from 'shared/assets/icons/plus';
 import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
-import { getMyProjects } from 'shared/api/service/Publication/api';
+import { getMyServices } from 'shared/api/service/Publication/api';
+import type { MyService } from 'shared/api/service/Publication/types';
 import classes from './ResponseToNeedDrawer.module.scss';
-import { ServicePickerDrawer, type MyService } from './ServicePickerDrawer';
+import { ServicePickerDrawer } from './ServicePickerDrawer';
 
 interface ResponseToNeedDrawerProps {
   opened: boolean;
@@ -26,7 +27,7 @@ interface ResponseToNeedDrawerProps {
 
 export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
   const { opened, onClose, onBack, needId, receiverId } = props;
-  const { notificationNeedResponseStore } = useStore();
+  const { notificationsStore } = useStore();
 
   const [comment, setComment] = useState('');
   const [selectedService, setSelectedService] = useState<MyService | null>(
@@ -41,7 +42,7 @@ export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
   useEffect(() => {
     if (opened) {
       setIsLoadingServices(true);
-      getMyProjects()
+      getMyServices()
         .then(setServices)
         .catch(() => setServices([]))
         .finally(() => setIsLoadingServices(false));
@@ -61,7 +62,7 @@ export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
 
   const handleSubmit = async () => {
     if (!selectedService) return;
-    const success = await notificationNeedResponseStore.sendNeedResponseAction({
+    const success = await notificationsStore.sendNeedResponseAction({
       message: comment,
       needId: needId ?? 1,
       publicationId: selectedService.id,
@@ -72,7 +73,7 @@ export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
     }
   };
 
-  const { isSending } = notificationNeedResponseStore;
+  const { isSending } = notificationsStore;
   const canSubmit = !!selectedService && !isSending;
 
   return (
@@ -106,9 +107,9 @@ export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
                 >
                   <Group gap={12} wrap="nowrap">
                     <div className={classes.pickerThumb}>
-                      {selectedService.image && (
+                      {selectedService.imageUrl && (
                         <img
-                          src={selectedService.image}
+                          src={selectedService.imageUrl}
                           alt={selectedService.name}
                           className={classes.pickerThumbImg}
                         />

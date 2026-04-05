@@ -1,14 +1,19 @@
 export {
-  getCollaborationNotifications,
-  getNeedResponseNotifications,
+  getIncomingNotifications,
+  getOutgoingNotifications,
+  getNotificationById,
   sendCollaborationNotification,
   sendNeedResponseNotification,
+  sendTeamInviteNotification,
+  sendTeamInviteResponse,
 } from './api';
 export type {
-  CollaborationNotification,
-  GetCollaborationNotificationsParams,
-  GetNeedResponseNotificationsParams,
-  NeedResponseNotification,
+  GetNotificationsParams,
+  Notification,
+  NotificationType,
   SendCollaborationRequest,
   SendNeedResponseRequest,
+  SendTeamInviteRequest,
+  SendTeamInviteResponseRequest,
+  TeamInviteNotification,
 } from './types';

@@ -1,19 +1,29 @@
-export interface CollaborationNotification {
+export type NotificationType =
+  | 'Collaboration'
+  | 'Response'
+  | 'Notice'
+  | 'TeamInvite';
+
+export interface Notification {
   createdAt: string;
-  creatorId: number;
+  creatorName: string;
   id: number;
   isRead: boolean;
-  message: string;
-  needId: number;
   publicationId: number;
   receiverId: number;
-  type: 'Collaboration';
+  type: NotificationType;
+  message?: string;
+  needId?: number;
+  isApprove?: boolean | null;
 }
 
-export interface GetCollaborationNotificationsParams {
-  limit?: number;
+export interface GetNotificationsParams {
+  type?: NotificationType;
+  size?: number;
   offset?: number;
 }
+
+// ---- Send requests (остаются для отправки уведомлений) ----
 
 export interface SendCollaborationRequest {
   message: string;
@@ -21,26 +31,24 @@ export interface SendCollaborationRequest {
   receiverId: number;
 }
 
-export interface NeedResponseNotification {
-  createdAt: string;
-  creatorId: number;
-  id: number;
-  isRead: boolean;
-  message: string;
-  needId: number;
-  publicationId: number;
-  receiverId: number;
-  type: 'Collaboration';
-}
-
-export interface GetNeedResponseNotificationsParams {
-  limit?: number;
-  offset?: number;
-}
-
 export interface SendNeedResponseRequest {
   message: string;
   needId: number;
   publicationId: number;
   receiverId: number;
+}
+
+export interface SendTeamInviteRequest {
+  publicationId: number | string;
+  receiverId: number;
+}
+
+export interface SendTeamInviteResponseRequest {
+  isApprove: boolean;
+  notificationId: number;
+}
+
+export interface TeamInviteNotification extends Omit<Notification, 'type'> {
+  isApprove: boolean | null;
+  type: 'TeamInvite';
 }

@@ -1,11 +1,9 @@
 import { Center, Stack, Text } from '@mantine/core';
 import ChatErrorIcon from 'shared/assets/icons/ChatError';
-import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useStore } from 'app/StoreProvider';
 import {
   CollaborationDrawer,
@@ -13,15 +11,9 @@ import {
   NotificationItemSkeleton,
   NOTIFICATION_CARD_VARIANT,
   NOTIFICATION_TAB,
-  ResponseDrawer,
 } from 'entities/notification';
 import type { NotificationTab } from 'entities/notification';
-import type {
-  CollaborationNotification,
-  NeedResponseNotification,
-} from 'shared/api/service/Notification/types';
-import { MOCK_NOTIFICATIONS } from 'shared/mocks/notificationsMocks';
-import type { NotificationMock } from 'shared/mocks/notificationsMocks';
+import type { Notification } from 'shared/api/service/Notification/types';
 import type { TabItem } from 'shared/ui/TabsSwitcher';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
@@ -30,41 +22,30 @@ import classes from './NotificationsPage.module.scss';
 dayjs.locale('ru');
 
 export const NotificationsPage = observer(() => {
-  const navigate = useNavigate();
-  const { notificationCollaborationStore, notificationNeedResponseStore } =
-    useStore();
+  const { notificationsStore } = useStore();
 
   const [activeTab, setActiveTab] = useState<NotificationTab>(
     NOTIFICATION_TAB.ALL,
   );
-  const [selectedMock, setSelectedMock] = useState<NotificationMock | null>(
-    null,
-  );
-  const [selectedCollaboration, setSelectedCollaboration] =
-    useState<CollaborationNotification | null>(null);
-  const [selectedResponse, setSelectedResponse] =
-    useState<NeedResponseNotification | null>(null);
-
-  const [responseOpened, { open: openResponse, close: closeResponse }] =
-    useDisclosure(false);
-  const [
-    collaborationOpened,
-    { open: openCollaboration, close: closeCollaboration },
-  ] = useDisclosure(false);
+  const [selectedNotification, setSelectedNotification] =
+    useState<Notification | null>(null);
+  const [detailOpened, setDetailOpened] = useState(false);
 
   useEffect(() => {
-    notificationCollaborationStore.fetchNotificationsAction();
-    notificationNeedResponseStore.fetchNotificationsAction();
-  }, [notificationCollaborationStore, notificationNeedResponseStore]);
+    notificationsStore.fetchIncomingAction();
+  }, [notificationsStore]);
 
-  const {
-    unreadCount,
-    notifications: collaborationNotifications,
-    isLoading: isCollaborationLoading,
-  } = notificationCollaborationStore;
+  const { incoming, isLoadingIncoming, unreadCount, incomingByType } =
+    notificationsStore;
 
-  const { notifications: responseNotifications, isLoading: isResponseLoading } =
-    notificationNeedResponseStore;
+  const collaborationItems = incomingByType('Collaboration');
+  const responseItems = incomingByType('Response');
+  const teamInviteItems = incomingByType('TeamInvite');
+  const noticeItems = incomingByType('Notice');
+
+  const allItems = [...incoming].sort(
+    (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+  );
 
   const TABS: TabItem<NotificationTab>[] = [
     { label: 'Все', value: NOTIFICATION_TAB.ALL },
@@ -77,39 +58,66 @@ export const NotificationsPage = observer(() => {
     { label: 'Отметки', value: NOTIFICATION_TAB.MENTIONS },
   ];
 
-  const handleMockItemClick = (item: NotificationMock) => {
-    if (item.tab === 'mentions') {
-      navigate(`/service/${item.linkedServiceId ?? '89'}`);
-      return;
-    }
-    setSelectedResponse(null);
-    setSelectedMock(item);
-    if (item.tab === 'responses') {
-      openResponse();
-    } else if (item.tab === 'collaboration') {
-      openCollaboration();
+  const handleNotificationClick = async (item: Notification) => {
+    setSelectedNotification(item);
+    setDetailOpened(true);
+    if (!item.isRead) {
+      await notificationsStore.markAsReadAction(item.id);
     }
   };
 
-  const handleCollaborationClick = (item: CollaborationNotification) => {
-    setSelectedCollaboration(item);
-    openCollaboration();
+  const handleCloseDetail = () => {
+    setDetailOpened(false);
+    setSelectedNotification(null);
   };
 
-  const handleResponseClick = (item: NeedResponseNotification) => {
-    setSelectedMock(null);
-    setSelectedResponse(item);
-    openResponse();
-  };
+  const renderEmpty = (text: string) => (
+    <Center className={classes.emptyState}>
+      <Stack align="center" gap={12}>
+        <ChatErrorIcon size={36} color="var(--accent-color)" />
+        <Text className={classes.emptyText}>{text}</Text>
+      </Stack>
+    </Center>
+  );
 
-  const responseGroups = responseNotifications.reduce<
-    Map<number, NeedResponseNotification[]>
-  >((acc, item) => {
-    const key = item.needId;
-    if (!acc.has(key)) acc.set(key, []);
-    acc.get(key)!.push(item);
-    return acc;
-  }, new Map());
+  const renderSkeletons = (count = 3) => (
+    <Stack gap={8}>
+      {Array.from({ length: count }).map((_, i) => (
+        <NotificationItemSkeleton key={i} />
+      ))}
+    </Stack>
+  );
+
+  const renderList = (items: Notification[]) => (
+    <Stack gap={8}>
+      {items.map((item) => (
+        <NotificationItem
+          key={item.id}
+          variant={
+            item.message
+              ? NOTIFICATION_CARD_VARIANT.WITH_BODY
+              : NOTIFICATION_CARD_VARIANT.WITHOUT_BODY
+          }
+          username={item.creatorName}
+          title={getNotificationTitle(item)}
+          body={item.message}
+          date={dayjs(item.createdAt).format('DD MMM, HH:mm')}
+          isRead={item.isRead}
+          onClick={() => handleNotificationClick(item)}
+        />
+      ))}
+    </Stack>
+  );
+
+  const responseGroups = responseItems.reduce<Map<number, Notification[]>>(
+    (acc, item) => {
+      const key = item.needId ?? 0;
+      if (!acc.has(key)) acc.set(key, []);
+      acc.get(key)!.push(item);
+      return acc;
+    },
+    new Map(),
+  );
 
   return (
     <Page smallPaddingBottom className={classes.page}>
@@ -122,79 +130,33 @@ export const NotificationsPage = observer(() => {
         onTabChange={setActiveTab}
         className={classes.tabs}
         renderTab={(tab) => {
+          if (tab === NOTIFICATION_TAB.ALL) {
+            if (isLoadingIncoming && allItems.length === 0) {
+              return renderSkeletons(4);
+            }
+            if (allItems.length === 0) {
+              return renderEmpty('Пока нет уведомлений');
+            }
+            return renderList(allItems);
+          }
+
           if (tab === NOTIFICATION_TAB.COLLABORATION) {
-            if (
-              isCollaborationLoading &&
-              collaborationNotifications.length === 0
-            ) {
-              return (
-                <Stack gap={8}>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <NotificationItemSkeleton key={i} />
-                  ))}
-                </Stack>
-              );
+            if (isLoadingIncoming && collaborationItems.length === 0) {
+              return renderSkeletons();
             }
-            if (collaborationNotifications.length === 0) {
-              return (
-                <Center className={classes.emptyState}>
-                  <Stack align="center" gap={12}>
-                    <ChatErrorIcon size={36} color="var(--accent-color)" />
-                    <Text className={classes.emptyText}>
-                      {'Пока нет уведомлений\nо сотрудничестве'}
-                    </Text>
-                  </Stack>
-                </Center>
-              );
+            if (collaborationItems.length === 0) {
+              return renderEmpty('Пока нет уведомлений\nо сотрудничестве');
             }
-            return (
-              <Stack gap={8}>
-                {collaborationNotifications.map((item) => (
-                  <NotificationItem
-                    key={item.id}
-                    variant={NOTIFICATION_CARD_VARIANT.WITH_BODY}
-                    title="Запрос на сотрудничество"
-                    body={item.message}
-                    date={dayjs(item.createdAt).format('DD MMM, HH:mm')}
-                    isRead={item.isRead}
-                    onClick={() => handleCollaborationClick(item)}
-                  />
-                ))}
-              </Stack>
-            );
+            return renderList(collaborationItems);
           }
 
           if (tab === NOTIFICATION_TAB.RESPONSES) {
-            if (isResponseLoading && responseNotifications.length === 0) {
-              return (
-                <Stack gap={24}>
-                  {Array.from({ length: 2 }).map((_, gi) => (
-                    <Stack key={gi} gap={12}>
-                      <NotificationItemSkeleton />
-                      <Stack gap={8}>
-                        {Array.from({ length: 2 }).map((__, i) => (
-                          <NotificationItemSkeleton key={i} />
-                        ))}
-                      </Stack>
-                    </Stack>
-                  ))}
-                </Stack>
-              );
+            if (isLoadingIncoming && responseItems.length === 0) {
+              return renderSkeletons();
             }
-
-            if (responseNotifications.length === 0) {
-              return (
-                <Center className={classes.emptyState}>
-                  <Stack align="center" gap={12}>
-                    <ChatErrorIcon size={36} color="var(--accent-color)" />
-                    <Text className={classes.emptyText}>
-                      {'Пока нет откликов\nна ваши потребности'}
-                    </Text>
-                  </Stack>
-                </Center>
-              );
+            if (responseItems.length === 0) {
+              return renderEmpty('Пока нет откликов\nна ваши потребности');
             }
-
             return (
               <Stack gap={24}>
                 {Array.from(responseGroups.entries()).map(([needId, items]) => (
@@ -207,11 +169,12 @@ export const NotificationsPage = observer(() => {
                         <NotificationItem
                           key={item.id}
                           variant={NOTIFICATION_CARD_VARIANT.WITH_BODY}
+                          username={item.creatorName}
                           title="откликнулся на вашу потребность:"
                           body={item.message}
                           date={dayjs(item.createdAt).format('DD MMM, HH:mm')}
                           isRead={item.isRead}
-                          onClick={() => handleResponseClick(item)}
+                          onClick={() => handleNotificationClick(item)}
                         />
                       ))}
                     </Stack>
@@ -221,82 +184,35 @@ export const NotificationsPage = observer(() => {
             );
           }
 
-          const items = MOCK_NOTIFICATIONS.filter(
-            (item) => tab === NOTIFICATION_TAB.ALL || item.tab === tab,
-          );
+          if (tab === NOTIFICATION_TAB.MENTIONS) {
+            const mentionItems = [...teamInviteItems, ...noticeItems];
+            if (isLoadingIncoming && mentionItems.length === 0) {
+              return renderSkeletons();
+            }
+            if (mentionItems.length === 0) {
+              return renderEmpty('Пока нет отметок');
+            }
+            return renderList(mentionItems);
+          }
 
-          return (
-            <Stack gap={8}>
-              {items.map((item) => (
-                <NotificationItem
-                  key={item.id}
-                  variant={item.variant}
-                  username={item.username}
-                  title={item.title}
-                  body={item.body}
-                  date={item.date}
-                  isRead={item.isRead}
-                  onClick={() => handleMockItemClick(item)}
-                />
-              ))}
-            </Stack>
-          );
+          return null;
         }}
       />
 
-      {selectedMock?.tab === 'responses' &&
-        selectedMock.sender &&
-        selectedMock.need &&
-        selectedMock.linkedItem &&
-        selectedMock.comment && (
-          <ResponseDrawer
-            opened={responseOpened}
-            onClose={closeResponse}
-            sender={selectedMock.sender}
-            need={selectedMock.need}
-            service={selectedMock.linkedItem}
-            comment={selectedMock.comment}
-          />
-        )}
-
-      {selectedResponse && !selectedMock && (
-        <ResponseDrawer
-          opened={responseOpened}
-          onClose={() => {
-            closeResponse();
-            setSelectedResponse(null);
-          }}
-          sender={{
-            name: `Пользователь ${selectedResponse.creatorId}`,
-            username: String(selectedResponse.creatorId),
-            meta: '',
-          }}
-          need={{
-            title: `Потребность #${selectedResponse.needId}`,
-            description: '',
-          }}
-          service={{
-            title: `Публикация #${selectedResponse.publicationId}`,
-            description: '',
-          }}
-          comment={selectedResponse.message}
-        />
-      )}
-
-      {selectedCollaboration && (
+      {selectedNotification?.type === 'Collaboration' && (
         <CollaborationDrawer
-          opened={collaborationOpened}
-          onClose={closeCollaboration}
+          opened={detailOpened}
+          onClose={handleCloseDetail}
           sender={{
-            name: `Пользователь ${selectedCollaboration.creatorId}`,
-            username: String(selectedCollaboration.creatorId),
+            name: selectedNotification.creatorName,
+            username: selectedNotification.creatorName,
             meta: '',
           }}
           project={{
-            title: `Проект #${selectedCollaboration.publicationId}`,
+            title: `Проект #${selectedNotification.publicationId}`,
             description: '',
           }}
-          comment={selectedCollaboration.message}
+          comment={selectedNotification.message ?? ''}
         />
       )}
     </Page>
@@ -304,3 +220,18 @@ export const NotificationsPage = observer(() => {
 });
 
 export default NotificationsPage;
+
+function getNotificationTitle(item: Notification): string {
+  switch (item.type) {
+    case 'Collaboration':
+      return 'Запрос на сотрудничество';
+    case 'Response':
+      return 'Откликнулся на вашу потребность';
+    case 'TeamInvite':
+      return 'Приглашение в команду';
+    case 'Notice':
+      return 'Уведомление';
+    default:
+      return 'Уведомление';
+  }
+}

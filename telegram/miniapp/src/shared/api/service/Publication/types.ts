@@ -219,3 +219,13 @@ export interface MyProject {
   name: string;
   type: 'PROJECT';
 }
+
+export interface MyService {
+  description: string;
+  id: number;
+  imageUrl: string | null;
+  isAuthor: boolean;
+  likesCount: number;
+  name: string;
+  type: 'SERVICE';
+}

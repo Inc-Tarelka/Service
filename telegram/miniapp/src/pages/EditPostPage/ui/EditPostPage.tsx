@@ -14,9 +14,9 @@ import { AddCollaborators, AddNeeds, NeedDrawer } from 'features/post';
 import { EditNeedPreviewDrawer } from 'features/post/ui/EditNeedPreviewDrawer/EditNeedPreviewDrawer';
 import { NeedPreviewDrawer } from 'features/post/ui/NeedPreviewDrawer/NeedPreviewDrawer';
 import { observer } from 'mobx-react-lite';
-import { Activity, useEffect, useRef, useState } from 'react';
+import { Activity, type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
+import type { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
 import type { UpdatePublicationRequest } from 'shared/api/service/Publication';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
@@ -39,6 +39,7 @@ export const EditPostPage = observer(() => {
     postStore,
     publicationStore,
     publicationDetailsStore,
+    notificationTeamInviteStore,
     searchUsersStore,
   } = useStore();
   const [searchParams] = useSearchParams();
@@ -62,7 +63,7 @@ export const EditPostPage = observer(() => {
       galleryStore.clearAll();
       postStore.resetPostData();
     };
-  }, [id]);
+  }, [galleryStore, id, postStore, publicationDetailsStore]);
 
   useEffect(() => {
     if (initialized) return;
@@ -97,7 +98,7 @@ export const EditPostPage = observer(() => {
     });
 
     setInitialized(true);
-  }, [publicationDetailsStore.data, initialized]);
+  }, [publicationDetailsStore.data, initialized, postStore]);
 
   const citiesData = referenceStore.cities.map((c) => ({
     value: String(c.id),
@@ -116,7 +117,7 @@ export const EditPostPage = observer(() => {
 
   const filteredUsers = searchUsersStore.users;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const imageFiles = Array.from(files).filter((f) =>
@@ -170,7 +171,7 @@ export const EditPostPage = observer(() => {
     openEditNeed();
   };
 
-  const handleSaveEditedNeed = (_updatedNeed: PostNeed) => {
+  const handleSaveEditedNeed = () => {
     closeEditNeed();
   };
 
@@ -182,6 +183,18 @@ export const EditPostPage = observer(() => {
   const handleSave = async () => {
     if (!id) return;
     try {
+      const isProjectPublication = postStore.formValues.type === 'project';
+      const pendingCollaboratorIds = postStore.collaborators
+        .filter((collaborator) => collaborator.status === 'pending')
+        .map((collaborator) => Number(collaborator.id))
+        .filter((value) => Number.isFinite(value));
+      const confirmedCollaboratorIds = postStore.collaborators
+        .filter((collaborator) => collaborator.status === 'confirmed')
+        .map((collaborator) => Number(collaborator.id))
+        .filter((value) => Number.isFinite(value));
+      const collaboratorIds = postStore.collaborators
+        .map((collaborator) => Number(collaborator.id))
+        .filter((value) => Number.isFinite(value));
       const newImageFiles = await Promise.all(
         galleryStore.selectedPhotos.map(async (photo, index) => {
           const response = await fetch(photo.base64);
@@ -200,7 +213,9 @@ export const EditPostPage = observer(() => {
           ? Number(postStore.formValues.cityId)
           : undefined,
         tagIds: postStore.formValues.tagIds.map(Number),
-        coAuthorIds: postStore.collaborators.map((c) => Number(c.id)),
+        coAuthorIds: isProjectPublication
+          ? confirmedCollaboratorIds
+          : collaboratorIds,
         needs: postStore.needs.map((need) => ({
           name: need.title,
           description: need.description,
@@ -217,6 +232,20 @@ export const EditPostPage = observer(() => {
         existingImageUrls,
         publicationData,
       );
+
+      if (isProjectPublication && pendingCollaboratorIds.length > 0) {
+        const result = await notificationTeamInviteStore.sendTeamInvitesAction(
+          Number(id),
+          pendingCollaboratorIds,
+        );
+
+        if (result.failedReceiverIds.length > 0) {
+          console.error(
+            'Failed to send some team invite notifications:',
+            result.failedReceiverIds,
+          );
+        }
+      }
 
       galleryStore.clearAll();
       postStore.resetPostData();

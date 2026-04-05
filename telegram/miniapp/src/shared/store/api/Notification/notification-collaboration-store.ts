@@ -1,15 +1,15 @@
 import { makeAutoObservable } from 'mobx';
 import {
-  getCollaborationNotifications,
+  getIncomingNotifications,
   sendCollaborationNotification,
 } from 'shared/api/service/Notification/api';
 import type {
-  CollaborationNotification,
+  Notification,
   SendCollaborationRequest,
 } from 'shared/api/service/Notification/types';
 
 export class NotificationCollaborationStore {
-  notifications: CollaborationNotification[] = [];
+  notifications: Notification[] = [];
   isLoading = false;
   isSending = false;
 
@@ -24,7 +24,11 @@ export class NotificationCollaborationStore {
     if (this.isLoading) return;
     this.isLoading = true;
     try {
-      const data = await getCollaborationNotifications(params);
+      const data = await getIncomingNotifications({
+        offset: params?.offset,
+        size: params?.limit,
+        type: 'Collaboration',
+      });
       this.notifications = data;
     } catch (error) {
       console.error('Failed to fetch collaboration notifications:', error);

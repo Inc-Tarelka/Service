@@ -10,12 +10,12 @@ import {
 import { useTheme } from 'app/providers/ThemeProvider';
 import { useState } from 'react';
 import ArrowLeftIcon from 'shared/assets/icons/arrowLeft';
-import type { MyProject } from 'shared/api/service/Publication/types';
+import type { MyService } from 'shared/api/service/Publication/types';
 import { Skeleton } from 'shared/ui/Skeleton';
 import { classNames } from 'shared/library/ClassNames/classNames';
 import classes from './ResponseToNeedDrawer.module.scss';
 
-export type MyService = MyProject;
+export type { MyService };
 
 interface ServicePickerDrawerProps {
   isOpen: boolean;
@@ -65,7 +65,7 @@ export const ServicePickerDrawer = (props: ServicePickerDrawerProps) => {
       }}
     >
       <div className={classNames(classes.pickerInner, {}, [theme])}>
-        <h2 className={classNames(classes.pickerTitle, {}, [])}>Ваши услуги</h2>
+        <h2 className={classes.pickerTitle}>Ваши услуги</h2>
 
         <div className={classes.pickerList}>
           {isLoading
@@ -93,9 +93,9 @@ export const ServicePickerDrawer = (props: ServicePickerDrawerProps) => {
                   onClick={() => setTempSelected(service)}
                 >
                   <div className={classes.pickerThumb}>
-                    {service.image && (
+                    {service.imageUrl && (
                       <img
-                        src={service.image}
+                        src={service.imageUrl}
                         alt={service.name}
                         className={classes.pickerThumbImg}
                       />

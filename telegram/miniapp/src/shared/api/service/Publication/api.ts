@@ -6,6 +6,7 @@ import type {
   GetPublicationCommentsParams,
   GetPublicationCommentsResponse,
   MyProject,
+  MyService,
   PresignRequest,
   PresignResponse,
   Publication,
@@ -86,6 +87,12 @@ export const createPublicationComment = async (
 // =========== MY PROJECTS ===========
 export const getMyProjects = async (): Promise<MyProject[]> => {
   const response = await baseInstanceV1.get<MyProject[]>(API_URL.my_projects());
+  return response.data;
+};
+
+// =========== MY SERVICES ===========
+export const getMyServices = async (): Promise<MyService[]> => {
+  const response = await baseInstanceV1.get<MyService[]>(API_URL.my_services());
   return response.data;
 };
 

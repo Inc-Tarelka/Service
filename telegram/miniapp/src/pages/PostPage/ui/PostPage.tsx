@@ -14,23 +14,29 @@ import { AddCollaborators, AddNeeds, NeedDrawer } from 'features/post';
 import { EditNeedPreviewDrawer } from 'features/post/ui/EditNeedPreviewDrawer/EditNeedPreviewDrawer';
 import { NeedPreviewDrawer } from 'features/post/ui/NeedPreviewDrawer/NeedPreviewDrawer';
 import { observer } from 'mobx-react-lite';
-import { Activity, useRef, useState } from 'react';
+import { Activity, type ChangeEvent, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
+import type { PostCollaborator, PostNeed } from 'shared/api/service/Post/types';
 import type { CreatePublicationRequest } from 'shared/api/service/Publication';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import { Page } from 'widgets/Page';
 import { DEFAULT_STEP, PostStep, VALID_STEPS } from '../lib/constants';
 import classes from './PostPage.module.scss';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const PostPage = observer(() => {
-  const { galleryStore, postStore, publicationStore } = useStore();
+  const {
+    galleryStore,
+    postStore,
+    publicationStore,
+    notificationTeamInviteStore,
+    searchUsersStore,
+  } = useStore();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,11 +62,9 @@ export const PostPage = observer(() => {
     label: t.name,
   }));
 
-  const { searchUsersStore } = useStore();
-
   const filteredUsers = searchUsersStore.users;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const imageFiles = Array.from(files).filter((f) =>
@@ -117,21 +121,73 @@ export const PostPage = observer(() => {
     openEditNeed();
   };
 
-  const handleSaveEditedNeed = (updatedNeed: PostNeed) => {
-    console.log('Save edited need:', updatedNeed);
-    // TODO: Update logic here
+  const handleSaveEditedNeed = () => {
     closeEditNeed();
   };
 
   const handleDeleteNeed = () => {
-    console.log('Delete need');
-    // TODO: Delete logic here
     closeEditNeed();
     closeNeedPreview();
   };
 
+  const resolvePublicationId = (value: unknown): string | number | null => {
+    const idKeys = ['id', 'publicationId', 'publicationID', 'publication_id'];
+    const stack: unknown[] = [value];
+    const visited = new Set<object>();
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+
+      if (!current || typeof current !== 'object') {
+        continue;
+      }
+
+      if (visited.has(current)) {
+        continue;
+      }
+      visited.add(current);
+
+      const data = current as Record<string, unknown>;
+
+      for (const key of idKeys) {
+        const candidate = data[key];
+
+        if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+          return candidate;
+        }
+
+        if (typeof candidate === 'string') {
+          const normalized = candidate.trim();
+          if (normalized.length > 0) {
+            return normalized;
+          }
+        }
+      }
+
+      for (const child of Object.values(data)) {
+        if (child && typeof child === 'object') {
+          stack.push(child);
+        }
+      }
+    }
+
+    return null;
+  };
+
   const handlePublish = async () => {
     try {
+      const isProjectPublication = postStore.formValues.type === 'project';
+      const pendingCollaboratorIds = postStore.collaborators
+        .filter((collaborator) => collaborator.status === 'pending')
+        .map((collaborator) => Number(collaborator.id))
+        .filter((id) => Number.isFinite(id));
+      const confirmedCollaboratorIds = postStore.collaborators
+        .filter((collaborator) => collaborator.status === 'confirmed')
+        .map((collaborator) => Number(collaborator.id))
+        .filter((id) => Number.isFinite(id));
+      const collaboratorIds = postStore.collaborators
+        .map((collaborator) => Number(collaborator.id))
+        .filter((id) => Number.isFinite(id));
       const imageFiles = await Promise.all(
         galleryStore.selectedPhotos.map(async (photo, index) => {
           const response = await fetch(photo.base64);
@@ -150,7 +206,9 @@ export const PostPage = observer(() => {
           ? Number(postStore.formValues.cityId)
           : undefined,
         tagIds: postStore.formValues.tagIds.map(Number),
-        coAuthorIds: postStore.collaborators.map((c) => Number(c.id)),
+        coAuthorIds: isProjectPublication
+          ? confirmedCollaboratorIds
+          : collaboratorIds,
         needs: postStore.needs.map((need) => ({
           name: need.title,
           description: need.description,
@@ -160,10 +218,35 @@ export const PostPage = observer(() => {
           tagIds: need.tagIds ? need.tagIds.map(Number) : [],
         })),
       };
-      await publicationStore.createPublicationAction(
+      const publication = await publicationStore.createPublicationAction(
         imageFiles,
         publicationData,
       );
+
+      if (isProjectPublication && pendingCollaboratorIds.length > 0) {
+        const publicationId = resolvePublicationId(publication);
+
+        if (!publicationId) {
+          console.error(
+            'Failed to resolve publicationId for team invites:',
+            publication,
+          );
+        } else {
+          const result =
+            await notificationTeamInviteStore.sendTeamInvitesAction(
+              publicationId,
+              pendingCollaboratorIds,
+            );
+
+          if (result.failedReceiverIds.length > 0) {
+            console.error(
+              'Failed to send some team invite notifications:',
+              result.failedReceiverIds,
+            );
+          }
+        }
+      }
+
       galleryStore.clearAll();
       postStore.resetPostData();
       navigate(RoutePath.profile);

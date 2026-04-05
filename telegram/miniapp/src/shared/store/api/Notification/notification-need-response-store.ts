@@ -1,15 +1,15 @@
 import { makeAutoObservable } from 'mobx';
 import {
-  getNeedResponseNotifications,
+  getIncomingNotifications,
   sendNeedResponseNotification,
 } from 'shared/api/service/Notification/api';
 import type {
-  NeedResponseNotification,
+  Notification,
   SendNeedResponseRequest,
 } from 'shared/api/service/Notification/types';
 
 export class NotificationNeedResponseStore {
-  notifications: NeedResponseNotification[] = [];
+  notifications: Notification[] = [];
   isLoading = false;
   isSending = false;
 
@@ -24,7 +24,11 @@ export class NotificationNeedResponseStore {
     if (this.isLoading) return;
     this.isLoading = true;
     try {
-      const data = await getNeedResponseNotifications(params);
+      const data = await getIncomingNotifications({
+        offset: params?.offset,
+        size: params?.limit,
+        type: 'Response',
+      });
       this.notifications = data;
     } catch (error) {
       console.error('Failed to fetch need response notifications:', error);

@@ -31,7 +31,7 @@ export class PublicationStore {
   createPublicationAction = async (
     imageFiles: File[],
     publicationData: Omit<CreatePublicationRequest, 'imageUrls'>,
-  ): Promise<void> => {
+  ): Promise<Publication> => {
     try {
       this.isLoading = true;
       this.error = null;
@@ -70,6 +70,7 @@ export class PublicationStore {
       this.createdPublication = publication;
       this.uploadProgress = 100;
       this.loadingStep = 'success';
+      return publication;
     } catch (error) {
       this.error =
         error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -119,7 +120,7 @@ export class PublicationStore {
 
         const progressIncrement = 50 / files.length;
         this.uploadProgress = 25 + progressIncrement * (i + 1);
-      } catch (error) {
+      } catch {
         throw new Error(`Не удалось загрузить файл ${file.name}`);
       }
     }
@@ -132,7 +133,7 @@ export class PublicationStore {
     imageFiles: File[],
     existingImageUrls: string[],
     publicationData: Omit<UpdatePublicationRequest, 'imageUrls'>,
-  ): Promise<void> => {
+  ): Promise<Publication> => {
     try {
       this.isLoading = true;
       this.error = null;
@@ -171,6 +172,7 @@ export class PublicationStore {
       this.createdPublication = publication;
       this.uploadProgress = 100;
       this.loadingStep = 'success';
+      return publication;
     } catch (error) {
       this.error =
         error instanceof Error ? error.message : 'Неизвестная ошибка';

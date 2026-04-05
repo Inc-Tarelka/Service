@@ -65,9 +65,14 @@ export const API_URL = {
   create_invite_link: () => '/createInviteLink',
 
   // Notifications
-  notifications_collaboration: () => '/notifications/collaboration',
-  notifications_need_response: () => '/notifications/need-response',
+  notifications_incoming: () => '/notifications/incoming',
+  notifications_outgoing: () => '/notifications/outgoing',
+  notification_by_id: (id: number) => `/notifications/${id}`,
+  notifications_team_invite: () => '/notifications/team-invite',
+  notifications_team_invite_response: () =>
+    '/notifications/team-invite/response',
 
   // My projects
   my_projects: () => '/publications/my/projects',
+  my_services: () => '/publications/my/services',
 };
