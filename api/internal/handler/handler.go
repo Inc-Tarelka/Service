@@ -130,6 +130,9 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				notifs.GET("/need-response", h.notification.ListNeedResponses)
 				notifs.POST("/team-invite", h.notification.CreateTeamInvite)
 				notifs.POST("/team-invite/response", h.notification.RespondTeamInvite)
+				notifs.GET("/incoming", h.notification.ListIncomingNotifications)
+				notifs.GET("/outgoing", h.notification.ListOutgoingNotifications)
+				notifs.GET(":id", h.notification.GetNotification)
 			}
 		}
 	}

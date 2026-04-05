@@ -24,6 +24,14 @@ type NotificationService interface {
 	// Приглашение в команду (соавторы проекта)
 	SendTeamInviteNotification(ctx context.Context, creatorID, publicationID, receiverID int64) (*model.Notification, error)
 	RespondToTeamInvite(ctx context.Context, receiverID, notificationID int64, isApprove bool) (*model.Notification, error)
+
+	// Общие ручки для уведомлений
+	// Входящие уведомления для пользователя (где он receiver).
+	ListIncomingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// Исходящие уведомления для пользователя (где он creator).
+	ListOutgoingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// Получить одно уведомление по id для конкретного получателя с пометкой как прочитанное.
+	GetNotificationForReceiver(ctx context.Context, id, receiverID int64) (*model.NotificationWithCreator, error)
 }
 
 type notificationService struct {
@@ -247,6 +255,35 @@ func (s *notificationService) RespondToTeamInvite(
 	}
 
 	return updated, nil
+}
+
+// ListIncomingNotifications возвращает входящие уведомления для пользователя.
+func (s *notificationService) ListIncomingNotifications(
+	ctx context.Context,
+	userID int64,
+	nType *model.NotificationType,
+	limit, offset int,
+) ([]*model.NotificationWithCreator, error) {
+	return s.notifRepo.ListIncoming(ctx, userID, nType, limit, offset)
+}
+
+// ListOutgoingNotifications возвращает исходящие уведомления для пользователя.
+func (s *notificationService) ListOutgoingNotifications(
+	ctx context.Context,
+	userID int64,
+	nType *model.NotificationType,
+	limit, offset int,
+) ([]*model.NotificationWithCreator, error) {
+	return s.notifRepo.ListOutgoing(ctx, userID, nType, limit, offset)
+}
+
+// GetNotificationForReceiver возвращает одно уведомление по id для конкретного получателя
+// и помечает его прочитанным.
+func (s *notificationService) GetNotificationForReceiver(
+	ctx context.Context,
+	id, receiverID int64,
+) (*model.NotificationWithCreator, error) {
+	return s.notifRepo.GetByIDForReceiverAndMarkRead(ctx, id, receiverID)
 }
 
 func buildTeamInviteMessage(pub *model.Publication) string {

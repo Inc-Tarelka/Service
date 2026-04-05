@@ -401,6 +401,29 @@ definitions:
     - NotificationTypeResponse
     - NotificationTypeNotice
     - NotificationTypeTeamInvite
+  model.NotificationWithCreatorResponse:
+    properties:
+      createdAt:
+        type: string
+      creatorName:
+        type: string
+      id:
+        type: integer
+      isApprove:
+        type: boolean
+      isRead:
+        type: boolean
+      message:
+        type: string
+      needId:
+        type: integer
+      publicationId:
+        type: integer
+      receiverId:
+        type: integer
+      type:
+        $ref: '#/definitions/model.NotificationType'
+    type: object
   model.PasswordForgotRequest:
     properties:
       username:
@@ -1377,6 +1400,44 @@ paths:
       summary: Получить потребность по ID
       tags:
       - needs
+  /notifications/{id}:
+    get:
+      description: Возвращает уведомление по id для текущего пользователя (как receiver)
+        и помечает его прочитанным
+      parameters:
+      - description: ID уведомления
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NotificationWithCreatorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить уведомление по id
+      tags:
+      - notifications
   /notifications/collaboration:
     get:
       description: Возвращает уведомления типа Collaboration для текущего пользователя
@@ -1446,6 +1507,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Отправить уведомление о сотрудничестве
+      tags:
+      - notifications
+  /notifications/incoming:
+    get:
+      description: Возвращает входящие уведомления для текущего пользователя (где
+        он receiver)
+      parameters:
+      - description: Тип уведомлений (Collaboration/Response/Notice/TeamInvite)
+        in: query
+        name: type
+        type: string
+      - default: 20
+        description: Размер страницы
+        in: query
+        name: size
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NotificationWithCreatorResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Список входящих уведомлений
       tags:
       - notifications
   /notifications/need-response:
@@ -1521,6 +1626,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Отправить отклик на потребность
+      tags:
+      - notifications
+  /notifications/outgoing:
+    get:
+      description: Возвращает исходящие уведомления для текущего пользователя (где
+        он creator)
+      parameters:
+      - description: Тип уведомлений (Collaboration/Response/Notice/TeamInvite)
+        in: query
+        name: type
+        type: string
+      - default: 20
+        description: Размер страницы
+        in: query
+        name: size
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NotificationWithCreatorResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Список исходящих уведомлений
       tags:
       - notifications
   /notifications/team-invite:

@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	"github.com/Inc-Tarelka/api/internal/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,11 +20,26 @@ type NotificationRepository interface {
 	// SetApproval устанавливает флаг is_approve для уведомления (обычно типа TeamInvite)
 	// и помечает его как прочитанное.
 	SetApproval(ctx context.Context, id int64, receiverID int64, isApprove bool) (*model.Notification, error)
+
+	// ListIncoming возвращает входящие уведомления для пользователя (receiver).
+	// Если nType == nil, возвращаются все типы.
+	ListIncoming(ctx context.Context, receiverID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// ListOutgoing возвращает исходящие уведомления для пользователя (creator).
+	// Если nType == nil, возвращаются все типы.
+	ListOutgoing(ctx context.Context, creatorID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// GetByIDForReceiverAndMarkRead возвращает уведомление по id для конкретного получателя
+	// и помечает его как прочитанное. Если уведомление не найдено или принадлежит другому
+	// получателю, возвращается ошибка ErrNotificationNotFound.
+	GetByIDForReceiverAndMarkRead(ctx context.Context, id int64, receiverID int64) (*model.NotificationWithCreator, error)
 }
 
 type notificationRepository struct {
 	pool *pgxpool.Pool
 }
+
+// ErrNotificationNotFound возвращается, когда уведомление не найдено
+// или не принадлежит указанному пользователю.
+var ErrNotificationNotFound = errors.New("notification not found")
 
 func NewNotificationRepository(pool *pgxpool.Pool) NotificationRepository {
 	return &notificationRepository{pool: pool}
@@ -170,5 +188,189 @@ func (r *notificationRepository) SetApproval(ctx context.Context, id int64, rece
 	); err != nil {
 		return nil, err
 	}
+	return &n, nil
+}
+
+// ListIncoming возвращает входящие уведомления (receiver_id = user)
+// с опциональной фильтрацией по типу.
+func (r *notificationRepository) ListIncoming(
+	ctx context.Context,
+	receiverID int64,
+	nType *model.NotificationType,
+	limit, offset int,
+) ([]*model.NotificationWithCreator, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	baseQuery := `
+		SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
+		       n.message, n.need_id, n.is_read, n.is_approve,
+		       COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
+		FROM notifications n
+		JOIN tarelka_users u ON u.id = n.creator_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		WHERE n.receiver_id = $1`
+
+	args := []interface{}{receiverID}
+	idx := 2
+
+	if nType != nil {
+		baseQuery += " AND n.type = $" + strconv.Itoa(idx)
+		args = append(args, *nType)
+		idx++
+	}
+
+	baseQuery += " ORDER BY n.created_at DESC"
+	baseQuery += " LIMIT $" + strconv.Itoa(idx)
+	args = append(args, limit)
+	idx++
+	baseQuery += " OFFSET $" + strconv.Itoa(idx)
+	args = append(args, offset)
+
+	rows, err := r.pool.Query(ctx, baseQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var res []*model.NotificationWithCreator
+	for rows.Next() {
+		var n model.NotificationWithCreator
+		if err := rows.Scan(
+			&n.ID,
+			&n.Type,
+			&n.PublicationID,
+			&n.CreatedAt,
+			&n.CreatorID,
+			&n.ReceiverID,
+			&n.Message,
+			&n.NeedID,
+			&n.IsRead,
+			&n.IsApprove,
+			&n.CreatorName,
+		); err != nil {
+			return nil, err
+		}
+		res = append(res, &n)
+	}
+
+	return res, rows.Err()
+}
+
+// ListOutgoing возвращает исходящие уведомления (creator_id = user)
+// с опциональной фильтрацией по типу.
+func (r *notificationRepository) ListOutgoing(
+	ctx context.Context,
+	creatorID int64,
+	nType *model.NotificationType,
+	limit, offset int,
+) ([]*model.NotificationWithCreator, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	baseQuery := `
+		SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
+		       n.message, n.need_id, n.is_read, n.is_approve,
+		       COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
+		FROM notifications n
+		JOIN tarelka_users u ON u.id = n.creator_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		WHERE n.creator_id = $1`
+
+	args := []interface{}{creatorID}
+	idx := 2
+
+	if nType != nil {
+		baseQuery += " AND n.type = $" + strconv.Itoa(idx)
+		args = append(args, *nType)
+		idx++
+	}
+
+	baseQuery += " ORDER BY n.created_at DESC"
+	baseQuery += " LIMIT $" + strconv.Itoa(idx)
+	args = append(args, limit)
+	idx++
+	baseQuery += " OFFSET $" + strconv.Itoa(idx)
+	args = append(args, offset)
+
+	rows, err := r.pool.Query(ctx, baseQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var res []*model.NotificationWithCreator
+	for rows.Next() {
+		var n model.NotificationWithCreator
+		if err := rows.Scan(
+			&n.ID,
+			&n.Type,
+			&n.PublicationID,
+			&n.CreatedAt,
+			&n.CreatorID,
+			&n.ReceiverID,
+			&n.Message,
+			&n.NeedID,
+			&n.IsRead,
+			&n.IsApprove,
+			&n.CreatorName,
+		); err != nil {
+			return nil, err
+		}
+		res = append(res, &n)
+	}
+
+	return res, rows.Err()
+}
+
+// GetByIDForReceiverAndMarkRead возвращает уведомление по id, если
+// оно принадлежит указанному получателю, и помечает его прочитанным.
+func (r *notificationRepository) GetByIDForReceiverAndMarkRead(
+	ctx context.Context,
+	id int64,
+	receiverID int64,
+) (*model.NotificationWithCreator, error) {
+	query := `
+		UPDATE notifications n
+		SET is_read = TRUE
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		WHERE n.id = $1 AND n.receiver_id = $2 AND u.id = n.creator_id
+		RETURNING n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
+		          n.message, n.need_id, n.is_read, n.is_approve,
+		          COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
+	`
+
+	var n model.NotificationWithCreator
+	if err := r.pool.QueryRow(ctx, query, id, receiverID).Scan(
+		&n.ID,
+		&n.Type,
+		&n.PublicationID,
+		&n.CreatedAt,
+		&n.CreatorID,
+		&n.ReceiverID,
+		&n.Message,
+		&n.NeedID,
+		&n.IsRead,
+		&n.IsApprove,
+		&n.CreatorName,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotificationNotFound
+		}
+		return nil, err
+	}
+
 	return &n, nil
 }

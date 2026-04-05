@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -42,6 +43,28 @@ type TeamInviteRequest struct {
 type TeamInviteResponseRequest struct {
 	NotificationID int64 `json:"notificationId" binding:"required"`
 	IsApprove      bool  `json:"isApprove" binding:"required"`
+}
+
+// parseNotificationType извлекает тип уведомления из query-параметра
+// и валидирует его по списку известных констант.
+// Возвращает (*NotificationType, nil) если тип задан и валиден,
+// (nil, nil) если тип не передан и ошибку, если тип неизвестен.
+func parseNotificationType(c *gin.Context) (*model.NotificationType, error) {
+	typeStr := c.Query("type")
+	if typeStr == "" {
+		return nil, nil
+	}
+
+	nt := model.NotificationType(typeStr)
+	switch nt {
+	case model.NotificationTypeCollaboration,
+		model.NotificationTypeResponse,
+		model.NotificationTypeNotice,
+		model.NotificationTypeTeamInvite:
+		return &nt, nil
+	default:
+		return nil, fmt.Errorf("invalid notification type")
+	}
 }
 
 // CreateCollaboration godoc
@@ -402,6 +425,172 @@ func (h *NotificationHandler) RespondTeamInvite(c *gin.Context) {
 		NeedID:        notif.NeedID,
 		IsRead:        notif.IsRead,
 		IsApprove:     notif.IsApprove,
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// ListIncomingNotifications godoc
+// @Summary Список входящих уведомлений
+// @Description Возвращает входящие уведомления для текущего пользователя (где он receiver)
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param type query string false "Тип уведомлений (Collaboration/Response/Notice/TeamInvite)"
+// @Param size query int false "Размер страницы" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.NotificationWithCreatorResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/incoming [get]
+func (h *NotificationHandler) ListIncomingNotifications(c *gin.Context) {
+	userIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+
+	nType, err := parseNotificationType(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "validation_error", Message: err.Error()})
+		return
+	}
+
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	list, err := h.svc.ListIncomingNotifications(c.Request.Context(), userID, nType, size, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := make([]model.NotificationWithCreatorResponse, 0, len(list))
+	for _, n := range list {
+		resp = append(resp, model.NotificationWithCreatorResponse{
+			ID:            n.ID,
+			Type:          n.Type,
+			PublicationID: n.PublicationID,
+			CreatedAtISO:  n.CreatedAt.Format(time.RFC3339),
+			CreatorName:   n.CreatorName,
+			ReceiverID:    n.ReceiverID,
+			Message:       n.Message,
+			NeedID:        n.NeedID,
+			IsRead:        n.IsRead,
+			IsApprove:     n.IsApprove,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// ListOutgoingNotifications godoc
+// @Summary Список исходящих уведомлений
+// @Description Возвращает исходящие уведомления для текущего пользователя (где он creator)
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param type query string false "Тип уведомлений (Collaboration/Response/Notice/TeamInvite)"
+// @Param size query int false "Размер страницы" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.NotificationWithCreatorResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/outgoing [get]
+func (h *NotificationHandler) ListOutgoingNotifications(c *gin.Context) {
+	userIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+
+	nType, err := parseNotificationType(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "validation_error", Message: err.Error()})
+		return
+	}
+
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	list, err := h.svc.ListOutgoingNotifications(c.Request.Context(), userID, nType, size, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := make([]model.NotificationWithCreatorResponse, 0, len(list))
+	for _, n := range list {
+		resp = append(resp, model.NotificationWithCreatorResponse{
+			ID:            n.ID,
+			Type:          n.Type,
+			PublicationID: n.PublicationID,
+			CreatedAtISO:  n.CreatedAt.Format(time.RFC3339),
+			CreatorName:   n.CreatorName,
+			ReceiverID:    n.ReceiverID,
+			Message:       n.Message,
+			NeedID:        n.NeedID,
+			IsRead:        n.IsRead,
+			IsApprove:     n.IsApprove,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetNotification godoc
+// @Summary Получить уведомление по id
+// @Description Возвращает уведомление по id для текущего пользователя (как receiver) и помечает его прочитанным
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID уведомления"
+// @Success 200 {object} model.NotificationWithCreatorResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/{id} [get]
+func (h *NotificationHandler) GetNotification(c *gin.Context) {
+	userIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	receiverID := userIDVal.(int64)
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "validation_error", Message: "invalid id"})
+		return
+	}
+
+	n, err := h.svc.GetNotificationForReceiver(c.Request.Context(), id, receiverID)
+	if err != nil {
+		if err == repository.ErrNotificationNotFound {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := model.NotificationWithCreatorResponse{
+		ID:            n.ID,
+		Type:          n.Type,
+		PublicationID: n.PublicationID,
+		CreatedAtISO:  n.CreatedAt.Format(time.RFC3339),
+		CreatorName:   n.CreatorName,
+		ReceiverID:    n.ReceiverID,
+		Message:       n.Message,
+		NeedID:        n.NeedID,
+		IsRead:        n.IsRead,
+		IsApprove:     n.IsApprove,
 	}
 
 	c.JSON(http.StatusOK, resp)
