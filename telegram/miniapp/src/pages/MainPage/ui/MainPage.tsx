@@ -36,6 +36,9 @@ export const MainPage = observer(() => {
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
+  const [responseReceiverId, setResponseReceiverId] = useState<number | null>(
+    null,
+  );
 
   const headerRef = useRef<HTMLDivElement>(null);
   const [_, setHeaderHeight] = useState(0);
@@ -99,7 +102,8 @@ export const MainPage = observer(() => {
     }
   };
 
-  const handleRespond = () => {
+  const handleRespond = (receiverId: number | null) => {
+    setResponseReceiverId(receiverId);
     setIsNeedDetailsOpen(false);
     setIsResponseDrawerOpen(true);
   };
@@ -160,8 +164,13 @@ export const MainPage = observer(() => {
 
       <ResponseToNeedDrawer
         opened={isResponseDrawerOpen}
-        onClose={() => setIsResponseDrawerOpen(false)}
+        onClose={() => {
+          setIsResponseDrawerOpen(false);
+          setResponseReceiverId(null);
+        }}
         onBack={handleBackToNeedDetails}
+        needId={selectedNeedId}
+        receiverId={responseReceiverId}
       />
     </Page>
   );

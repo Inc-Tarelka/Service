@@ -66,6 +66,7 @@ export const API_URL = {
 
   // Notifications
   notifications_collaboration: () => '/notifications/collaboration',
+  notifications_need_response: () => '/notifications/need-response',
 
   // My projects
   my_projects: () => '/publications/my/projects',

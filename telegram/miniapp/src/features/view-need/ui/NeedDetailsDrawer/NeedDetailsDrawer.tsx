@@ -11,12 +11,13 @@ import { NeedDetailsDrawerSkeleton } from './NeedDetailsDrawer.skeleton';
 interface NeedDetailsDrawerProps {
   opened: boolean;
   onClose: () => void;
-  onRespond: () => void;
+  onRespond: (receiverId: number | null) => void;
   needId: number | null;
+  receiverId?: number | null;
 }
 
 export const NeedDetailsDrawer = observer((props: NeedDetailsDrawerProps) => {
-  const { opened, onClose, onRespond, needId } = props;
+  const { opened, onClose, onRespond, needId, receiverId = null } = props;
   const { needsStore } = useStore();
 
   useEffect(() => {
@@ -110,7 +111,7 @@ export const NeedDetailsDrawer = observer((props: NeedDetailsDrawerProps) => {
             variant="filled"
             fullWidth
             size="lg"
-            onClick={onRespond}
+            onClick={() => onRespond(receiverId)}
             c="var(--bg-color)"
           >
             Откликнуться

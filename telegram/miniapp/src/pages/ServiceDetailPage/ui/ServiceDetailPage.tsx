@@ -25,6 +25,9 @@ export const ServiceDetailPage = observer(() => {
   const [commentsOpened, setCommentsOpened] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [responseOpened, setResponseOpened] = useState(false);
+  const [responseReceiverId, setResponseReceiverId] = useState<number | null>(
+    null,
+  );
 
   useBackButton();
 
@@ -123,16 +126,23 @@ export const ServiceDetailPage = observer(() => {
       <NeedDetailsDrawer
         opened={!!selectedNeedId && !responseOpened}
         onClose={() => setSelectedNeedId(null)}
-        onRespond={() => setResponseOpened(true)}
+        onRespond={(receiverId) => {
+          setResponseReceiverId(receiverId);
+          setResponseOpened(true);
+        }}
         needId={selectedNeedId}
+        receiverId={storeService?.authorId ?? null}
       />
       <ResponseToNeedDrawer
         opened={responseOpened}
         onClose={() => {
           setResponseOpened(false);
           setSelectedNeedId(null);
+          setResponseReceiverId(null);
         }}
         onBack={() => setResponseOpened(false)}
+        needId={selectedNeedId}
+        receiverId={responseReceiverId}
       />
     </Page>
   );
