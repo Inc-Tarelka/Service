@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,11 +17,19 @@ import (
 type NotificationService interface {
 	SendCollaborationNotification(ctx context.Context, creatorID, receiverID, publicationID int64, message *string) (*model.Notification, error)
 	ListCollaborationNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
+
+	// Отклик на потребность
+	SendNeedResponseNotification(ctx context.Context, creatorID, publicationID, needID int64, message *string) (*model.Notification, error)
+	ListNeedResponseNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
 }
+
+// ErrInvalidNeedPublication возвращается, если указанная потребность не относится к указанной публикации.
+var ErrInvalidNeedPublication = errors.New("need does not belong to publication")
 
 type notificationService struct {
 	notifRepo       repository.NotificationRepository
 	tarelkaUserRepo repository.TarelkaUserRepository
+	publicationRepo repository.PublicationRepository
 	botToken        string
 	httpClient      *http.Client
 }
@@ -28,11 +37,13 @@ type notificationService struct {
 func NewNotificationService(
 	notifRepo repository.NotificationRepository,
 	tarelkaUserRepo repository.TarelkaUserRepository,
+	publicationRepo repository.PublicationRepository,
 	botToken string,
 ) NotificationService {
 	return &notificationService{
 		notifRepo:       notifRepo,
 		tarelkaUserRepo: tarelkaUserRepo,
+		publicationRepo: publicationRepo,
 		botToken:        botToken,
 		httpClient:      &http.Client{Timeout: 5 * time.Second},
 	}
@@ -87,6 +98,72 @@ func normalizeTelegramURL(url string) string {
 
 func buildCollaborationMessage(n *model.Notification, msg *string) string {
 	base := "У вас новая заявка на сотрудничество в Tarelka"
+	if msg != nil && *msg != "" {
+		return base + ":\n\n" + *msg
+	}
+	return base
+}
+
+// SendNeedResponseNotification создаёт уведомление типа Response для отклика на потребность
+// и отправляет Telegram-сообщение получателю.
+func (s *notificationService) SendNeedResponseNotification(
+	ctx context.Context,
+	creatorID, publicationID, needID int64,
+	message *string,
+) (*model.Notification, error) {
+	// 1. Проверяем, что потребность существует и принадлежит указанной публикации
+	need, err := s.publicationRepo.GetNeedByID(ctx, needID)
+	if err != nil {
+		// Репозиторий возвращает ошибку с текстом "need not found" для несуществующей потребности.
+		// Не заворачиваем её, чтобы хендлер мог различать 404 по строке.
+		return nil, err
+	}
+	if need.PublicationID != publicationID {
+		return nil, ErrInvalidNeedPublication
+	}
+
+	// 2. Получаем публикацию, чтобы узнать автора (получателя уведомления)
+	pub, _, _, err := s.publicationRepo.GetByID(ctx, publicationID, nil)
+	if err != nil {
+		return nil, err
+	}
+	receiverID := pub.AuthorID
+
+	// 3. Создаём запись в notifications с type = Response и заполненным need_id
+	notif := &model.Notification{
+		Type:          model.NotificationTypeResponse,
+		PublicationID: &publicationID,
+		CreatorID:     creatorID,
+		ReceiverID:    receiverID,
+		Message:       message,
+		NeedID:        &needID,
+		IsRead:        false,
+	}
+
+	created, err := s.notifRepo.Create(ctx, notif)
+	if err != nil {
+		return nil, err
+	}
+
+	receiver, err := s.tarelkaUserRepo.FindByID(ctx, receiverID)
+	if err != nil {
+		return created, nil
+	}
+
+	chatID := fmt.Sprintf("%d", receiver.TgUserID)
+
+	text := buildNeedResponseMessage(created, message)
+	_ = s.sendTelegramMessage(ctx, chatID, text)
+
+	return created, nil
+}
+
+func (s *notificationService) ListNeedResponseNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error) {
+	return s.notifRepo.ListByReceiverAndType(ctx, userID, model.NotificationTypeResponse, limit, offset)
+}
+
+func buildNeedResponseMessage(n *model.Notification, msg *string) string {
+	base := "У вас новый отклик на потребность в Tarelka"
 	if msg != nil && *msg != "" {
 		return base + ":\n\n" + *msg
 	}

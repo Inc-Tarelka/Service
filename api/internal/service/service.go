@@ -55,7 +55,7 @@ func NewServices(deps Deps) *Services {
 		Storage:      deps.Storage,
 		Publication:  NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),
 		Activity:     activitySvc,
-		Notification: NewNotificationService(deps.Repos.Notification, deps.Repos.TarelkaUser, deps.TelegramBotToken),
+		Notification: NewNotificationService(deps.Repos.Notification, deps.Repos.TarelkaUser, deps.Repos.Publication, deps.TelegramBotToken),
 		Repos:        deps.Repos,
 	}
 }
