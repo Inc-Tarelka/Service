@@ -39,6 +39,10 @@ type UserService interface {
 		bio *string,
 		findWork *model.FindWork,
 		education *string,
+		// master fields
+		masterName *string,
+		masterID *int64,
+		isMasterFromTable *bool,
 	) error
 
 	// UpdateUserSpecializations полностью заменяет специализации пользователя на переданный список.
@@ -57,14 +61,16 @@ type userService struct {
 	tarelkaUserRepo  repository.TarelkaUserRepository
 	publicationRepo  repository.PublicationRepository
 	notificationRepo repository.NotificationRepository
+	masterRepo       repository.MasterRepository
 	storage          StorageService
 }
 
-func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicationRepo repository.PublicationRepository, notificationRepo repository.NotificationRepository, storage StorageService) UserService {
+func NewUserService(tarelkaUserRepo repository.TarelkaUserRepository, publicationRepo repository.PublicationRepository, notificationRepo repository.NotificationRepository, masterRepo repository.MasterRepository, storage StorageService) UserService {
 	return &userService{
 		tarelkaUserRepo:  tarelkaUserRepo,
 		publicationRepo:  publicationRepo,
 		notificationRepo: notificationRepo,
+		masterRepo:       masterRepo,
 		storage:          storage,
 	}
 }
@@ -127,6 +133,12 @@ func (s *userService) GetUserProfile(ctx context.Context, id int64) (*model.User
 		return nil, err
 	}
 
+	// Информация о мастере, если задан
+	master, err := s.tarelkaUserRepo.GetMasterInfo(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.UserProfileResponse{
 		User:                  user,
 		Publications:          pubItems,
@@ -134,6 +146,7 @@ func (s *userService) GetUserProfile(ctx context.Context, id int64) (*model.User
 		OutgoingRequestsCount: unreadCount,
 		ProjectsCount:         projectsCount,
 		Sender:                sender,
+		Master:                master,
 	}, nil
 }
 
@@ -261,6 +274,9 @@ func (s *userService) UpdateUserProfile(
 	bio *string,
 	findWork *model.FindWork,
 	education *string,
+	masterName *string,
+	masterID *int64,
+	isMasterFromTable *bool,
 ) error {
 	if err := s.tarelkaUserRepo.UpdateProfile(ctx, userID,
 		personName, personSurname,
@@ -272,6 +288,38 @@ func (s *userService) UpdateUserProfile(
 		education,
 	); err != nil {
 		return err
+	}
+
+	// Обновление мастера при необходимости
+	if isMasterFromTable != nil {
+		// Если мастер берётся из таблицы masters и передано имя — создаём запись
+		if *isMasterFromTable {
+			if masterName != nil {
+				name := strings.TrimSpace(*masterName)
+				if name != "" {
+					if s.masterRepo == nil {
+						return fmt.Errorf("master repository not configured")
+					}
+					id, err := s.masterRepo.Create(ctx, name)
+					if err != nil {
+						return err
+					}
+					if err := s.tarelkaUserRepo.UpdateMaster(ctx, userID, &id, isMasterFromTable); err != nil {
+						return err
+					}
+				}
+			} else if masterID != nil {
+				// Привязка к уже существующему мастеру из таблицы masters
+				if err := s.tarelkaUserRepo.UpdateMaster(ctx, userID, masterID, isMasterFromTable); err != nil {
+					return err
+				}
+			}
+		} else if masterID != nil {
+			// Мастер — другой tarelka пользователь, masterID трактуется как его id
+			if err := s.tarelkaUserRepo.UpdateMaster(ctx, userID, masterID, isMasterFromTable); err != nil {
+				return err
+			}
+		}
 	}
 	// Variant A (simple): any profile update is considered a signal to move to stage 2
 	_ = s.tarelkaUserRepo.UpdateConversation(ctx, userID, 2)

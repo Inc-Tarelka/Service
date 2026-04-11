@@ -55,7 +55,7 @@ func NewServices(deps Deps) *Services {
 			deps.InviteSecret,
 			deps.TelegramProxySecret,
 		),
-		User:        NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Storage),
+		User:        NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Repos.Master, deps.Storage),
 		Reference:   NewReferenceService(deps.Repos.Reference),
 		Storage:     deps.Storage,
 		Publication: NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),

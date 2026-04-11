@@ -204,6 +204,15 @@ type UpdateUserRequest struct {
 
 	// Для COMPANY: название
 	CompanyName *string `json:"companyName,omitempty"`
+
+	// Master: опционально можно указать мастера пользователя.
+	// Если IsMasterFromTable = true и передано MasterName, будет создана запись в таблице masters
+	// и пользователь будет привязан к ней. Если IsMasterFromTable = true и передан MasterID,
+	// пользователь будет привязан к существующей записи masters.
+	// Если IsMasterFromTable = false и передан MasterID, он трактуется как id другого tarelka пользователя.
+	IsMasterFromTable *bool   `json:"isMasterFromTable,omitempty"`
+	MasterID          *int64  `json:"masterId,omitempty"`
+	MasterName        *string `json:"masterName,omitempty"`
 }
 
 // UserSearchItem - упрощённый ответ для поиска пользователей

@@ -85,6 +85,12 @@ type TarelkaUserRepository interface {
 	GetTeammatesCount(ctx context.Context, userID int64) (int64, error)
 	// GetTeammates возвращает список сокомандников по той же логике, что и GetTeammatesCount.
 	GetTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error)
+	// UpdateMaster обновляет мастера пользователя (master_id и is_master_from_table).
+	// Если masterID или isMasterFromTable равны nil, соответствующее поле не изменяется.
+	UpdateMaster(ctx context.Context, userID int64, masterID *int64, isMasterFromTable *bool) error
+	// GetMasterInfo возвращает информацию о мастере пользователя, если он указан.
+	// Если мастер не задан, возвращает (nil, nil).
+	GetMasterInfo(ctx context.Context, userID int64) (*model.MasterInfo, error)
 }
 
 type tarelkaUserRepository struct {
@@ -93,6 +99,71 @@ type tarelkaUserRepository struct {
 
 func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 	return &tarelkaUserRepository{pool: pool}
+}
+
+// UpdateMaster обновляет поля master_id и is_master_from_table для пользователя.
+// Если masterID или isMasterFromTable равны nil, соответствующее поле не изменяется.
+func (r *tarelkaUserRepository) UpdateMaster(ctx context.Context, userID int64, masterID *int64, isMasterFromTable *bool) error {
+	parts := []string{}
+	args := []interface{}{}
+	idx := 1
+
+	if masterID != nil {
+		parts = append(parts, fmt.Sprintf("master_id = $%d", idx))
+		args = append(args, *masterID)
+		idx++
+	}
+	if isMasterFromTable != nil {
+		parts = append(parts, fmt.Sprintf("is_master_from_table = $%d", idx))
+		args = append(args, *isMasterFromTable)
+		idx++
+	}
+
+	if len(parts) == 0 {
+		return nil
+	}
+
+	args = append(args, userID)
+	query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
+	cmd, err := r.pool.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// GetMasterInfo возвращает информацию о мастере пользователя, если она указана.
+func (r *tarelkaUserRepository) GetMasterInfo(ctx context.Context, userID int64) (*model.MasterInfo, error) {
+	query := `
+		SELECT
+			CASE WHEN tu.is_master_from_table THEN m.id ELSE mu.id END AS master_id,
+			CASE WHEN tu.is_master_from_table THEN m.name
+				 ELSE COALESCE(tp.name || ' ' || tp.surname, mc.company_name, mu.username)
+			END AS master_name,
+			NOT tu.is_master_from_table AS is_tarelka_user
+		FROM tarelka_users tu
+		LEFT JOIN masters m ON m.id = tu.master_id AND tu.is_master_from_table = TRUE
+		LEFT JOIN tarelka_users mu ON mu.id = tu.master_id AND tu.is_master_from_table = FALSE
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = mu.id
+		LEFT JOIN tarelka_companies mc ON mc.tarelka_user_id = mu.id
+		WHERE tu.id = $1 AND tu.master_id IS NOT NULL
+	`
+	var (
+		id            int64
+		name          string
+		isTarelkaUser bool
+	)
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&id, &name, &isTarelkaUser)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.MasterInfo{ID: id, Name: name, IsTarelkaUser: isTarelkaUser}, nil
 }
 
 // FindByTgUserID возвращает пользователя по Telegram ID владельца.

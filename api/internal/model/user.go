@@ -56,8 +56,14 @@ type TarelkaUser struct {
 	// InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке
 	InviteReferralCount int `json:"invite_referral_count" db:"invite_referral_count"`
 	// InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть
-	InvitedByUserID *int64    `json:"invitedByUserId,omitempty" db:"invited_by_user_id"`
-	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	InvitedByUserID *int64 `json:"invitedByUserId,omitempty" db:"invited_by_user_id"`
+	// MasterID — идентификатор мастера. В зависимости от IsMasterFromTable
+	// либо указывает на запись в таблице masters, либо на другого tarelka пользователя.
+	MasterID *int64 `json:"masterId,omitempty" db:"master_id"`
+	// IsMasterFromTable — если true, masterId ссылается на таблицу masters.
+	// Если false, masterId трактуется как id другого tarelka пользователя.
+	IsMasterFromTable bool      `json:"isMasterFromTable" db:"is_master_from_table"`
+	CreatedAt         time.Time `json:"created_at" db:"created_at"`
 }
 
 // FindWork — вариант поиска работы
@@ -103,6 +109,14 @@ type SenderInfo struct {
 	Surname string `json:"surname"`
 }
 
+// MasterInfo — информация о мастере пользователя.
+// Может ссылаться либо на отдельную запись в таблице masters, либо на другого tarelka пользователя.
+type MasterInfo struct {
+	ID            int64  `json:"id"`
+	Name          string `json:"name"`
+	IsTarelkaUser bool   `json:"isTarelkaUser"`
+}
+
 // UserProfilePublicationItem описывает короткую информацию о публикации в профиле пользователя.
 type UserProfilePublicationItem struct {
 	ID         int64           `json:"id"`
@@ -122,6 +136,8 @@ type UserProfileResponse struct {
 	// Sender содержит краткую информацию о пользователе, по чьей инвайт-ссылке произошла регистрация.
 	// Может быть nil, если пользователь зарегистрировался без инвайта или связь не зафиксирована.
 	Sender *SenderInfo `json:"sender,omitempty"`
+	// Master содержит информацию о мастере пользователя, если указан.
+	Master *MasterInfo `json:"master,omitempty"`
 }
 
 // TeammateItem описывает «сокомандника» пользователя — другого пользователя,

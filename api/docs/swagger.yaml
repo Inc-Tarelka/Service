@@ -289,6 +289,15 @@ definitions:
       userId:
         type: integer
     type: object
+  model.MasterInfo:
+    properties:
+      id:
+        type: integer
+      isTarelkaUser:
+        type: boolean
+      name:
+        type: string
+    type: object
   model.Need:
     properties:
       budget:
@@ -809,8 +818,18 @@ definitions:
         description: InvitedByUserID — идентификатор пользователя-пригласителя (sender),
           если есть
         type: integer
+      isMasterFromTable:
+        description: |-
+          IsMasterFromTable — если true, masterId ссылается на таблицу masters.
+          Если false, masterId трактуется как id другого tarelka пользователя.
+        type: boolean
       logo_url:
         type: string
+      masterId:
+        description: |-
+          MasterID — идентификатор мастера. В зависимости от IsMasterFromTable
+          либо указывает на запись в таблице masters, либо на другого tarelka пользователя.
+        type: integer
       phone:
         type: string
       telegram_chat_id:
@@ -870,8 +889,18 @@ definitions:
         description: InvitedByUserID — идентификатор пользователя-пригласителя (sender),
           если есть
         type: integer
+      isMasterFromTable:
+        description: |-
+          IsMasterFromTable — если true, masterId ссылается на таблицу masters.
+          Если false, masterId трактуется как id другого tarelka пользователя.
+        type: boolean
       logo_url:
         type: string
+      masterId:
+        description: |-
+          MasterID — идентификатор мастера. В зависимости от IsMasterFromTable
+          либо указывает на запись в таблице masters, либо на другого tarelka пользователя.
+        type: integer
       person:
         $ref: '#/definitions/model.TarelkaPerson'
       phone:
@@ -930,6 +959,18 @@ definitions:
       find_work:
         description: Use the same enum values as model.FindWork (string values)
         type: string
+      isMasterFromTable:
+        description: |-
+          Master: опционально можно указать мастера пользователя.
+          Если IsMasterFromTable = true и передано MasterName, будет создана запись в таблице masters
+          и пользователь будет привязан к ней. Если IsMasterFromTable = true и передан MasterID,
+          пользователь будет привязан к существующей записи masters.
+          Если IsMasterFromTable = false и передан MasterID, он трактуется как id другого tarelka пользователя.
+        type: boolean
+      masterId:
+        type: integer
+      masterName:
+        type: string
       name:
         description: 'Для PERSON: имя и фамилия'
         type: string
@@ -959,6 +1000,10 @@ definitions:
     type: object
   model.UserProfileResponse:
     properties:
+      master:
+        allOf:
+        - $ref: '#/definitions/model.MasterInfo'
+        description: Master содержит информацию о мастере пользователя, если указан.
       outgoingRequestsCount:
         type: integer
       projectsCount:

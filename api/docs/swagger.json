@@ -3502,6 +3502,20 @@
                 }
             }
         },
+        "model.MasterInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isTarelkaUser": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Need": {
             "type": "object",
             "properties": {
@@ -4281,8 +4295,16 @@
                     "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
                     "type": "integer"
                 },
+                "isMasterFromTable": {
+                    "description": "IsMasterFromTable — если true, masterId ссылается на таблицу masters.\nЕсли false, masterId трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
                 "logo_url": {
                     "type": "string"
+                },
+                "masterId": {
+                    "description": "MasterID — идентификатор мастера. В зависимости от IsMasterFromTable\nлибо указывает на запись в таблице masters, либо на другого tarelka пользователя.",
+                    "type": "integer"
                 },
                 "phone": {
                     "type": "string"
@@ -4371,8 +4393,16 @@
                     "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
                     "type": "integer"
                 },
+                "isMasterFromTable": {
+                    "description": "IsMasterFromTable — если true, masterId ссылается на таблицу masters.\nЕсли false, masterId трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
                 "logo_url": {
                     "type": "string"
+                },
+                "masterId": {
+                    "description": "MasterID — идентификатор мастера. В зависимости от IsMasterFromTable\nлибо указывает на запись в таблице masters, либо на другого tarelka пользователя.",
+                    "type": "integer"
                 },
                 "person": {
                     "$ref": "#/definitions/model.TarelkaPerson"
@@ -4457,6 +4487,16 @@
                     "description": "Use the same enum values as model.FindWork (string values)",
                     "type": "string"
                 },
+                "isMasterFromTable": {
+                    "description": "Master: опционально можно указать мастера пользователя.\nЕсли IsMasterFromTable = true и передано MasterName, будет создана запись в таблице masters\nи пользователь будет привязан к ней. Если IsMasterFromTable = true и передан MasterID,\nпользователь будет привязан к существующей записи masters.\nЕсли IsMasterFromTable = false и передан MasterID, он трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
+                "masterId": {
+                    "type": "integer"
+                },
+                "masterName": {
+                    "type": "string"
+                },
                 "name": {
                     "description": "Для PERSON: имя и фамилия",
                     "type": "string"
@@ -4500,6 +4540,14 @@
         "model.UserProfileResponse": {
             "type": "object",
             "properties": {
+                "master": {
+                    "description": "Master содержит информацию о мастере пользователя, если указан.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MasterInfo"
+                        }
+                    ]
+                },
                 "outgoingRequestsCount": {
                     "type": "integer"
                 },

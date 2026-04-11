@@ -597,7 +597,7 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 		}
 	}
 
-	// Имя/фамилия или companyName в зависимости от типа аккаунта, username, город, bio, образование
+	// Имя/фамилия или companyName в зависимости от типа аккаунта, username, город, bio, образование, мастер
 	var personName, personSurname, companyName *string
 	if req.Name != nil {
 		personName = req.Name
@@ -611,6 +611,9 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 
 	username := req.Username // пустая строка => не обновляем
 	cityID := req.CityID
+	isMasterFromTable := req.IsMasterFromTable
+	masterID := req.MasterID
+	masterName := req.MasterName
 
 	if err := h.userService.UpdateUserProfile(
 		c.Request.Context(),
@@ -623,6 +626,9 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 		req.Bio,
 		findWork,
 		req.Education,
+		masterName,
+		masterID,
+		isMasterFromTable,
 	); err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 		return
