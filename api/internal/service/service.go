@@ -30,6 +30,10 @@ type Deps struct {
 	InviteSecret         string
 	VerificationTokenTTL time.Duration
 	Storage              StorageService
+	// TelegramAPIBaseURL и TelegramProxySecret используются для проксирования
+	// запросов к Telegram Bot API и Telegram Gateway через внешний воркер.
+	TelegramAPIBaseURL  string
+	TelegramProxySecret string
 }
 
 // NewServices создаёт все сервисы
@@ -49,13 +53,21 @@ func NewServices(deps Deps) *Services {
 			deps.TelegramGatewayToken,
 			deps.TelegramGatewayURL,
 			deps.InviteSecret,
+			deps.TelegramProxySecret,
 		),
-		User:         NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Storage),
-		Reference:    NewReferenceService(deps.Repos.Reference),
-		Storage:      deps.Storage,
-		Publication:  NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),
-		Activity:     activitySvc,
-		Notification: NewNotificationService(deps.Repos.Notification, deps.Repos.TarelkaUser, deps.Repos.Publication, deps.TelegramBotToken),
-		Repos:        deps.Repos,
+		User:        NewUserService(deps.Repos.TarelkaUser, deps.Repos.Publication, deps.Repos.Notification, deps.Storage),
+		Reference:   NewReferenceService(deps.Repos.Reference),
+		Storage:     deps.Storage,
+		Publication: NewPublicationService(deps.Repos.Publication, deps.Storage, activitySvc),
+		Activity:    activitySvc,
+		Notification: NewNotificationService(
+			deps.Repos.Notification,
+			deps.Repos.TarelkaUser,
+			deps.Repos.Publication,
+			deps.TelegramBotToken,
+			deps.TelegramAPIBaseURL,
+			deps.TelegramProxySecret,
+		),
+		Repos: deps.Repos,
 	}
 }

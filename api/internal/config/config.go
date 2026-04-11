@@ -13,9 +13,16 @@ type Config struct {
 	TelegramBotToken     string
 	TelegramGatewayToken string
 	TelegramGatewayURL   string
-	InviteSecret         string
-	AccessTokenTTL       time.Duration
-	RefreshTokenTTL      time.Duration
+	// TelegramAPIBaseURL переопределяет базовый URL для Telegram Bot API
+	// По умолчанию используется https://api.telegram.org, но может быть проксирован
+	// через Cloudflare Workers или другой шлюз.
+	TelegramAPIBaseURL string
+	// TelegramProxySecret добавляется в заголовок X-Secret при обращении к
+	// Telegram Bot API и Telegram Gateway (для работы через прокси/воркер).
+	TelegramProxySecret string
+	InviteSecret        string
+	AccessTokenTTL      time.Duration
+	RefreshTokenTTL     time.Duration
 	// CORS configuration
 	// AllowedOrigins: exact origins allowed, e.g. "https://talerla-dev-app.web.app"
 	// AllowedOriginSuffixes: domain suffixes allowed, e.g. ".trycloudflare.com" to match any subdomain
@@ -43,6 +50,8 @@ func Load() *Config {
 		TelegramBotToken:     getEnv("TELEGRAM_BOT_TOKEN", ""),
 		TelegramGatewayToken: getEnv("TELEGRAM_GATEWAY_TOKEN", ""),
 		TelegramGatewayURL:   getEnv("TELEGRAM_GATEWAY_URL", "https://gatewayapi.telegram.org"),
+		TelegramAPIBaseURL:   getEnv("TELEGRAM_API_BASE_URL", "https://api.telegram.org"),
+		TelegramProxySecret:  getEnv("TELEGRAM_PROXY_SECRET", ""),
 		InviteSecret:         getEnv("TELEGRAM_MINIAPP_SECRET", ""),
 		AccessTokenTTL:       parseDuration(getEnv("ACCESS_TOKEN_TTL", "15m")),
 		RefreshTokenTTL:      parseDuration(getEnv("REFRESH_TOKEN_TTL", "168h")), // 7 days

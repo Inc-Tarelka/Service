@@ -82,6 +82,9 @@ type authService struct {
 	gatewayURL      string
 	// inviteSecret используется для подписи/проверки senderID.
 	inviteSecret string
+	// proxySecret добавляется в заголовок X-Secret при обращении к Telegram Gateway
+	// (например, при проксировании через Cloudflare Workers).
+	proxySecret string
 }
 
 func NewAuthService(
@@ -97,6 +100,7 @@ func NewAuthService(
 	gatewayToken string,
 	gatewayURL string,
 	inviteSecret string,
+	proxySecret string,
 ) AuthService {
 	return &authService{
 		tgUserRepo:      tgUserRepo,
@@ -111,6 +115,7 @@ func NewAuthService(
 		gatewayToken:    gatewayToken,
 		gatewayURL:      gatewayURL,
 		inviteSecret:    inviteSecret,
+		proxySecret:     proxySecret,
 	}
 }
 
@@ -564,6 +569,9 @@ func (s *authService) SendPhoneVerification(ctx context.Context, phone string) (
 	if s.gatewayToken != "" {
 		req.Header.Set("Authorization", "Bearer "+s.gatewayToken)
 	}
+	if s.proxySecret != "" {
+		req.Header.Set("X-Secret", s.proxySecret)
+	}
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 	resp, err := httpClient.Do(req)
@@ -922,6 +930,9 @@ func (s *authService) verifyPhoneWithGateway(ctx context.Context, requestID, cod
 	req.Header.Set("Content-Type", "application/json")
 	if s.gatewayToken != "" {
 		req.Header.Set("Authorization", "Bearer "+s.gatewayToken)
+	}
+	if s.proxySecret != "" {
+		req.Header.Set("X-Secret", s.proxySecret)
 	}
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}

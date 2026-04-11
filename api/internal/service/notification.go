@@ -42,6 +42,8 @@ type notificationService struct {
 	publicationRepo repository.PublicationRepository
 	botToken        string
 	httpClient      *http.Client
+	telegramBaseURL string
+	proxySecret     string
 }
 
 func NewNotificationService(
@@ -49,13 +51,20 @@ func NewNotificationService(
 	tarelkaUserRepo repository.TarelkaUserRepository,
 	publicationRepo repository.PublicationRepository,
 	botToken string,
+	telegramBaseURL string,
+	proxySecret string,
 ) NotificationService {
+	if telegramBaseURL == "" {
+		telegramBaseURL = "https://api.telegram.org"
+	}
 	return &notificationService{
 		notifRepo:       notifRepo,
 		tarelkaUserRepo: tarelkaUserRepo,
 		publicationRepo: publicationRepo,
 		botToken:        botToken,
 		httpClient:      &http.Client{Timeout: 5 * time.Second},
+		telegramBaseURL: strings.TrimRight(telegramBaseURL, "/"),
+		proxySecret:     proxySecret,
 	}
 }
 
@@ -306,13 +315,20 @@ func (s *notificationService) sendTelegramMessage(ctx context.Context, chatID, t
 		return err
 	}
 
-	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", s.botToken)
+	base := s.telegramBaseURL
+	if base == "" {
+		base = "https://api.telegram.org"
+	}
+	url := fmt.Sprintf("%s/bot%s/sendMessage", base, s.botToken)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if s.proxySecret != "" {
+		req.Header.Set("X-Secret", s.proxySecret)
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
