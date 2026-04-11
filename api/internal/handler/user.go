@@ -557,18 +557,27 @@ func (h *UserHandler) SetWallpaperURL(c *gin.Context) {
 // @Tags users
 // @Produce json
 // @Security BearerAuth
-// @Param id path int true "ID пользователя"
-// @Param payload body model.UpdateUserRequest true "Поля для обновления"
+// PatchMyProfile godoc
+// @Summary Обновить профиль текущего пользователя
+// @Description Частичное обновление профиля: имя, фамилия, логин, город, bio, специализации, статус поиска работы, образование и мастер.
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param payload body model.UpdateUserRequest true "Поля для обновления профиля"
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 401 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
-// @Router /users/{id} [patch]
-func (h *UserHandler) PatchUser(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+// @Router /users/me/profile [patch]
+func (h *UserHandler) PatchMyProfile(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID, ok := uid.(int64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 	var req model.UpdateUserRequest
@@ -617,7 +626,7 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 
 	if err := h.userService.UpdateUserProfile(
 		c.Request.Context(),
-		id,
+		userID,
 		personName,
 		personSurname,
 		companyName,
@@ -636,7 +645,7 @@ func (h *UserHandler) PatchUser(c *gin.Context) {
 
 	// Специализации: если поле присутствует в запросе, заменяем весь список.
 	if req.SpecializationIDs != nil {
-		if err := h.userService.UpdateUserSpecializations(c.Request.Context(), id, *req.SpecializationIDs); err != nil {
+		if err := h.userService.UpdateUserSpecializations(c.Request.Context(), userID, *req.SpecializationIDs); err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
 			return
 		}
