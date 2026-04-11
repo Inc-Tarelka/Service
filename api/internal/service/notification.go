@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -314,11 +316,14 @@ func (s *notificationService) sendTelegramMessage(ctx context.Context, chatID, t
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
+		log.Printf("telegram sendMessage request error: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("telegram sendMessage failed: status=%d body=%s", resp.StatusCode, string(body))
 		return fmt.Errorf("telegram sendMessage failed with status %d", resp.StatusCode)
 	}
 
