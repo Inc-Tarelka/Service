@@ -1878,6 +1878,49 @@ paths:
       summary: Получить публикацию по ID
       tags:
       - publications
+    patch:
+      description: В текущей реализации требуется передавать все поля так же, как
+        при создании публикации.
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные публикации
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrUpdatePublicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Частичное обновление публикации
+      tags:
+      - publications
     put:
       parameters:
       - description: ID публикации

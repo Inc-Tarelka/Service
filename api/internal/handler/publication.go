@@ -208,6 +208,50 @@ func (h *PublicationHandler) UpdatePublication(c *gin.Context) {
 	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
 }
 
+// PatchPublication godoc
+// @Summary Частичное обновление публикации
+// @Description В текущей реализации требуется передавать все поля так же, как при создании публикации.
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Param payload body model.CreateOrUpdatePublicationRequest true "Данные публикации"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id} [patch]
+func (h *PublicationHandler) PatchPublication(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	authorID := uid.(int64)
+	idStr := c.Param("id")
+	pubID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	var req model.CreateOrUpdatePublicationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_request", Message: err.Error()})
+		return
+	}
+	if err := h.svc.UpdatePublication(c.Request.Context(), pubID, authorID, req); err != nil {
+		if err.Error() == "publication not found" {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "validation_error", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
+}
+
 // AddComment godoc
 // @Summary Добавить комментарий к публикации
 // @Tags publications
