@@ -1035,7 +1035,7 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 		FROM tarelka_users u
 		%s
 		%s
-		ORDER BY u.id, u.created_at DESC
+		ORDER BY u.created_at DESC, u.id DESC
 		LIMIT $%d OFFSET $%d
 	`, strings.Join(joins, "\n"), whereSQL, limPos, offPos)
 

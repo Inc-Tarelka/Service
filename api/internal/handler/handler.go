@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
@@ -17,6 +18,7 @@ type Handler struct {
 	publication  *PublicationHandler
 	notification *NotificationHandler
 	authService  service.AuthService
+	services     *service.Services
 }
 
 // NewHandler создаёт Handler
@@ -28,7 +30,65 @@ func NewHandler(services *service.Services) *Handler {
 		publication:  NewPublicationHandler(services.Publication),
 		notification: NewNotificationHandler(services.Notification),
 		authService:  services.Auth,
+		services:     services,
 	}
+}
+
+// GlobalSearch godoc
+// @Summary Глобальный поиск сущностей
+// @Description Возвращает услуги, потребности и пользователей без фильтров, отсортированных от новых к старым в каждой категории.
+// @Tags search
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Лимит результатов на категорию" default(20)
+// @Param offset query int false "Смещение" default(0)
+// @Success 200 {object} model.GlobalSearchResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /search/all [get]
+func (h *Handler) GlobalSearch(c *gin.Context) {
+	// protected group already checks auth token; here we just assume user is authenticated
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	ctx := c.Request.Context()
+
+	// services: publications of type SERVICE
+	t := model.PublicationTypeService
+	pubFilters := model.PublicationSearchFilters{Type: &t}
+	services, err := h.services.Publication.SearchPublications(ctx, pubFilters, limit, offset, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	// needs: no filters
+	needs, err := h.services.Publication.SearchNeeds(ctx, model.NeedSearchFilters{}, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	// users: no filters
+	users, err := h.services.User.SearchUsersByFilters(ctx, "", nil, nil, nil, nil, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+		return
+	}
+
+	resp := model.GlobalSearchResponse{
+		Services: services,
+		Needs:    needs,
+		Users:    users,
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // RegisterRoutes регистрирует все маршруты
@@ -68,6 +128,9 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		protected := api.Group("")
 		protected.Use(h.authMiddleware())
 		{
+			// Global search across services, needs and users
+			protected.GET("/search/all", h.GlobalSearch)
+
 			// Invite links
 			protected.GET("/createInviteLink", h.CreateInviteLink)
 

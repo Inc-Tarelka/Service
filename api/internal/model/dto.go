@@ -226,3 +226,11 @@ type UserSearchItem struct {
 	Specialization *string `json:"specialisation,omitempty"`
 	LogoURL        *string `json:"logo_url,omitempty"`
 }
+
+// GlobalSearchResponse — ответ глобального поиска по услугам, потребностям и пользователям.
+// Каждая категория отсортирована от новых к старым по дате создания в своей таблице.
+type GlobalSearchResponse struct {
+	Services []Publication      `json:"services"`
+	Needs    []NeedSearchItem   `json:"needs"`
+	Users    []*TarelkaUserFull `json:"users"`
+}

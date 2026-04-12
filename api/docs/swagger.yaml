@@ -255,6 +255,21 @@ definitions:
     - FindWorkLooking
     - FindWorkNotLooking
     - FindWorkOpenToOffer
+  model.GlobalSearchResponse:
+    properties:
+      needs:
+        items:
+          $ref: '#/definitions/model.NeedSearchItem'
+        type: array
+      services:
+        items:
+          $ref: '#/definitions/model.Publication'
+        type: array
+      users:
+        items:
+          $ref: '#/definitions/model.TarelkaUserFull'
+        type: array
+    type: object
   model.InviteAccountType:
     enum:
     - DEFAULT
@@ -2510,6 +2525,41 @@ paths:
       summary: Список специализаций
       tags:
       - references
+  /search/all:
+    get:
+      description: Возвращает услуги, потребности и пользователей без фильтров, отсортированных
+        от новых к старым в каждой категории.
+      parameters:
+      - default: 20
+        description: Лимит результатов на категорию
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GlobalSearchResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Глобальный поиск сущностей
+      tags:
+      - search
   /users/{id}:
     get:
       description: Получение информации о пользователе по ID
