@@ -1028,14 +1028,22 @@ func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string
 	limPos := len(args) + 1
 	offPos := len(args) + 2
 
+	// DISTINCT ON требует, чтобы ORDER BY начинался с тех же полей, что и список DISTINCT ON.
+	// Внутренний запрос выбирает по одному ряду на пользователя и сортирует по u.id, u.created_at DESC,
+	// а внешний слой уже сортирует готовый набор пользователей по created_at DESC, id DESC.
 	query := fmt.Sprintf(`
-		SELECT DISTINCT ON (u.id)
-			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
-			p.name, p.surname, c.company_name
-		FROM tarelka_users u
-		%s
-		%s
-		ORDER BY u.created_at DESC, u.id DESC
+		WITH base AS (
+			SELECT DISTINCT ON (u.id)
+				u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
+				p.name, p.surname, c.company_name
+			FROM tarelka_users u
+			%s
+			%s
+			ORDER BY u.id, u.created_at DESC
+		)
+		SELECT *
+		FROM base
+		ORDER BY created_at DESC, id DESC
 		LIMIT $%d OFFSET $%d
 	`, strings.Join(joins, "\n"), whereSQL, limPos, offPos)
 
