@@ -10,6 +10,7 @@ import { ResponseToNeedDrawer } from 'features/respond-to-need/ui/ResponseToNeed
 import { NeedDetailsDrawer } from 'features/view-need/ui/NeedDetailsDrawer/NeedDetailsDrawer';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
 import { useBackButton } from 'shared/hooks/useBackButton';
+import { buildServiceStartAppLink } from 'shared/lib/utils/telegram-startapp';
 import { MOCK_SERVICE_DETAIL } from 'shared/mocks/serviceDetailMocks';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { Page } from 'widgets/Page';
@@ -20,7 +21,7 @@ export const ServiceDetailPage = observer(() => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { publicationDetailsStore, userStore } = useStore();
+  const { publicationDetailsStore, userStore, authStore } = useStore();
 
   const [commentsOpened, setCommentsOpened] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
@@ -55,12 +56,34 @@ export const ServiceDetailPage = observer(() => {
     service?.cityId?.toString();
 
   const handleLike = (publicationId: number) => {
+    if (!authStore.isAuth) {
+      return;
+    }
     publicationDetailsStore.toggleLikeAction(publicationId);
+  };
+
+  const handleShare = (publicationId: number) => {
+    const shareLink = buildServiceStartAppLink(publicationId);
+    const shareText = service.name
+      ? `${service.name} в Tarelka`
+      : 'Смотри пост в Tarelka';
+
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      shareLink,
+    )}&text=${encodeURIComponent(shareText)}`;
+
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+      return;
+    }
+
+    window.open(telegramShareUrl, '_blank');
   };
 
   const currentUserId = userStore.profile?.id;
   const isOwner =
     !!currentUserId && String(currentUserId) === String(storeService?.authorId);
+  const isViewOnly = !authStore.isAuth;
 
   const handleEditClick = () => {
     if (id) {
@@ -69,6 +92,10 @@ export const ServiceDetailPage = observer(() => {
   };
 
   const handleTeamMemberClick = (userId: number) => {
+    if (!authStore.isAuth) {
+      return;
+    }
+
     const currentUserId = userStore.profile?.id;
     const isOwner = currentUserId && String(currentUserId) === String(userId);
 
@@ -111,39 +138,51 @@ export const ServiceDetailPage = observer(() => {
         cityName={cityName}
         team={publicationDetailsStore.data?.team}
         needs={publicationDetailsStore.data?.needs}
-        onCommentClick={() => setCommentsOpened(true)}
-        onNeedClick={(needId: number) => setSelectedNeedId(needId)}
-        onLike={handleLike}
-        onTeamMemberClick={handleTeamMemberClick}
+        onCommentClick={!isViewOnly ? () => setCommentsOpened(true) : undefined}
+        onNeedClick={
+          !isViewOnly
+            ? (needId: number) => setSelectedNeedId(needId)
+            : undefined
+        }
+        onLike={!isViewOnly ? handleLike : undefined}
+        onTeamMemberClick={!isViewOnly ? handleTeamMemberClick : undefined}
         isOwner={isOwner}
         onEdit={handleEditClick}
+        onShare={handleShare}
+        isViewOnly={isViewOnly}
       />
-      <ServiceCommentsDrawer
-        opened={commentsOpened}
-        onClose={() => setCommentsOpened(false)}
-        publicationId={service.id}
-      />
-      <NeedDetailsDrawer
-        opened={!!selectedNeedId && !responseOpened}
-        onClose={() => setSelectedNeedId(null)}
-        onRespond={(receiverId) => {
-          setResponseReceiverId(receiverId);
-          setResponseOpened(true);
-        }}
-        needId={selectedNeedId}
-        receiverId={storeService?.authorId ?? null}
-      />
-      <ResponseToNeedDrawer
-        opened={responseOpened}
-        onClose={() => {
-          setResponseOpened(false);
-          setSelectedNeedId(null);
-          setResponseReceiverId(null);
-        }}
-        onBack={() => setResponseOpened(false)}
-        needId={selectedNeedId}
-        receiverId={responseReceiverId}
-      />
+      {!isViewOnly && (
+        <ServiceCommentsDrawer
+          opened={commentsOpened}
+          onClose={() => setCommentsOpened(false)}
+          publicationId={service.id}
+        />
+      )}
+      {!isViewOnly && (
+        <NeedDetailsDrawer
+          opened={!!selectedNeedId && !responseOpened}
+          onClose={() => setSelectedNeedId(null)}
+          onRespond={(receiverId) => {
+            setResponseReceiverId(receiverId);
+            setResponseOpened(true);
+          }}
+          needId={selectedNeedId}
+          receiverId={storeService?.authorId ?? null}
+        />
+      )}
+      {!isViewOnly && (
+        <ResponseToNeedDrawer
+          opened={responseOpened}
+          onClose={() => {
+            setResponseOpened(false);
+            setSelectedNeedId(null);
+            setResponseReceiverId(null);
+          }}
+          onBack={() => setResponseOpened(false)}
+          needId={selectedNeedId}
+          receiverId={responseReceiverId}
+        />
+      )}
     </Page>
   );
 });

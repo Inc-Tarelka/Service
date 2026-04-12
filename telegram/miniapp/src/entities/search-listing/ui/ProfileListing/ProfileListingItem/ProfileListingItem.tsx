@@ -43,7 +43,7 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
       </div>
 
       {projectImages.length > 0 && (
-        <div className={s.projects}>
+        <div className={s.projects} data-tab-swipe-lock="true">
           {projectImages.map((imgUrl, index) => (
             <img
               key={index}

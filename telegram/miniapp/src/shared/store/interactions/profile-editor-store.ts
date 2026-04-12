@@ -5,6 +5,7 @@ export class ProfileEditorStore {
   coverActionsOpened = false;
   avatarEditorOpened = false;
   coverEditorOpened = false;
+  masterSearchOpened = false;
   avatarAutoOpen = false;
   coverAutoOpen = false;
 
@@ -26,6 +27,14 @@ export class ProfileEditorStore {
 
   closeCoverActions = () => {
     this.coverActionsOpened = false;
+  };
+
+  openMasterSearch = () => {
+    this.masterSearchOpened = true;
+  };
+
+  closeMasterSearch = () => {
+    this.masterSearchOpened = false;
   };
 
   openAvatarEditor = (autoOpen = false) => {

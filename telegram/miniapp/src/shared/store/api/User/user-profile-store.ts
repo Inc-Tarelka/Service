@@ -85,7 +85,7 @@ export class UserProfileStore {
         firstName: apiData.person?.name || MOCK_USER.firstName,
         lastName: apiData.person?.surname || MOCK_USER.lastName,
 
-        avatarUrl: apiData.logo_url,
+        avatarUrl: apiData.logo_url || apiData.avatarUrl,
 
         about: apiData.bio || MOCK_USER.about,
 
@@ -116,6 +116,8 @@ export class UserProfileStore {
         tags: apiData.tags || MOCK_USER.tags,
 
         role: apiData.role || MOCK_USER.role,
+        master:
+          apiData.master || extendedData?.user?.master || extendedData?.master,
       };
     }
     return null;

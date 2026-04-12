@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
-import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { SimpleTabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -49,35 +49,23 @@ export const ProfilePage = observer(() => {
       />
 
       <Box className={classes.tabsSection}>
-        <TabsSwitcher
+        <SimpleTabsSwitcher
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS}
           contentPaddingTop={16}
-          stickyTop="var(--total-navbar-height)"
-          renderTab={(tab) => {
-            switch (tab) {
-              case 'publications':
-                return (
-                  <PublicationsList
-                    publications={userStore.publications}
-                    onItemClick={handlePublicationClick}
-                  />
-                );
-              case 'info':
-                return <ProfileInfoSection user={user} />;
-              case 'interactions':
-                return (
-                  <InteractionsList
-                    interactions={userStore.interactions}
-                    canEdit={true}
-                  />
-                );
-              default:
-                return null;
-            }
-          }}
-        />
+        >
+          {activeTab === 'publications' && (
+            <PublicationsList
+              publications={userStore.publications}
+              onItemClick={handlePublicationClick}
+            />
+          )}
+          {activeTab === 'info' && <ProfileInfoSection user={user} />}
+          {activeTab === 'interactions' && (
+            <InteractionsList interactions={userStore.interactions} canEdit />
+          )}
+        </SimpleTabsSwitcher>
       </Box>
     </Page>
   );

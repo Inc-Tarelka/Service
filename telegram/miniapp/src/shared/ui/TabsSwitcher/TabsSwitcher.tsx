@@ -31,12 +31,48 @@ interface TabsSwitcherProps<T extends string> {
 
 const SWIPE_THRESHOLD = 50;
 const DIRECTION_LOCK_THRESHOLD = 10;
+const SCROLLABLE_DELTA = 1;
 
 interface TouchState {
   startX: number;
   startY: number;
   direction: 'horizontal' | 'vertical' | null;
+  skipSwipe: boolean;
 }
+
+const isScrollableX = (element: HTMLElement) => {
+  const style = window.getComputedStyle(element);
+  const overflowX = style.overflowX;
+  const canScrollByStyle = overflowX === 'auto' || overflowX === 'scroll';
+  const canScrollBySize =
+    element.scrollWidth > element.clientWidth + SCROLLABLE_DELTA;
+
+  return canScrollByStyle && canScrollBySize;
+};
+
+const shouldSkipSwipeGesture = (
+  target: HTMLElement | null,
+  boundary: HTMLElement | null,
+) => {
+  if (!target || !boundary) {
+    return false;
+  }
+
+  let element: HTMLElement | null = target;
+  while (element) {
+    if (element.dataset.tabSwipeLock === 'true' || isScrollableX(element)) {
+      return true;
+    }
+
+    if (element === boundary) {
+      break;
+    }
+
+    element = element.parentElement;
+  }
+
+  return false;
+};
 
 export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
   const {
@@ -136,17 +172,29 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
+    const target = e.target instanceof HTMLElement ? e.target : null;
+    const boundary =
+      e.currentTarget instanceof HTMLElement ? e.currentTarget : null;
+    const skipSwipe = shouldSkipSwipeGesture(target, boundary);
+
     touchRef.current = {
       startX: touch.clientX,
       startY: touch.clientY,
       direction: null,
+      skipSwipe,
     };
+
+    if (skipSwipe) {
+      offsetRef.current = 0;
+      setOffsetX(0);
+      setIsSwiping(false);
+    }
   }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
       const state = touchRef.current;
-      if (!state) return;
+      if (!state || state.skipSwipe) return;
 
       const touch = e.touches[0];
       const dx = touch.clientX - state.startX;
@@ -191,7 +239,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     const state = touchRef.current;
     touchRef.current = null;
 
-    if (!state || state.direction !== 'horizontal') {
+    if (!state || state.skipSwipe || state.direction !== 'horizontal') {
       offsetRef.current = 0;
       setOffsetX(0);
       setIsSwiping(false);

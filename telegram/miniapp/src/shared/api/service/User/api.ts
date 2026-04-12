@@ -4,6 +4,7 @@ import type {
   DeleteAccountResponse,
   ExpandedUserProfile,
   TeammatesResponse,
+  UpdateMyProfileRequest,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,
@@ -27,6 +28,9 @@ export const updateProfile = async (data: Partial<User>, userId?: number) =>
     userId ? API_URL.user(userId) : API_URL.profile(),
     data,
   );
+
+export const updateMyProfile = async (data: UpdateMyProfileRequest) =>
+  await baseInstanceV1.patch<User>(API_URL.me_profile(), data);
 
 // =============================== DELETE ACCOUNT ===============================
 export const deleteAccount = async () =>

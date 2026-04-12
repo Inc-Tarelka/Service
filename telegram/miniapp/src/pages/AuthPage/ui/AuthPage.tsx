@@ -17,6 +17,10 @@ import {
 } from 'features/auth';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
+import {
+  getTelegramStartParam,
+  parseTelegramStartParam,
+} from 'shared/lib/utils/telegram-startapp';
 import classNames from 'shared/library/ClassNames/classNames';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
@@ -28,8 +32,8 @@ export const AuthPage = observer(() => {
   const { authStore } = useStore();
 
   const rawStep = searchParams.get('step');
-  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-  const isReferral = !!startParam;
+  const startParam = parseTelegramStartParam(getTelegramStartParam());
+  const isReferral = startParam?.type === 'referral';
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
     : isReferral

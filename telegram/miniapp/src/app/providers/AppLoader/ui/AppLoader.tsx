@@ -1,5 +1,6 @@
 import { AnimatePresence } from 'framer-motion';
 import { memo, useEffect, useState, type ReactNode } from 'react';
+import { ensureTelegramFullscreen } from 'shared/lib/utils/telegram-fullscreen';
 
 interface AppLoaderProps {
   children: ReactNode;
@@ -35,10 +36,7 @@ export const AppLoader = memo((props: AppLoaderProps) => {
         timeoutId = setTimeout(() => {
           if (mounted) {
             try {
-              if (window.Telegram?.WebApp) {
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-              }
+              ensureTelegramFullscreen();
             } catch (error) {
               console.error(
                 '[AppLoader] Telegram WebApp initialization error:',

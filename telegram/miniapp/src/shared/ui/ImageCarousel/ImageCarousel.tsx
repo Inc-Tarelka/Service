@@ -106,7 +106,7 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
   const carouselHeight = carouselStore.activeSlideHeight;
 
   return (
-    <div className={classes.wrapper}>
+    <div className={classes.wrapper} data-tab-swipe-lock="true">
       <Carousel
         withControls={false}
         withIndicators={images.length > 1}

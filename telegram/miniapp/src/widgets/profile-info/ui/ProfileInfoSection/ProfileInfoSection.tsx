@@ -53,7 +53,9 @@ export const ProfileInfoSection = ({
           <span className={s.value}>{user.education}</span>
 
           <span className={s.label}>Мастер</span>
-          <span className={s.valueBold}>Иванов Иван Иванович</span>
+          <span className={s.valueBold}>
+            {user.master?.name || 'Не указано'}
+          </span>
         </div>
       </Stack>
     </Box>

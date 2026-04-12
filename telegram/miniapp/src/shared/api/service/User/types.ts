@@ -35,6 +35,12 @@ export interface Sender {
 
 export type FindWorkStatus = 'LOOKING' | 'NOT_LOOKING' | 'OPEN_TO_OFFERS';
 
+export interface UserMaster {
+  id: number;
+  name: string;
+  isTarelkaUser: boolean;
+}
+
 export interface User {
   id: string | number;
   tg_user_id?: number;
@@ -69,6 +75,7 @@ export interface User {
   conversation?: number;
   invite_account_type?: string;
   sender?: Sender;
+  master?: UserMaster;
 }
 
 export interface DeleteAccountResponse {
@@ -112,6 +119,24 @@ export interface UserMediaUrlResponse {
   success: boolean;
 }
 
+// ===== My profile patch =====
+
+interface UpdateMyProfileBaseRequest {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  bio?: string;
+  education?: string;
+  find_work?: FindWorkStatus;
+  cityIds?: number[];
+  specializationIds?: number[];
+  isMasterFromTable?: boolean;
+  masterId?: number;
+  masterName?: string;
+}
+
+export type UpdateMyProfileRequest = UpdateMyProfileBaseRequest;
+
 // ===== Teammate =====
 
 export interface Teammate {
@@ -139,6 +164,7 @@ export interface ExpandedUserProfile {
   user: User;
   publications: UserProfilePublication[];
   sender?: Sender;
+  master?: UserMaster;
   teammatesCount: number;
   outgoingRequestsCount: number;
   projectsCount: number;

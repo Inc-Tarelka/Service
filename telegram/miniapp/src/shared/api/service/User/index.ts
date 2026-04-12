@@ -9,11 +9,13 @@ export {
   presignUserWallpaper,
   setUserLogoUrl,
   setUserWallpaperUrl,
+  updateMyProfile,
   updateProfile,
 } from './api';
 export type {
   DeleteAccountResponse,
   ExpandedUserProfile,
+  UpdateMyProfileRequest,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,

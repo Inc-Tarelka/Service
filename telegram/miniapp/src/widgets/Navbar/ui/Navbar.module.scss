@@ -6,7 +6,7 @@
   height: var(--total-navbar-height);
   justify-content: center;
   left: 0;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--tg-safe-area-inset-top);
   position: fixed;
   right: 0;
   top: 0;
@@ -20,7 +20,7 @@
 
 .logo {
   height: 24px;
-  margin-top: 40px;
+  margin-top: -5px;
   object-fit: contain;
 }
 

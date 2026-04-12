@@ -29,7 +29,19 @@
     --TabBar-size: 60px;
     --Navbar-size: 90px;
     --navbar-base-height: 100px;
-    --total-navbar-height: calc(var(--navbar-base-height) + env(safe-area-inset-top));
+    --tg-navbar-base-height: 48px;
+    --tg-viewport-height: 100dvh;
+    --tg-viewport-stable-height: 100dvh;
+    --tg-safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --tg-safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --tg-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --tg-safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --tg-content-safe-area-inset-top: var(--tg-safe-area-inset-top);
+    --tg-content-safe-area-inset-right: var(--tg-safe-area-inset-right);
+    --tg-content-safe-area-inset-bottom: var(--tg-safe-area-inset-bottom);
+    --tg-content-safe-area-inset-left: var(--tg-safe-area-inset-left);
+    --tg-page-top-offset: calc(var(--tg-navbar-base-height) + var(--tg-safe-area-inset-top));
+    --total-navbar-height: var(--tg-page-top-offset);
 
     // components
     --primary-stroke: #1C1C1C;
@@ -74,6 +86,6 @@ html, body {
 }
   
   .app {
-    height: 100%;
+    height: var(--tg-viewport-stable-height, 100%);
   }
   

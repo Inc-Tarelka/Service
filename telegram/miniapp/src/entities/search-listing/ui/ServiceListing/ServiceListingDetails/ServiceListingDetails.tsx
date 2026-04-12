@@ -38,6 +38,8 @@ interface ServiceListingDetailsProps {
   onTeamMemberClick?: (id: number) => void;
   isOwner?: boolean;
   onEdit?: () => void;
+  onShare?: (id: number) => void;
+  isViewOnly?: boolean;
 }
 
 const formatCount = (count: number): string | number => {
@@ -70,6 +72,8 @@ export const ServiceListingDetails = observer(
       onTeamMemberClick,
       isOwner,
       onEdit,
+      onShare,
+      isViewOnly = false,
     } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
@@ -86,10 +90,25 @@ export const ServiceListingDetails = observer(
     }, [service.isLiked, service.likesCount]);
 
     const handleLikeClick = () => {
+      if (isViewOnly) {
+        return;
+      }
+
       const nextLiked = !isLiked;
       setIsLiked(nextLiked);
       setLikesCount((prev) => (nextLiked ? prev + 1 : prev - 1));
       onLike?.(service.id);
+    };
+
+    const handleCommentClick = () => {
+      if (isViewOnly) {
+        return;
+      }
+      onCommentClick?.();
+    };
+
+    const handleShareClick = () => {
+      onShare?.(service.id);
     };
 
     const displayNeeds: SearchNeedItem[] = (needs ?? service.needs ?? []).map(
@@ -123,8 +142,8 @@ export const ServiceListingDetails = observer(
           <div className={s.badgesContainer}>
             <div className={s.badgesLeft}>
               <div
-                className={`${s.badge} ${isLiked ? s.likedBadge : ''}`}
-                onClick={handleLikeClick}
+                className={`${s.badge} ${isLiked ? s.likedBadge : ''} ${!isViewOnly ? s.badgeInteractive : s.badgeDisabled}`}
+                onClick={!isViewOnly ? handleLikeClick : undefined}
               >
                 <div
                   className={`${s.likeIconWrapper} ${isLiked ? s.isLiked : ''}`}
@@ -140,7 +159,10 @@ export const ServiceListingDetails = observer(
                 </div>
               </div>
 
-              <div className={s.badge} onClick={onCommentClick}>
+              <div
+                className={`${s.badge} ${!isViewOnly ? s.badgeInteractive : s.badgeDisabled}`}
+                onClick={!isViewOnly ? handleCommentClick : undefined}
+              >
                 <CommentIcon ClassNames={s.icon} />
                 <span className={s.count}>
                   {formatCount(service.commentsCount ?? 0)}
@@ -148,16 +170,26 @@ export const ServiceListingDetails = observer(
               </div>
             </div>
             <div className={s.badgesRight}>
-              <div className={s.iconBtn}>
+              <div
+                className={`${s.iconBtn} ${s.badgeInteractive}`}
+                onClick={handleShareClick}
+              >
                 <ShareIcon />
               </div>
-              {isOwner && (
+              {isOwner && !isViewOnly && (
                 <div className={s.iconBtn} onClick={openActions}>
                   <MoreHorizontalIcon />
                 </div>
               )}
             </div>
           </div>
+
+          {isViewOnly && (
+            <div className={s.viewOnlyHint}>
+              Режим просмотра: лайки, комментарии и переходы в профили
+              недоступны.
+            </div>
+          )}
 
           <div className={s.topRow}>
             <span className={s.date}>
@@ -202,7 +234,7 @@ export const ServiceListingDetails = observer(
                     key={author.userId}
                     member={author}
                     isAuthor={author.isAuthor}
-                    onClick={onTeamMemberClick}
+                    onClick={!isViewOnly ? onTeamMemberClick : undefined}
                   />
                 ))}
               </div>
@@ -217,7 +249,7 @@ export const ServiceListingDetails = observer(
                   <NeedListingItem
                     key={need.id}
                     need={need}
-                    onClick={onNeedClick}
+                    onClick={!isViewOnly ? onNeedClick : undefined}
                     hideProjectAndCity
                   />
                 ))}

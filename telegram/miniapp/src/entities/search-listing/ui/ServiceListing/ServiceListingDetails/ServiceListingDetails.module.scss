@@ -83,6 +83,15 @@
   padding: 0 8px;
 }
 
+.badgeInteractive {
+  cursor: pointer;
+}
+
+.badgeDisabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
 .count {
   font-size: 14px;
   font-weight: 500;
@@ -127,6 +136,12 @@
     height: 24px;
     width: 24px;
   }
+}
+
+.viewOnlyHint {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  padding: 8px 12px 0;
 }
 
 .infoSection {

@@ -21,6 +21,9 @@ export const ProfileSection = observer(() => {
     if (!userStore.profile && !userStore.isLoadingProfile) {
       userStore.getProfileAction();
     }
+    if (!userStore.myExtendedProfileData && !userStore.isLoadingProfile) {
+      userStore.getMyExtendedProfileAction();
+    }
   }, [userStore]);
 
   const user = userStore.profile;

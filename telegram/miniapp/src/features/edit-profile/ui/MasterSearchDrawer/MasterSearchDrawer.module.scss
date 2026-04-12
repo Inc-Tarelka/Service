@@ -1,0 +1,68 @@
+.drawer {
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 12px;
+}
+
+.searchHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.searchInput {
+  border: 1px solid var(--card-bg) !important;
+  border-radius: 16px;
+  color: var(--text-color) !important;
+
+  &::placeholder {
+    color: var(--tertiary-text-color) !important;
+  }
+}
+
+.searchIcon {
+  color: var(--tertiary-text-color) !important;
+}
+
+.hintText {
+  color: var(--text-color-secondary);
+  font: var(--font-caption);
+  margin-left: 6px;
+}
+
+.scrollContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.loaderContainer {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.emptyText,
+.errorText {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-body);
+}
+
+.footer {
+  background: var(--bg-color);
+  border-top: 1px solid var(--card-bg);
+  padding: 12px 0 4px;
+}
+
+.saveButton {
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+

@@ -6,15 +6,31 @@ import {
   getMyExtendedProfile,
   getMyTeammates,
   getProfile,
+  updateMyProfile,
   updateProfile,
 } from 'shared/api/service/User/api';
 import {
   DeleteAccountResponse,
   ExpandedUserProfile,
   Teammate,
+  UpdateMyProfileRequest,
   User,
 } from 'shared/api/service/User/types';
 import { MOCK_INTERACTIONS, MOCK_USER } from 'shared/mocks/profileMocks';
+
+const hasSignedUrlParams = (url: string): boolean =>
+  /(X-Amz-|AWSAccessKeyId=|Signature=|Expires=)/i.test(url);
+
+const withCacheBuster = (url: string): string => {
+  if (!url || hasSignedUrlParams(url)) {
+    return url;
+  }
+
+  const [base, hash] = url.split('#');
+  const separator = base.includes('?') ? '&' : '?';
+  const normalized = `${base}${separator}v=${Date.now()}`;
+  return hash ? `${normalized}#${hash}` : normalized;
+};
 
 export class UserStore {
   constructor() {
@@ -34,6 +50,7 @@ export class UserStore {
   >;
 
   updateProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
+  updateMyProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
 
   getProfileAction = async () => {
     try {
@@ -74,12 +91,11 @@ export class UserStore {
 
   setLocalOverride = (overrides: Partial<User>) => {
     const normalized = { ...overrides };
-    const cacheBuster = `?v=${Date.now()}`;
     if (normalized.avatarUrl) {
-      normalized.avatarUrl = normalized.avatarUrl.split('?')[0] + cacheBuster;
+      normalized.avatarUrl = withCacheBuster(normalized.avatarUrl);
     }
     if (normalized.logo_url) {
-      normalized.logo_url = normalized.logo_url.split('?')[0] + cacheBuster;
+      normalized.logo_url = withCacheBuster(normalized.logo_url);
     }
     this._localOverrides = { ...this._localOverrides, ...normalized };
   };
@@ -104,6 +120,21 @@ export class UserStore {
     }
   };
 
+  updateMyProfileAction = async (
+    data: UpdateMyProfileRequest,
+  ): Promise<boolean> => {
+    try {
+      this.updateMyProfileData = fromPromise<AxiosResponse<User>>(
+        updateMyProfile(data),
+      );
+      await this.updateMyProfileData;
+      return true;
+    } catch (error) {
+      console.error('Failed to update my profile:', error);
+      return false;
+    }
+  };
+
   get isLoadingProfile() {
     return (
       this.profileData?.state === 'pending' ||
@@ -112,7 +143,10 @@ export class UserStore {
   }
 
   get isUpdatingProfile() {
-    return this.updateProfileData?.state === 'pending';
+    return (
+      this.updateProfileData?.state === 'pending' ||
+      this.updateMyProfileData?.state === 'pending'
+    );
   }
 
   get profileError() {
@@ -126,6 +160,7 @@ export class UserStore {
       this.myExtendedProfileData?.state === 'fulfilled'
         ? this.myExtendedProfileData.value.data
         : null;
+    const extendedUser = extendedData?.user;
 
     const apiData: User | null =
       this.profileData?.state === 'fulfilled'
@@ -135,21 +170,41 @@ export class UserStore {
           : null;
 
     if (apiData) {
+      const sourceCities =
+        apiData.cities && apiData.cities.length > 0
+          ? apiData.cities
+          : extendedUser?.cities;
+      const sourceSpecializations =
+        apiData.specializations && apiData.specializations.length > 0
+          ? apiData.specializations
+          : extendedUser?.specializations;
+
       const computed: User = {
         ...apiData,
-        firstName: apiData.person?.name || MOCK_USER.firstName,
-        lastName: apiData.person?.surname || MOCK_USER.lastName,
+        firstName:
+          apiData.person?.name ||
+          extendedUser?.person?.name ||
+          MOCK_USER.firstName,
+        lastName:
+          apiData.person?.surname ||
+          extendedUser?.person?.surname ||
+          MOCK_USER.lastName,
 
-        avatarUrl: apiData.logo_url,
+        avatarUrl:
+          apiData.logo_url ||
+          apiData.avatarUrl ||
+          extendedUser?.logo_url ||
+          extendedUser?.avatarUrl,
 
         about: apiData.bio || MOCK_USER.about,
 
-        city: apiData.cities?.[0]?.name || MOCK_USER.city,
+        city: sourceCities?.[0]?.name || MOCK_USER.city,
 
         specialization:
-          apiData.specializations?.map((s) => s.name).join(', ') ||
-          MOCK_USER.specialization,
-        profession: apiData.specializations?.[0]?.name || MOCK_USER.profession,
+          sourceSpecializations
+            ?.map((specialization) => specialization.name)
+            .join(', ') || MOCK_USER.specialization,
+        profession: sourceSpecializations?.[0]?.name || MOCK_USER.profession,
 
         status:
           apiData.find_work === 'LOOKING'
@@ -170,6 +225,7 @@ export class UserStore {
 
         tags: apiData.tags || MOCK_USER.tags,
         role: apiData.role || MOCK_USER.role,
+        master: apiData.master || extendedUser?.master || extendedData?.master,
       };
 
       return { ...computed, ...this._localOverrides };

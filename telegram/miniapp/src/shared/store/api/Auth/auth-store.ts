@@ -9,6 +9,10 @@ import {
   setRefreshToken,
 } from 'shared/api/base';
 import {
+  getTelegramStartParam,
+  parseTelegramStartParam,
+} from 'shared/lib/utils/telegram-startapp';
+import {
   forgotPasswordRequest,
   loginRequest,
   logoutRequest,
@@ -36,6 +40,17 @@ import type {
   VerifyCodeRequest,
   VerifyCodeResponse,
 } from 'shared/api/service/Auth/types';
+
+const DEFAULT_SENDER_ID =
+  'NTI0NjA3MDA3OjI1YzI3OWUxNWJlNTAyMGU0Mzg3YmMzYzNiMDg2Njc2Yjk3ZDkzNmJjOWZmNjQzYTlmZmZjYjk3OTVkYzQ5MDI';
+
+const getReferralSenderIdFromStartParam = (): string | undefined => {
+  const parsedStartParam = parseTelegramStartParam(getTelegramStartParam());
+  if (parsedStartParam?.type === 'referral') {
+    return parsedStartParam.senderId;
+  }
+  return undefined;
+};
 
 export class AuthStore {
   loginData?: IPromiseBasedObservable<LoginResponse>;
@@ -166,9 +181,7 @@ export class AuthStore {
     data: Omit<PreRegisterRequest, 'senderId'>,
   ): Promise<number | null> => {
     try {
-      const senderId =
-        window.Telegram?.WebApp?.initDataUnsafe?.start_param ??
-        'NTI0NjA3MDA3OjI1YzI3OWUxNWJlNTAyMGU0Mzg3YmMzYzNiMDg2Njc2Yjk3ZDkzNmJjOWZmNjQzYTlmZmZjYjk3OTVkYzQ5MDI';
+      const senderId = getReferralSenderIdFromStartParam() ?? DEFAULT_SENDER_ID;
       const promise = preRegisterRequest({ ...data, senderId });
       this.preRegisterData = fromPromise(promise);
 
@@ -211,8 +224,7 @@ export class AuthStore {
     data: TelegramRegisterRequest,
   ): Promise<boolean> => {
     try {
-      const senderId =
-        window.Telegram?.WebApp?.initDataUnsafe?.start_param || undefined;
+      const senderId = getReferralSenderIdFromStartParam();
       const payload: TelegramRegisterRequest = {
         ...data,
         ...(senderId ? { senderId } : {}),

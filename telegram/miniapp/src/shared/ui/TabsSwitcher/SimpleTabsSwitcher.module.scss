@@ -1,0 +1,95 @@
+.container {
+  padding: 16px;
+}
+
+.tabsWrapper {
+  mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+  -ms-overflow-style: none;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.tabsWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsList {
+  border-bottom: 1px solid var(--card-bg);
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+  padding-right: 40px;
+  position: relative;
+}
+
+.tab {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  color: var(--tertiary-text-color);
+  cursor: pointer;
+  font: var(--font-body);
+  height: 40px;
+  padding: 0 20px;
+  position: relative;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-color);
+}
+
+.tabActive {
+  background-color: transparent;
+  border-bottom: 1px solid var(--green);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.tabActive:hover {
+  background-color: transparent;
+  color: var(--text-color);
+}
+
+.noMask {
+  mask-image: none;
+
+  .tabsList {
+    padding-right: 0;
+  }
+}
+
+.fullWidth {
+  .tabsList {
+    min-width: 100%;
+  }
+
+  .tab {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    padding: 0;
+    text-align: center;
+  }
+}
+
+.tabBadge {
+  background: var(--card-bg);
+  border-radius: 16px;
+  color: var(--text-color-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  margin-left: 8px;
+  padding: 2px 8px;
+}
+
+.content {
+  padding-top: 4px;
+}

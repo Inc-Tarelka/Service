@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
-import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { SimpleTabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -60,41 +60,33 @@ export const UserProfilePage = observer(() => {
       </Box>
 
       <Box className={classes.tabsSection}>
-        <TabsSwitcher
+        <SimpleTabsSwitcher
           contentPaddingTop={16}
           fullWidth={true}
           hideMask={true}
-          stickyTop="var(--total-navbar-height)"
           className={classes.tabsSwitcher}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={PROFILE_TABS.filter((t) =>
             (['publications', 'info'] as ProfileTab[]).includes(t.value),
           )}
-          renderTab={(tab) => {
-            switch (tab) {
-              case 'publications':
-                return (
-                  <PublicationsList
-                    publications={
-                      userProfileStore.extendedProfile?.publications || []
-                    }
-                    onItemClick={handlePublicationClick}
-                  />
-                );
-              case 'info':
-                return (
-                  <ProfileInfoSection
-                    user={user}
-                    sender={userProfileStore.extendedProfile?.sender}
-                    isPublicView={true}
-                  />
-                );
-              default:
-                return null;
-            }
-          }}
-        />
+        >
+          {activeTab === 'publications' && (
+            <PublicationsList
+              publications={
+                userProfileStore.extendedProfile?.publications || []
+              }
+              onItemClick={handlePublicationClick}
+            />
+          )}
+          {activeTab === 'info' && (
+            <ProfileInfoSection
+              user={user}
+              sender={userProfileStore.extendedProfile?.sender}
+              isPublicView={true}
+            />
+          )}
+        </SimpleTabsSwitcher>
       </Box>
 
       <OfferCollaborationDrawer

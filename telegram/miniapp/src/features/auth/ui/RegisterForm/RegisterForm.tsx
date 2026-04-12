@@ -6,6 +6,10 @@ import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import {
+  getTelegramStartParam,
+  parseTelegramStartParam,
+} from 'shared/lib/utils/telegram-startapp';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
@@ -19,6 +23,8 @@ interface RegisterFormProps {
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
     const { authStore } = useStore();
+    const startParam = parseTelegramStartParam(getTelegramStartParam());
+    const isReferral = startParam?.type === 'referral';
 
     const {
       values,
@@ -84,7 +90,7 @@ export const RegisterForm = observer(
       <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
-          {WebApp.initDataUnsafe?.start_param && (
+          {isReferral && (
             <div className={s.referralHint}>Регистрация по приглашению</div>
           )}
 

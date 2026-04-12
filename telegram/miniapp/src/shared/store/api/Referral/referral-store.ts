@@ -1,8 +1,7 @@
 import { AxiosError } from 'axios';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { createInviteLinkRequest } from 'shared/api/service/Referral/api';
-
-const BOT_INVITE_BASE = 'https://t.me/mydebbugingbot';
+import { TELEGRAM_BOT_BASE_URL } from 'shared/lib/utils/telegram-startapp';
 
 export class ReferralStore {
   senderId: string | null = null;
@@ -16,7 +15,7 @@ export class ReferralStore {
 
   get inviteLink(): string | null {
     if (!this.senderId) return null;
-    return `${BOT_INVITE_BASE}?startapp=${this.senderId}`;
+    return `${TELEGRAM_BOT_BASE_URL}?startapp=${this.senderId}`;
   }
 
   generateInviteLinkAction = async () => {
