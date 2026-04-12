@@ -163,7 +163,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64, userID *i
 				SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
 			) cc ON TRUE
 			LEFT JOIN LATERAL (
-				SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+				SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 0 ORDER BY pi.id ASC LIMIT 1
 			) ti ON TRUE
 			LEFT JOIN LATERAL (
 				SELECT TRUE AS is_liked
@@ -817,7 +817,7 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 			SELECT COUNT(*)::BIGINT AS cnt FROM publication_comments pc WHERE pc.publication_id = p.id
 		) cc ON TRUE
 		LEFT JOIN LATERAL (
-			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
+			SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 0 ORDER BY pi.id ASC LIMIT 1
 		) ti ON TRUE
 		LEFT JOIN LATERAL (
 			SELECT TRUE AS is_liked
