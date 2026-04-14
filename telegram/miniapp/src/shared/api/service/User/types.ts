@@ -122,8 +122,8 @@ export interface UserMediaUrlResponse {
 // ===== My profile patch =====
 
 interface UpdateMyProfileBaseRequest {
-  firstName?: string;
-  lastName?: string;
+  name?: string;
+  surname?: string;
   username?: string;
   bio?: string;
   education?: string;

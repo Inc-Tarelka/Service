@@ -44,7 +44,7 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
 
       <Stack align="center" mt={-50} gap="xs" className={classes.content}>
         <UserAvatar
-          src={user.avatarUrl}
+          src={user.logo_url || user.avatarUrl}
           size={100}
           className={classes.avatar}
         />

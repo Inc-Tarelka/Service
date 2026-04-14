@@ -1,10 +1,8 @@
 import { Carousel } from '@mantine/carousel';
 import { Skeleton } from '@mantine/core';
-import { observer } from 'mobx-react-lite';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import TrashIcon from 'shared/assets/icons/trash';
 import '@mantine/carousel/styles.css';
-import { CarouselHeightStore } from 'shared/store/ui/ImageCarousel/carousel-store';
 import classes from './ImageCarousel.module.scss';
 
 interface ImageCarouselProps {
@@ -19,19 +17,11 @@ interface SlideImageProps {
   src: string;
   alt: string;
   preloaded: boolean;
-  onLoad: (url: string, height: number) => void;
+  onLoaded: (url: string) => void;
 }
 
 const SlideImage = (props: SlideImageProps) => {
-  const { src, alt, preloaded, onLoad } = props;
-  const imageRef = useRef<HTMLImageElement>(null);
-
-  const handleImageLoad = () => {
-    if (imageRef.current) {
-      const height = imageRef.current.offsetHeight;
-      onLoad(src, height);
-    }
-  };
+  const { src, alt, preloaded, onLoaded } = props;
 
   return (
     <div className={classes.slideInner}>
@@ -42,18 +32,17 @@ const SlideImage = (props: SlideImageProps) => {
         visible={!preloaded}
       />
       <img
-        ref={imageRef}
         src={src}
         alt={alt}
         draggable={false}
         className={`${classes.image} ${preloaded ? classes.imageLoaded : classes.imageLoading}`}
-        onLoad={handleImageLoad}
+        onLoad={() => onLoaded(src)}
       />
     </div>
   );
 };
 
-const ImageCarouselContent = observer((props: ImageCarouselProps) => {
+const ImageCarouselContent = (props: ImageCarouselProps) => {
   const {
     images,
     activeIndex: controlledIndex,
@@ -62,29 +51,20 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
     showDeleteButton = false,
   } = props;
 
-  const carouselStore = useMemo(() => new CarouselHeightStore(), []);
   const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
   const [internalIndex, setInternalIndex] = useState(0);
   const activeIndex = controlledIndex ?? internalIndex;
 
-  const handleImageLoad = useCallback(
-    (url: string, height: number) => {
-      const imageIndex = images.indexOf(url);
-      if (imageIndex !== -1) {
-        carouselStore.setSlideHeight(imageIndex, height);
-      }
-      setLoadedUrls((prev) => new Set([...prev, url]));
-    },
-    [images, carouselStore],
-  );
+  const handleImageLoaded = useCallback((url: string) => {
+    setLoadedUrls((prev) => new Set([...prev, url]));
+  }, []);
 
   const handleSlideChange = useCallback(
     (index: number) => {
       setInternalIndex(index);
-      carouselStore.setActiveIndex(index);
       onIndexChange?.(index);
     },
-    [onIndexChange, carouselStore],
+    [onIndexChange],
   );
 
   const handleDelete = useCallback(() => {
@@ -95,15 +75,12 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
         ? activeIndex - 1
         : activeIndex;
     setInternalIndex(newIndex);
-    carouselStore.setActiveIndex(newIndex);
     onIndexChange?.(newIndex);
-  }, [onDelete, activeIndex, images.length, onIndexChange, carouselStore]);
+  }, [onDelete, activeIndex, images.length, onIndexChange]);
 
   if (images.length === 0) {
     return null;
   }
-
-  const carouselHeight = carouselStore.activeSlideHeight;
 
   return (
     <div className={classes.wrapper} data-tab-swipe-lock="true">
@@ -112,10 +89,10 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
         withIndicators={images.length > 1}
         emblaOptions={{
           loop: true,
-          containScroll: 'trimSnaps',
-          duration: 50,
+          duration: 25,
           dragFree: false,
-          inViewThreshold: 0.5,
+          skipSnaps: false,
+          align: 'center',
         }}
         initialSlide={activeIndex}
         onSlideChange={handleSlideChange}
@@ -127,9 +104,6 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
           indicators: classes.indicators,
           indicator: classes.indicator,
         }}
-        style={{
-          height: carouselHeight > 0 ? carouselHeight : undefined,
-        }}
       >
         {images.map((url, index) => (
           <Carousel.Slide key={url}>
@@ -137,7 +111,7 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
               src={url}
               alt={`Image ${index + 1}`}
               preloaded={loadedUrls.has(url)}
-              onLoad={handleImageLoad}
+              onLoaded={handleImageLoaded}
             />
           </Carousel.Slide>
         ))}
@@ -154,7 +128,7 @@ const ImageCarouselContent = observer((props: ImageCarouselProps) => {
       )}
     </div>
   );
-});
+};
 
 export const ImageCarousel = (props: ImageCarouselProps) => {
   return <ImageCarouselContent {...props} />;

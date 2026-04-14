@@ -93,9 +93,9 @@ export const ServicePickerDrawer = (props: ServicePickerDrawerProps) => {
                   onClick={() => setTempSelected(service)}
                 >
                   <div className={classes.pickerThumb}>
-                    {service.imageUrl && (
+                    {service.image && (
                       <img
-                        src={service.imageUrl}
+                        src={service.image}
                         alt={service.name}
                         className={classes.pickerThumbImg}
                       />

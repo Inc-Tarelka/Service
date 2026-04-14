@@ -60,6 +60,7 @@ export const API_URL = {
 
   // Search
   search_coauthors: () => '/users/search/name',
+  search_all: () => '/search/all',
 
   // Referral
   create_invite_link: () => '/createInviteLink',

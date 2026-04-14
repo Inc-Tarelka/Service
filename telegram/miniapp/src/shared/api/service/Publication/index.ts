@@ -25,6 +25,7 @@ export type {
   SearchPublicationsParams,
   SearchPublicationsResponse,
   ToggleLikeResponse,
+  UpdatePublicationResponse,
   UpdatePublicationRequest,
   WorkingStatus,
 } from './types';

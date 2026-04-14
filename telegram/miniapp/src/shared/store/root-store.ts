@@ -21,6 +21,7 @@ import { ScrollRecoveryStore } from './interactions/scroll-recovery-store';
 import { ViewportStore } from './viewport-store';
 import { WebAppStore } from './web-app-store';
 import { ReferralStore } from './api/Referral/referral-store';
+import { SearchAllStore } from './api/SearchAll/search-all-store';
 
 export class RootStore {
   webAppStore = new WebAppStore();
@@ -44,6 +45,7 @@ export class RootStore {
   needsStore = new NeedsStore();
   publicationCommentsStore = new PublicationCommentsStore(this);
   referralStore = new ReferralStore();
+  searchAllStore = new SearchAllStore();
   notificationsStore = new NotificationsStore();
   notificationTeamInviteStore = new NotificationTeamInviteStore();
 }

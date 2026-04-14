@@ -13,9 +13,12 @@ export const useAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const handledStartParamRef = useRef<string | null>(null);
+  const isAuthenticated = authStore.isAuth;
 
   useEffect(() => {
-    const parsedStartParam = parseTelegramStartParam(getTelegramStartParam());
+    const startParam = getTelegramStartParam();
+    authStore.syncRegistrationSenderId(startParam);
+    const parsedStartParam = parseTelegramStartParam(startParam);
 
     if (
       parsedStartParam?.type === 'service' &&
@@ -33,7 +36,7 @@ export const useAuth = () => {
       location.pathname,
     );
 
-    if (authStore.isAuth) {
+    if (isAuthenticated) {
       if (location.pathname === RoutePath.auth) {
         navigate(RoutePath.main);
       }
@@ -46,10 +49,10 @@ export const useAuth = () => {
         navigate(RoutePath.auth);
       }
     }
-  }, [navigate, location.pathname, authStore.isAuth]);
+  }, [navigate, location.pathname, isAuthenticated]);
 
   return {
-    isAuthenticated: authStore.isAuth,
+    isAuthenticated,
     setToken: (token: string) => {
       setAccessToken(token);
       authStore.isAuth = true;

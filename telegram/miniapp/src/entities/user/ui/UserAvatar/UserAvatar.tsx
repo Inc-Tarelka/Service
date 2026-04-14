@@ -11,10 +11,46 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ src, size = 100, className }: UserAvatarProps) => {
-  const [isLoading, setIsLoading] = useState(!!src);
+  const [resolvedSrc, setResolvedSrc] = useState(src || defaultUserSvg);
+  const [isLoading, setIsLoading] = useState(Boolean(src));
 
   useEffect(() => {
-    setIsLoading(!!src);
+    if (!src) {
+      setResolvedSrc(defaultUserSvg);
+      setIsLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsLoading(true);
+
+    const img = new Image();
+    const fallbackTimer = setTimeout(() => {
+      if (isCancelled) return;
+      setResolvedSrc(defaultUserSvg);
+      setIsLoading(false);
+    }, 8000);
+
+    img.onload = () => {
+      if (isCancelled) return;
+      clearTimeout(fallbackTimer);
+      setResolvedSrc(src);
+      setIsLoading(false);
+    };
+
+    img.onerror = () => {
+      if (isCancelled) return;
+      clearTimeout(fallbackTimer);
+      setResolvedSrc(defaultUserSvg);
+      setIsLoading(false);
+    };
+
+    img.src = src;
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(fallbackTimer);
+    };
   }, [src]);
 
   return (
@@ -31,13 +67,16 @@ export const UserAvatar = ({ src, size = 100, className }: UserAvatarProps) => {
         />
       )}
       <Avatar
-        src={src || defaultUserSvg}
+        src={resolvedSrc}
         size={size}
         radius="100%"
         style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.2s' }}
         imageProps={{
           onLoad: () => setIsLoading(false),
-          onError: () => setIsLoading(false),
+          onError: () => {
+            setResolvedSrc(defaultUserSvg);
+            setIsLoading(false);
+          },
         }}
       />
     </div>

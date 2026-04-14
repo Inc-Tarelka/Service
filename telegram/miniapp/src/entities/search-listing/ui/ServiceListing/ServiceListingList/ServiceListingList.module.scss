@@ -5,6 +5,12 @@
   margin-top: 24px;
 }
 
+.loadMore {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .empty {
   align-items: center;
   color: var(--text-color-secondary);
@@ -18,4 +24,3 @@
     margin: 0;
   }
 }
-

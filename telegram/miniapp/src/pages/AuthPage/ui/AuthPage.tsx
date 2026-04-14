@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { Activity, useCallback } from 'react';
+import { Activity, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import s from './AuthPage.module.scss';
 
@@ -17,10 +17,6 @@ import {
 } from 'features/auth';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
-import {
-  getTelegramStartParam,
-  parseTelegramStartParam,
-} from 'shared/lib/utils/telegram-startapp';
 import classNames from 'shared/library/ClassNames/classNames';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
 import { RoutePath } from 'shared/config/routeConfig/routeConfig';
@@ -31,15 +27,17 @@ export const AuthPage = observer(() => {
   const { setToken } = useAuth();
   const { authStore } = useStore();
 
+  useEffect(() => {
+    authStore.syncRegistrationSenderId();
+  }, [authStore]);
+
   const rawStep = searchParams.get('step');
-  const startParam = parseTelegramStartParam(getTelegramStartParam());
-  const isReferral = startParam?.type === 'referral';
+  const isReferral = authStore.hasRegistrationSenderId;
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
     : isReferral
       ? 'register'
       : DEFAULT_STEP;
-
   const showBackButton = step !== DEFAULT_STEP;
 
   useBackButton({

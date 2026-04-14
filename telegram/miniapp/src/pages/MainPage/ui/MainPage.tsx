@@ -14,20 +14,25 @@ import { ListingContent } from '../lib/ListingContent';
 import { useNavigationLogic } from '../lib/useNavigationLogic';
 import s from './MainPage.module.scss';
 
+const TAB_VALUES = new Set(Object.values(SearchPublicationsType));
+
 export const MainPage = observer(() => {
   const {
     searchPublicationStore,
     searchNeedsStore,
     searchServicesStore,
     searchUsersStore,
+    searchAllStore,
   } = useStore();
   const [searchParams] = useSearchParams();
   const { isDesktop } = useViewport();
   const { handleDataNavigation, handleUserNavigation } = useNavigationLogic();
   const queryFromUrl = searchParams.get('query') || '';
+  const tabParam = searchParams.get('tab');
   const tabFromUrl =
-    (searchParams.get('tab') as SearchPublicationsType) ||
-    SearchPublicationsType.PROFILE;
+    tabParam && TAB_VALUES.has(tabParam as SearchPublicationsType)
+      ? (tabParam as SearchPublicationsType)
+      : SearchPublicationsType.ALL;
 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] =
@@ -41,7 +46,7 @@ export const MainPage = observer(() => {
   );
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const [_, setHeaderHeight] = useState(0);
+  const [, setHeaderHeight] = useState(0);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -66,6 +71,8 @@ export const MainPage = observer(() => {
         return searchServicesStore;
       case SearchPublicationsType.PROFILE:
         return searchUsersStore;
+      case SearchPublicationsType.ALL:
+        return searchAllStore;
       default:
         return searchPublicationStore;
     }
@@ -75,6 +82,13 @@ export const MainPage = observer(() => {
   const needs = searchNeedsStore.needs;
   const services = searchServicesStore.services;
   const users = searchUsersStore.users;
+  const allItems = searchAllStore.items;
+  const allServices = searchAllStore.services;
+  const allNeeds = searchAllStore.needs;
+  const allUsers = searchAllStore.users;
+  const isUsersLoadingMore = searchUsersStore.isLoadingMore;
+  const isServicesLoadingMore = searchServicesStore.isLoadingMore;
+  const isNeedsLoadingMore = searchNeedsStore.isLoadingMore;
 
   const handleItemClickForTab = (id: number, tab: SearchPublicationsType) => {
     switch (tab) {
@@ -113,6 +127,22 @@ export const MainPage = observer(() => {
     setIsNeedDetailsOpen(true);
   };
 
+  const handleTabScrollEnd = (tab: SearchPublicationsType) => {
+    switch (tab) {
+      case SearchPublicationsType.PROFILE:
+        searchUsersStore.loadMoreUsersAction();
+        break;
+      case SearchPublicationsType.SERVICE:
+        searchServicesStore.loadMoreServicesAction();
+        break;
+      case SearchPublicationsType.NEED:
+        searchNeedsStore.loadMoreNeedsAction();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Page
       smallPaddingBottom
@@ -134,8 +164,9 @@ export const MainPage = observer(() => {
         tabs={tabs}
         activeTab={activeTab}
         className={s.tabs}
-        onTabChange={(tab) => setActiveTab(tab as any)}
+        onTabChange={(tab) => setActiveTab(tab)}
         stickyTop={64}
+        onTabScrollEnd={handleTabScrollEnd}
         renderTab={(tab) => {
           const store = getStoreForTab(tab);
           return (
@@ -144,8 +175,34 @@ export const MainPage = observer(() => {
               needs={needs}
               services={services}
               users={users}
+              allItems={allItems}
+              allServices={allServices}
+              allNeeds={allNeeds}
+              allUsers={allUsers}
               isLoading={store.isLoading}
+              isLoadingMoreProfiles={
+                tab === SearchPublicationsType.PROFILE
+                  ? isUsersLoadingMore
+                  : false
+              }
+              isLoadingMoreServices={
+                tab === SearchPublicationsType.SERVICE
+                  ? isServicesLoadingMore
+                  : false
+              }
+              isLoadingMoreNeeds={
+                tab === SearchPublicationsType.NEED ? isNeedsLoadingMore : false
+              }
               isLoaded={store.isLoaded}
+              onAllProfileClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.PROFILE)
+              }
+              onAllServiceClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.SERVICE)
+              }
+              onAllNeedClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.NEED)
+              }
               onItemClick={(id) => handleItemClickForTab(id, tab)}
             />
           );

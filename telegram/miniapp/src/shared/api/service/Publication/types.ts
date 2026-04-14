@@ -20,6 +20,7 @@ export interface PresignResponse {
 }
 
 export interface PublicationNeed {
+  id?: number;
   name: string;
   description?: string;
   budget?: number;
@@ -50,6 +51,11 @@ export interface UpdatePublicationRequest {
   coAuthorIds?: number[];
   needs?: PublicationNeed[];
   isHidden?: boolean;
+}
+
+export interface UpdatePublicationResponse {
+  data: string;
+  success: boolean;
 }
 
 export interface Publication {
@@ -223,7 +229,7 @@ export interface MyProject {
 export interface MyService {
   description: string;
   id: number;
-  imageUrl: string | null;
+  image: string | null;
   isAuthor: boolean;
   likesCount: number;
   name: string;

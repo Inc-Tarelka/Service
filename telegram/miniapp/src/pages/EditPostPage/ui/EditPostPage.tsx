@@ -21,6 +21,7 @@ import type { UpdatePublicationRequest } from 'shared/api/service/Publication';
 import PlusIcon from 'shared/assets/icons/plus';
 import XIcon from 'shared/assets/icons/x';
 import SearchIcon from 'shared/assets/tabbar-icons/search';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
@@ -83,6 +84,28 @@ export const EditPostPage = observer(() => {
 
     const urls = pub.images?.map((img) => img.url) ?? [];
     setExistingImageUrls(urls);
+
+    const parseDate = (value?: string) => {
+      if (!value) return undefined;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? undefined : date;
+    };
+
+    const existingNeeds = (pub.needs ?? []).map((need) => ({
+      id: need.id ? String(need.id) : undefined,
+      title: need.name,
+      description: need.description ?? '',
+      cityId: need.cityId ? String(need.cityId) : undefined,
+      tagIds: need.tags?.map((tag) => String(tag.id)) ?? [],
+      startDate: parseDate(need.deadlineStart),
+      endDate: parseDate(need.deadlineEnd),
+      budget:
+        need.budget !== undefined && need.budget !== null
+          ? String(need.budget)
+          : undefined,
+    }));
+    postStore.needs.splice(0, postStore.needs.length);
+    existingNeeds.forEach((need) => postStore.addNeed(need));
 
     const coAuthors = data.team?.filter((m) => !m.isAuthor) ?? [];
     postStore.collaborators.splice(0, postStore.collaborators.length);
@@ -184,6 +207,14 @@ export const EditPostPage = observer(() => {
     if (!id) return;
     try {
       const isProjectPublication = postStore.formValues.type === 'project';
+      const toNumberOrUndefined = (value?: string) => {
+        if (!value) return undefined;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+      };
+      const publicationCityId = postStore.formValues.cityId
+        ? Number(postStore.formValues.cityId)
+        : undefined;
       const pendingCollaboratorIds = postStore.collaborators
         .filter((collaborator) => collaborator.status === 'pending')
         .map((collaborator) => Number(collaborator.id))
@@ -209,17 +240,17 @@ export const EditPostPage = observer(() => {
         name: postStore.formValues.title,
         type: postStore.formValues.type === 'project' ? 'PROJECT' : 'SERVICE',
         description: postStore.formValues.description || undefined,
-        cityId: postStore.formValues.cityId
-          ? Number(postStore.formValues.cityId)
-          : undefined,
+        cityId: publicationCityId,
         tagIds: postStore.formValues.tagIds.map(Number),
         coAuthorIds: isProjectPublication
           ? confirmedCollaboratorIds
           : collaboratorIds,
         needs: postStore.needs.map((need) => ({
+          id: toNumberOrUndefined(need.id),
           name: need.title,
           description: need.description,
           budget: need.budget ? Number(need.budget) : undefined,
+          cityId: toNumberOrUndefined(need.cityId) ?? publicationCityId,
           deadlineStart: need.startDate?.toISOString(),
           deadlineEnd: need.endDate?.toISOString(),
           tagIds: need.tagIds ? need.tagIds.map(Number) : [],
@@ -249,7 +280,7 @@ export const EditPostPage = observer(() => {
 
       galleryStore.clearAll();
       postStore.resetPostData();
-      navigate(-1);
+      navigate(RoutePath.profile);
     } catch (error) {
       console.error('Failed to save:', error);
     }

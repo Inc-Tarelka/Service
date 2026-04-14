@@ -9,8 +9,9 @@ import {
   setRefreshToken,
 } from 'shared/api/base';
 import {
-  getTelegramStartParam,
-  parseTelegramStartParam,
+  getStoredReferralSenderId,
+  persistReferralSenderIdFromStartParam,
+  setStoredReferralSenderId,
 } from 'shared/lib/utils/telegram-startapp';
 import {
   forgotPasswordRequest,
@@ -41,17 +42,6 @@ import type {
   VerifyCodeResponse,
 } from 'shared/api/service/Auth/types';
 
-const DEFAULT_SENDER_ID =
-  'NTI0NjA3MDA3OjI1YzI3OWUxNWJlNTAyMGU0Mzg3YmMzYzNiMDg2Njc2Yjk3ZDkzNmJjOWZmNjQzYTlmZmZjYjk3OTVkYzQ5MDI';
-
-const getReferralSenderIdFromStartParam = (): string | undefined => {
-  const parsedStartParam = parseTelegramStartParam(getTelegramStartParam());
-  if (parsedStartParam?.type === 'referral') {
-    return parsedStartParam.senderId;
-  }
-  return undefined;
-};
-
 export class AuthStore {
   loginData?: IPromiseBasedObservable<LoginResponse>;
   preRegisterData?: IPromiseBasedObservable<PreRegisterResponse>;
@@ -63,6 +53,8 @@ export class AuthStore {
 
   isAuth = false;
   token: string | null = null;
+  registrationSenderId: string | null = null;
+  registrationBlocked = false;
 
   tempData: {
     phone?: string;
@@ -74,6 +66,7 @@ export class AuthStore {
     verificationCode?: string;
     verificationToken?: string;
     resetToken?: string;
+    senderId?: string;
   } = {};
 
   username = '';
@@ -83,6 +76,7 @@ export class AuthStore {
 
   constructor() {
     makeAutoObservable(this);
+    this.syncRegistrationSenderId();
     this.init();
   }
 
@@ -104,7 +98,25 @@ export class AuthStore {
     if (data.verificationRequestId !== undefined)
       this.verificationRequestId = data.verificationRequestId;
     if (data.phone !== undefined) this.phone = data.phone;
+    if (data.senderId !== undefined) {
+      const normalizedSenderId = data.senderId.trim();
+      if (normalizedSenderId) {
+        this.setRegistrationSenderId(normalizedSenderId);
+      }
+    }
   }
+
+  setRegistrationSenderId = (senderId: string) => {
+    const normalizedSenderId = senderId.trim();
+    if (!normalizedSenderId) {
+      return;
+    }
+
+    this.registrationSenderId = normalizedSenderId;
+    this.tempData.senderId = normalizedSenderId;
+    this.registrationBlocked = false;
+    setStoredReferralSenderId(normalizedSenderId);
+  };
 
   clearTempData() {
     this.tempData = {};
@@ -153,6 +165,53 @@ export class AuthStore {
     return phone;
   }
 
+  get hasRegistrationSenderId() {
+    return !!(
+      this.tempData.senderId?.trim() ||
+      this.registrationSenderId?.trim() ||
+      getStoredReferralSenderId()
+    );
+  }
+
+  syncRegistrationSenderId = (startParam?: string | null): string | null => {
+    const senderIdFromStart = persistReferralSenderIdFromStartParam(startParam);
+    if (senderIdFromStart) {
+      this.setRegistrationSenderId(senderIdFromStart);
+      return senderIdFromStart;
+    }
+
+    const senderIdFromTemp = this.tempData.senderId?.trim();
+    if (senderIdFromTemp) {
+      this.setRegistrationSenderId(senderIdFromTemp);
+      return senderIdFromTemp;
+    }
+
+    if (this.registrationSenderId) {
+      return this.registrationSenderId;
+    }
+
+    const senderIdFromStorage = getStoredReferralSenderId();
+    if (senderIdFromStorage) {
+      this.setRegistrationSenderId(senderIdFromStorage);
+      return senderIdFromStorage;
+    }
+
+    return null;
+  };
+
+  private resolveRegistrationSenderId = (): string | null => {
+    const senderId = this.syncRegistrationSenderId();
+    if (!senderId) {
+      this.registrationBlocked = true;
+      return null;
+    }
+
+    this.registrationBlocked = false;
+    this.tempData.senderId = senderId;
+    this.registrationSenderId = senderId;
+    return senderId;
+  };
+
   // ================= ACTIONS =================
 
   loginAction = async (data: LoginRequest): Promise<boolean> => {
@@ -181,7 +240,11 @@ export class AuthStore {
     data: Omit<PreRegisterRequest, 'senderId'>,
   ): Promise<number | null> => {
     try {
-      const senderId = getReferralSenderIdFromStartParam() ?? DEFAULT_SENDER_ID;
+      const senderId = this.resolveRegistrationSenderId();
+      if (!senderId) {
+        return null;
+      }
+
       const promise = preRegisterRequest({ ...data, senderId });
       this.preRegisterData = fromPromise(promise);
 
@@ -224,11 +287,12 @@ export class AuthStore {
     data: TelegramRegisterRequest,
   ): Promise<boolean> => {
     try {
-      const senderId = getReferralSenderIdFromStartParam();
-      const payload: TelegramRegisterRequest = {
-        ...data,
-        ...(senderId ? { senderId } : {}),
-      };
+      const senderId = this.resolveRegistrationSenderId();
+      if (!senderId) {
+        return false;
+      }
+
+      const payload: TelegramRegisterRequest = { ...data, senderId };
 
       const promise = telegramRegisterRequest(payload);
       this.registerData = fromPromise(promise);

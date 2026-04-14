@@ -20,6 +20,7 @@ interface TabsSwitcherProps<T extends string> {
   tabs: TabItem<T>[];
   activeTab?: T;
   onTabChange?: (tab: T) => void;
+  onTabScrollEnd?: (tab: T) => void;
   children?: ReactNode;
   renderTab?: (tab: T) => ReactNode;
   className?: string;
@@ -32,6 +33,7 @@ interface TabsSwitcherProps<T extends string> {
 const SWIPE_THRESHOLD = 50;
 const DIRECTION_LOCK_THRESHOLD = 10;
 const SCROLLABLE_DELTA = 1;
+const SCROLL_END_THRESHOLD = 50;
 
 interface TouchState {
   startX: number;
@@ -79,6 +81,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     tabs,
     activeTab,
     onTabChange,
+    onTabScrollEnd,
     children,
     renderTab,
     className,
@@ -264,6 +267,19 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     setIsSwiping(false);
   }, [currentIndex, tabs, changeTab]);
 
+  const handleTabScroll = useCallback(
+    (tabValue: T, e: React.UIEvent<HTMLDivElement>) => {
+      if (!onTabScrollEnd) return;
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      if (
+        Math.abs(scrollHeight - scrollTop - clientHeight) < SCROLL_END_THRESHOLD
+      ) {
+        onTabScrollEnd(tabValue);
+      }
+    },
+    [onTabScrollEnd],
+  );
+
   const stickyTopCss =
     stickyTop !== undefined
       ? typeof stickyTop === 'number'
@@ -364,6 +380,11 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
                       }
                     : {}),
                 }}
+                onScroll={
+                  independentScroll
+                    ? (e) => handleTabScroll(tab.value, e)
+                    : undefined
+                }
               >
                 {renderTab(tab.value)}
               </div>

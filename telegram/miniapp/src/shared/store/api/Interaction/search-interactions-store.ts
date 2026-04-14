@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { SearchPublicationsParams } from 'shared/api/service/Publication';
+import type { SearchAllParams } from 'shared/api/service/SearchAll';
 import { SearchNeedsParams } from 'shared/api/service/PublicationNeedsSearch';
 import { SearchServicesParams } from 'shared/api/service/PublicationServicesSearch';
 import { SearchUsersParams } from 'shared/api/service/UserSearch';
@@ -52,6 +53,13 @@ export class SearchInteractionsStore {
         offset: 0,
       };
       this.rootStore.searchUsersStore.searchUsersAction(userParams);
+    } else if (activeTab === SearchPublicationsType.ALL) {
+      const allParams: SearchAllParams = {
+        q: query || undefined,
+        limit: 20,
+        offset: 0,
+      };
+      this.rootStore.searchAllStore.searchAllAction(allParams);
     } else {
       const params: SearchPublicationsParams = {
         ...filters,

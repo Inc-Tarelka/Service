@@ -1,5 +1,7 @@
 import { Box, Stack } from '@mantine/core';
+import { Link } from 'react-router-dom';
 import { Sender, User } from 'shared/api/service/User/types';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { UserRole } from 'shared/consts/userRoles';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
 import s from './ProfileInfoSection.module.scss';
@@ -53,9 +55,20 @@ export const ProfileInfoSection = ({
           <span className={s.value}>{user.education}</span>
 
           <span className={s.label}>Мастер</span>
-          <span className={s.valueBold}>
-            {user.master?.name || 'Не указано'}
-          </span>
+          {user.master?.isTarelkaUser ? (
+            <Link
+              to={RoutePath[AppRoutes.USER_PROFILE].replace(
+                ':id',
+                String(user.master.id),
+              )}
+              className={s.valueBold}
+              style={{ textDecoration: 'none' }}
+            >
+              {user.master.name}
+            </Link>
+          ) : (
+            <span className={s.value}>{user.master?.name || 'Не указано'}</span>
+          )}
         </div>
       </Stack>
     </Box>

@@ -19,6 +19,7 @@ import type {
   SearchPublicationsParams,
   SearchPublicationsResponse,
   ToggleLikeResponse,
+  UpdatePublicationResponse,
   UpdatePublicationRequest,
 } from './types';
 
@@ -108,9 +109,9 @@ export const getMyServices = async (): Promise<MyService[]> => {
 export const updatePublication = async (
   id: number,
   request: UpdatePublicationRequest,
-): Promise<Publication> =>
+): Promise<UpdatePublicationResponse> =>
   (
-    await baseInstanceV1.put<Publication>(
+    await baseInstanceV1.put<UpdatePublicationResponse>(
       API_URL.update_publication(id.toString()),
       request,
     )

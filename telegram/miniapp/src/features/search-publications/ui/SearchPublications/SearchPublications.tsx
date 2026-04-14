@@ -29,6 +29,7 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
   const [filtersOpened, setFiltersOpened] = useState(false);
   const [filters, setFilters] = useState<SearchPublicationsParams>({});
   const [debouncedQuery] = useDebouncedValue(searchQuery, 500);
+  const canUseFilters = activeTab !== SearchPublicationsType.ALL;
 
   useEffect(() => {
     searchInteractionsStore.performSearch(activeTab, debouncedQuery, filters);
@@ -41,6 +42,12 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
     onSearchComplete,
   ]);
 
+  useEffect(() => {
+    if (!canUseFilters) {
+      setFiltersOpened(false);
+    }
+  }, [canUseFilters]);
+
   const handleApplyFilters = (newFilters: SearchPublicationsParams) => {
     setFilters(newFilters);
     setFiltersOpened(false);
@@ -48,7 +55,9 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
 
   return (
     <>
-      <div className={s.searchRow}>
+      <div
+        className={`${s.searchRow} ${!canUseFilters ? s.searchRowExpanded : ''}`}
+      >
         <TextInput
           className={s.search}
           rightSection={<SearchIcon />}
@@ -62,15 +71,24 @@ export const SearchPublications = observer((props: SearchPublicationsProps) => {
             onSearchQueryChange?.(newQuery);
           }}
         />
-        <ActionIcon
-          className={s.filterBtn}
-          variant="outline"
-          size={48}
-          radius={16}
-          onClick={() => setFiltersOpened(true)}
+        <div
+          className={`${s.filterSlot} ${!canUseFilters ? s.filterSlotHidden : ''}`}
         >
-          <FilterIcon />
-        </ActionIcon>
+          <ActionIcon
+            className={s.filterBtn}
+            variant="outline"
+            size={48}
+            radius={16}
+            disabled={!canUseFilters}
+            onClick={() => {
+              if (canUseFilters) {
+                setFiltersOpened(true);
+              }
+            }}
+          >
+            <FilterIcon />
+          </ActionIcon>
+        </div>
       </div>
 
       <SearchFiltersDrawer

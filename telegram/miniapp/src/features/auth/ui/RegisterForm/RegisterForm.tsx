@@ -1,30 +1,47 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
+import { useMemo, useState } from 'react';
 
 import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import {
-  getTelegramStartParam,
-  parseTelegramStartParam,
-} from 'shared/lib/utils/telegram-startapp';
+import { getReferralSenderIdFromInviteLink } from 'shared/lib/utils/telegram-startapp';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
 import s from './RegisterForm.module.scss';
 
+interface RegisterSuccessPayload {
+  phone: string;
+  login: string;
+  password: string;
+  verificationRequestId?: string;
+}
+
 interface RegisterFormProps {
-  onSuccess: (data: any) => void;
+  onSuccess: (data: RegisterSuccessPayload) => void;
   onNavigateToLogin: () => void;
 }
 
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
     const { authStore } = useStore();
-    const startParam = parseTelegramStartParam(getTelegramStartParam());
-    const isReferral = startParam?.type === 'referral';
+    const [inviteLink, setInviteLink] = useState('');
+    const parsedInviteSenderId = useMemo(
+      () => getReferralSenderIdFromInviteLink(inviteLink),
+      [inviteLink],
+    );
+    const hasStoredInvite = authStore.hasRegistrationSenderId;
+    const canRegister = hasStoredInvite || !!parsedInviteSenderId;
+    const referralHintText = canRegister
+      ? 'Регистрация по приглашению'
+      : 'Введите ссылку для регистрации';
+    const inviteLinkError =
+      !hasStoredInvite && inviteLink.trim() && !parsedInviteSenderId
+        ? 'Введите валидную пригласительную ссылку'
+        : undefined;
 
     const {
       values,
@@ -39,13 +56,20 @@ export const RegisterForm = observer(
         login: '',
         password: '',
         confirmPassword: '',
-        agreeToTerms: false as any as true,
+        agreeToTerms: false as unknown as true,
       },
       schema: registerSchema,
       onSubmit: async (values) => {
+        if (parsedInviteSenderId) {
+          authStore.setRegistrationSenderId(parsedInviteSenderId);
+        }
+
+        if (!authStore.hasRegistrationSenderId) {
+          return;
+        }
+
         const success = await authStore.preRegisterAndSendCodeAction({
-          initData:
-            'query_id=AAEf3kQfAAAAAB_eRB_s5YZ4&user=%7B%22id%22%3A524607007%2C%22first_name%22%3A%22%D0%98%D0%BB%D1%8C%D1%8F%22%2C%22last_name%22%3A%22%D0%9A%D0%B8%D1%81%D0%B5%D0%BB%D1%91%D0%B2%22%2C%22username%22%3A%22Vegetablefinder%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FvB29BixlKdczdf4UGp8tEIq7GmZ1UMlOO0vrGwdljmE.svg%22%7D&auth_date=1775077586&signature=eCepqLfGEd6RGqcibWWPBLfk77z_9esICxwXg_mnfIt19Inob6CAPqLoW3fZL0Ye85pNz-CMaLjeNm-_LxFPBw&hash=f63275a5c831aad9a1da114272365ea60b4056db7a58796070c5d58183690bc5',
+          initData: WebApp.initData || '',
           account: {
             type: AccountType.PERSON,
             username: values.login,
@@ -73,26 +97,47 @@ export const RegisterForm = observer(
     });
 
     const handleRequestPhone = () => {
-      WebApp.requestContact((success: boolean, response: any) => {
-        if (success && response?.responseUnsafe?.contact?.phone_number) {
-          let phoneNumber = response.responseUnsafe.contact.phone_number;
-          if (!phoneNumber.startsWith('+')) {
-            phoneNumber = '+' + phoneNumber;
-          }
-          handleChange('phone', phoneNumber);
+      const requestContactCallback: Parameters<
+        typeof WebApp.requestContact
+      >[0] = (success, response) => {
+        const phoneNumberFromTelegram =
+          response?.status === 'sent'
+            ? response.responseUnsafe.contact.phone_number
+            : undefined;
+
+        if (success && phoneNumberFromTelegram) {
+          const normalizedPhone = phoneNumberFromTelegram.startsWith('+')
+            ? phoneNumberFromTelegram
+            : `+${phoneNumberFromTelegram}`;
+          handleChange('phone', normalizedPhone);
         } else {
           console.log('Phone request failed or cancelled');
         }
-      });
+      };
+
+      WebApp.requestContact(requestContactCallback);
     };
 
     return (
       <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
-          {isReferral && (
-            <div className={s.referralHint}>Регистрация по приглашению</div>
-          )}
+          <div className={s.referralHint}>{referralHintText}</div>
+
+          <div className={s.inputGroup}>
+            <span className={s.label}>Пригласительная ссылка</span>
+            <TextInput
+              classNames={{
+                input: `${s.input} ${inviteLinkError ? s.error : ''}`,
+              }}
+              value={inviteLink}
+              onChange={(event) => setInviteLink(event.currentTarget.value)}
+              placeholder="https://t.me/Tarelka_dev_weak_bot?startapp=..."
+              error={inviteLinkError}
+              radius="xl"
+              size="lg"
+            />
+          </div>
 
           <div className={s.inputGroup}>
             <span className={s.label}>Телефон</span>
@@ -192,6 +237,7 @@ export const RegisterForm = observer(
             className={s.submitButton}
             onClick={handleSubmit}
             loading={isSubmitting}
+            disabled={!canRegister}
             fullWidth
             radius="xl"
             variant="filled"

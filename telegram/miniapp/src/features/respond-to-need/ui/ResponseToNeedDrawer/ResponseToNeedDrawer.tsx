@@ -107,9 +107,9 @@ export const ResponseToNeedDrawer = (props: ResponseToNeedDrawerProps) => {
                 >
                   <Group gap={12} wrap="nowrap">
                     <div className={classes.pickerThumb}>
-                      {selectedService.imageUrl && (
+                      {selectedService.image && (
                         <img
-                          src={selectedService.imageUrl}
+                          src={selectedService.image}
                           alt={selectedService.name}
                           className={classes.pickerThumbImg}
                         />

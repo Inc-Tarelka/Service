@@ -7,12 +7,13 @@ interface NeedListingListProps {
   needs: SearchNeedItem[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export const NeedListingList = (props: NeedListingListProps) => {
-  const { needs, onItemClick, isLoading } = props;
+  const { needs, onItemClick, isLoading, isLoadingMore } = props;
 
-  if (isLoading) {
+  if (isLoading && needs.length === 0) {
     return (
       <div className={classes.list}>
         {Array.from({ length: 5 }).map((_, index) => (
@@ -35,6 +36,13 @@ export const NeedListingList = (props: NeedListingListProps) => {
       {needs.map((need) => (
         <NeedListingItem key={need.id} need={need} onClick={onItemClick} />
       ))}
+      {isLoadingMore && (
+        <div className={classes.loadMore}>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <NeedListingSkeleton key={`more-${index}`} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

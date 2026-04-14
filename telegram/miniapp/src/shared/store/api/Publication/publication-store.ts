@@ -4,6 +4,7 @@ import {
   PresignItem,
   PresignRequest,
   Publication,
+  UpdatePublicationResponse,
   UpdatePublicationRequest,
   createPublication,
   presignImages,
@@ -133,7 +134,7 @@ export class PublicationStore {
     imageFiles: File[],
     existingImageUrls: string[],
     publicationData: Omit<UpdatePublicationRequest, 'imageUrls'>,
-  ): Promise<Publication> => {
+  ): Promise<UpdatePublicationResponse> => {
     try {
       this.isLoading = true;
       this.error = null;
@@ -168,11 +169,10 @@ export class PublicationStore {
         imageUrls: [...existingImageUrls, ...newImageUrls],
       };
 
-      const publication = await updatePublication(id, finalRequest);
-      this.createdPublication = publication;
+      const response = await updatePublication(id, finalRequest);
       this.uploadProgress = 100;
       this.loadingStep = 'success';
-      return publication;
+      return response;
     } catch (error) {
       this.error =
         error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -198,7 +198,7 @@ export class PublicationStore {
       case 'uploading':
         return 'Загрузка изображений...';
       case 'creating':
-        return 'Создание публикации...';
+        return 'Сохранение публикации...';
       case 'success':
         return 'Готово!';
       default:

@@ -45,6 +45,7 @@ export interface SearchUser {
   tg_user_id: number;
   type: 'PERSON' | 'COMPANY';
   username: string;
+  telegram_url?: string;
   phone?: string;
   logo_url?: string;
   created_at: string;

@@ -10,7 +10,7 @@ interface ProfileListingItemProps {
 
 export const ProfileListingItem = (props: ProfileListingItemProps) => {
   const { user, onClick } = props;
-  const { name, userId, specializations, cities, logoUrl, username } =
+  const { name, userId, specializations, cities, logoUrl, telegramLabel } =
     getProfileDisplayData(user);
 
   const projectImages = (user.projectTopImages ?? [])
@@ -35,7 +35,7 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
           <div className={s.nameRow}>
             <h3 className={s.name}>{name}</h3>
           </div>
-          {username && <p className={s.username}>@{username}</p>}
+          {telegramLabel && <p className={s.username}>{telegramLabel}</p>}
           <p className={s.details}>
             {specializations}, {cities}
           </p>

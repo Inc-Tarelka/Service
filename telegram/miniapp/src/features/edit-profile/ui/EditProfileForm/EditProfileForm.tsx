@@ -85,8 +85,8 @@ export const EditProfileForm = observer(() => {
     schema: editProfileSchema,
     onSubmit: async (vals) => {
       const payload: UpdateMyProfileRequest = {
-        firstName: vals.firstName.trim(),
-        lastName: vals.lastName?.trim() ?? '',
+        name: vals.firstName.trim(),
+        surname: vals.lastName?.trim() ?? '',
         username: vals.username.trim(),
         bio: vals.about?.trim() ?? '',
         education: vals.education?.trim() ?? '',
@@ -317,7 +317,7 @@ export const EditProfileForm = observer(() => {
           </div>
         </div>
 
-        <div className={s.footer}>
+        <div className={s.buttonContainer}>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || userStore.isUpdatingProfile}

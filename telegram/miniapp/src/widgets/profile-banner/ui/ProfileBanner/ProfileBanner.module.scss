@@ -46,6 +46,7 @@
 
 .avatar {
   border: 4px solid var(--bg-color);
+  box-sizing: content-box;
 }
 
 .username {
