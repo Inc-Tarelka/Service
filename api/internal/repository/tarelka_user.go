@@ -1166,69 +1166,51 @@ func (r *tarelkaUserRepository) UpdateProfile(
 	findWork *model.FindWork,
 	education *string,
 ) error {
-	parts := []string{}
-	args := []interface{}{}
-	idx := 1
-
-	// Обновление имени/фамилии или company_name в зав-ти от типа пользователя
-	if personName != nil {
-		parts = append(parts, "name = $"+strconv.Itoa(idx))
-		args = append(args, *personName)
-		idx++
-	}
-	if personSurname != nil {
-		parts = append(parts, "surname = $"+strconv.Itoa(idx))
-		args = append(args, *personSurname)
-		idx++
-	}
-	if companyName != nil {
-		parts = append(parts, "company_name = $"+strconv.Itoa(idx))
-		args = append(args, *companyName)
-		idx++
-	}
-
-	// username храним в tarelka_users
-	if username != "" {
-		parts = append(parts, "username = $"+strconv.Itoa(idx))
-		args = append(args, username)
-		idx++
-	}
-
-	// city: для простоты обновим user_cities, установив один основной город
-	if cityID != nil {
-		// city будет обновлён отдельным запросом ниже
-	}
-
-	if bio != nil {
-		parts = append(parts, "bio = $"+strconv.Itoa(idx))
-		args = append(args, *bio)
-		idx++
-	}
-	if findWork != nil {
-		parts = append(parts, "find_work = $"+strconv.Itoa(idx))
-		args = append(args, *findWork)
-		idx++
-	}
-	if education != nil {
-		parts = append(parts, "education = $"+strconv.Itoa(idx))
-		args = append(args, *education)
-		idx++
-	}
-
-	// Если нет полей для обновления в самой таблице tarelka_users — просто обновим город (если нужно)
-	if len(parts) == 0 && cityID == nil {
-		return nil
-	}
-
+	// Начинаем транзакцию, так как будем обновлять несколько связанных таблиц.
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	if len(parts) > 0 {
-		argsWithUser := append(args, userID)
-		query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
+	// Определяем тип аккаунта, чтобы понимать, куда писать name/surname или company_name.
+	var accType model.AccountType
+	if err := tx.QueryRow(ctx, "SELECT type FROM tarelka_users WHERE id = $1", userID).Scan(&accType); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	// Собираем обновления для tarelka_users (username, bio, find_work, education).
+	userParts := []string{}
+	userArgs := []interface{}{}
+	idx := 1
+
+	if username != "" {
+		userParts = append(userParts, "username = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, username)
+		idx++
+	}
+	if bio != nil {
+		userParts = append(userParts, "bio = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *bio)
+		idx++
+	}
+	if findWork != nil {
+		userParts = append(userParts, "find_work = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *findWork)
+		idx++
+	}
+	if education != nil {
+		userParts = append(userParts, "education = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *education)
+		idx++
+	}
+
+	if len(userParts) > 0 {
+		argsWithUser := append(userArgs, userID)
+		query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(userParts, ", "), idx)
 		cmd, err := tx.Exec(ctx, query, argsWithUser...)
 		if err != nil {
 			return err
@@ -1238,6 +1220,47 @@ func (r *tarelkaUserRepository) UpdateProfile(
 		}
 	}
 
+	// Обновляем имя/фамилию или company_name в зав-ти от типа пользователя.
+	if accType == model.AccountTypePerson {
+		personParts := []string{}
+		personArgs := []interface{}{}
+		pIdx := 1
+		if personName != nil {
+			personParts = append(personParts, "name = $"+strconv.Itoa(pIdx))
+			personArgs = append(personArgs, *personName)
+			pIdx++
+		}
+		if personSurname != nil {
+			personParts = append(personParts, "surname = $"+strconv.Itoa(pIdx))
+			personArgs = append(personArgs, *personSurname)
+			pIdx++
+		}
+		if len(personParts) > 0 {
+			personArgs = append(personArgs, userID)
+			query := fmt.Sprintf("UPDATE tarelka_persons SET %s WHERE tarelka_user_id = $%d", strings.Join(personParts, ", "), pIdx)
+			cmd, err := tx.Exec(ctx, query, personArgs...)
+			if err != nil {
+				return err
+			}
+			// Если по какой-то причине записи нет, не создаём автоматически, предполагаем корректную регистрацию.
+			if cmd.RowsAffected() == 0 {
+				// Игнорируем тихо либо можно вернуть ErrUserNotFound; выберем тихое игнорирование.
+			}
+		}
+	} else if accType == model.AccountTypeCompany {
+		if companyName != nil {
+			query := "UPDATE tarelka_companies SET company_name = $1 WHERE tarelka_user_id = $2"
+			cmd, err := tx.Exec(ctx, query, *companyName, userID)
+			if err != nil {
+				return err
+			}
+			if cmd.RowsAffected() == 0 {
+				// Аналогично PERSON: если записи нет, не считаем это фатальной ошибкой на уровне профиля.
+			}
+		}
+	}
+
+	// city: для простоты обновим user_cities, установив один основной город
 	if cityID != nil {
 		// Удалим старые связи и добавим одну новую
 		if _, err := tx.Exec(ctx, "DELETE FROM user_cities WHERE tarelka_user_id = $1", userID); err != nil {
