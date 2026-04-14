@@ -213,7 +213,7 @@ func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) 
 
 // PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
 // На этом шаге:
-//   - валидируем initData и получаем telegramID
+//   - валидируем initData и получаем telegramID и (опционально) username
 //   - проверяем и списываем инвайт по senderId (если включён закрытый режим)
 //   - проверяем уникальность username
 //   - создаём или находим tg_user
@@ -228,8 +228,8 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		return nil, err
 	}
 
-	// 1. Валидация initData и извлечение telegramID
-	telegramID, err := s.validateInitData(req.InitData)
+	// 1. Валидация initData и извлечение telegramID + username
+	telegramID, telegramUsername, err := s.validateInitData(req.InitData)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +265,14 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
+	// 6.1. Заполняем telegram_url на основе username из initData, если он есть.
+	// Храним в нормализованном виде (например, @username), чтобы можно было искать по нику.
+	var telegramURL *string
+	if telegramUsername != nil && strings.TrimSpace(*telegramUsername) != "" {
+		norm := normalizeTelegramURL(*telegramUsername)
+		telegramURL = &norm
+	}
+
 	// 6. Создание tarelka_user с conversation = 0
 	user := &model.TarelkaUser{
 		TgUserID:        tgUser.TelegramID,
@@ -272,6 +280,7 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		Username:        req.Account.Username,
 		Phone:           phonePtr,
 		PasswordHash:    string(passwordHash),
+		TelegramURL:     telegramURL,
 		Conversation:    0,
 		InvitedByUserID: &inviterID,
 	}
@@ -306,7 +315,7 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 	// 0. Инвайт уже был проверен и применён на этапе pre-register, здесь ничего не делаем.
 
 	// 1. Валидация initData
-	telegramID, err := s.validateInitData(req.InitData)
+	telegramID, _, err := s.validateInitData(req.InitData)
 	if err != nil {
 		return nil, err
 	}
@@ -727,34 +736,35 @@ func (s *authService) ResetPasswordWithCode(ctx context.Context, username, reque
 	return nil
 }
 
-// validateInitData валидация initData от Telegram
-func (s *authService) validateInitData(initData string) (int64, error) {
+// validateInitData валидация initData от Telegram.
+// Возвращает telegramID и, если доступно, username пользователя.
+func (s *authService) validateInitData(initData string) (int64, *string, error) {
 	// Парсинг initData
 	values, err := url.ParseQuery(initData)
 	if err != nil {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Извлечение hash
 	hash := values.Get("hash")
 	if hash == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 	values.Del("hash")
 
 	// Проверка auth_date
 	authDateStr := values.Get("auth_date")
 	if authDateStr == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 	authDate, err := strconv.ParseInt(authDateStr, 10, 64)
 	if err != nil {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Проверка возраста initData
 	if time.Since(time.Unix(authDate, 0)) > initDataMaxAge {
-		return 0, ErrInitDataExpired
+		return 0, nil, ErrInitDataExpired
 	}
 
 	// Формирование data-check-string
@@ -785,23 +795,35 @@ func (s *authService) validateInitData(initData string) (int64, error) {
 
 	// Сравнение
 	if calculatedHash != hash {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Извлечение telegram_id из user
 	userStr := values.Get("user")
 	if userStr == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
-	// Простой парсинг user JSON для извлечения id
-	// В продакшене используйте json.Unmarshal
-	telegramID, err := extractTelegramID(userStr)
-	if err != nil {
-		return 0, ErrInvalidInitData
+	// Аккуратно парсим JSON user, чтобы получить id и username.
+	type tgUser struct {
+		ID       int64  `json:"id"`
+		Username string `json:"username"`
+	}
+	var u tgUser
+	if err := json.Unmarshal([]byte(userStr), &u); err != nil {
+		return 0, nil, ErrInvalidInitData
+	}
+	if u.ID == 0 {
+		return 0, nil, ErrInvalidInitData
 	}
 
-	return telegramID, nil
+	var usernamePtr *string
+	if strings.TrimSpace(u.Username) != "" {
+		username := u.Username
+		usernamePtr = &username
+	}
+
+	return u.ID, usernamePtr, nil
 }
 
 // generateTokenPair генерация пары токенов
