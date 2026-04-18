@@ -3841,6 +3841,9 @@
                 "isApprove": {
                     "type": "boolean"
                 },
+                "isDeleted": {
+                    "type": "boolean"
+                },
                 "isRead": {
                     "type": "boolean"
                 },
@@ -3889,6 +3892,9 @@
                     "type": "integer"
                 },
                 "isApprove": {
+                    "type": "boolean"
+                },
+                "isDeleted": {
                     "type": "boolean"
                 },
                 "isRead": {

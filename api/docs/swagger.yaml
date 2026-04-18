@@ -400,6 +400,8 @@ definitions:
         type: integer
       isApprove:
         type: boolean
+      isDeleted:
+        type: boolean
       isRead:
         type: boolean
       message:
@@ -434,6 +436,8 @@ definitions:
       id:
         type: integer
       isApprove:
+        type: boolean
+      isDeleted:
         type: boolean
       isRead:
         type: boolean

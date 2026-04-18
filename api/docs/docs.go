@@ -3847,6 +3847,9 @@ const docTemplate = `{
                 "isApprove": {
                     "type": "boolean"
                 },
+                "isDeleted": {
+                    "type": "boolean"
+                },
                 "isRead": {
                     "type": "boolean"
                 },
@@ -3895,6 +3898,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "isApprove": {
+                    "type": "boolean"
+                },
+                "isDeleted": {
                     "type": "boolean"
                 },
                 "isRead": {

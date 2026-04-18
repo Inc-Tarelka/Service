@@ -38,8 +38,14 @@ type NotificationService interface {
 	// Исходящие уведомления для пользователя (где он creator)
 	ListOutgoingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
 
+	// Удалить (скрыть) уведомление для пользователя
+	MarkNotificationAsDeleted(ctx context.Context, notificationID, userID int64) error
 	// Общие ручки для уведомлений
 	// ...existing code...
+}
+
+func (s *notificationService) MarkNotificationAsDeleted(ctx context.Context, notificationID, userID int64) error {
+	return s.notifRepo.MarkAsDeleted(ctx, notificationID, userID)
 }
 
 func (s *notificationService) ListTeamInviteNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error) {

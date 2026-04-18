@@ -119,6 +119,7 @@ func (h *NotificationHandler) CreateCollaboration(c *gin.Context) {
 		Message:       notif.Message,
 		NeedID:        notif.NeedID,
 		IsRead:        notif.IsRead,
+		IsDeleted:     notif.IsDeleted,
 	}
 
 	c.JSON(http.StatusCreated, resp)
@@ -182,6 +183,7 @@ func (h *NotificationHandler) CreateNeedResponse(c *gin.Context) {
 		Message:       notif.Message,
 		NeedID:        notif.NeedID,
 		IsRead:        notif.IsRead,
+		IsDeleted:     notif.IsDeleted,
 	}
 
 	c.JSON(http.StatusCreated, resp)
@@ -228,6 +230,7 @@ func (h *NotificationHandler) ListCollaboration(c *gin.Context) {
 			Message:       n.Message,
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
+			IsDeleted:     n.IsDeleted,
 		})
 	}
 
@@ -275,6 +278,7 @@ func (h *NotificationHandler) ListNeedResponses(c *gin.Context) {
 			Message:       n.Message,
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
+			IsDeleted:     n.IsDeleted,
 		})
 	}
 
@@ -323,6 +327,7 @@ func (h *NotificationHandler) ListTeamInviteResponses(c *gin.Context) {
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
 			IsApprove:     n.IsApprove,
+			IsDeleted:     n.IsDeleted,
 		})
 	}
 
@@ -396,6 +401,7 @@ func (h *NotificationHandler) CreateTeamInvite(c *gin.Context) {
 		NeedID:        notif.NeedID,
 		IsRead:        notif.IsRead,
 		IsApprove:     notif.IsApprove,
+		IsDeleted:     notif.IsDeleted,
 	}
 
 	c.JSON(http.StatusCreated, resp)
@@ -473,6 +479,7 @@ func (h *NotificationHandler) RespondTeamInvite(c *gin.Context) {
 		NeedID:        notif.NeedID,
 		IsRead:        notif.IsRead,
 		IsApprove:     notif.IsApprove,
+		IsDeleted:     notif.IsDeleted,
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -528,6 +535,7 @@ func (h *NotificationHandler) ListIncomingNotifications(c *gin.Context) {
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
 			IsApprove:     n.IsApprove,
+			IsDeleted:     n.IsDeleted,
 		})
 	}
 
@@ -584,6 +592,7 @@ func (h *NotificationHandler) ListOutgoingNotifications(c *gin.Context) {
 			NeedID:        n.NeedID,
 			IsRead:        n.IsRead,
 			IsApprove:     n.IsApprove,
+			IsDeleted:     n.IsDeleted,
 		})
 	}
 
@@ -639,6 +648,7 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 		NeedID:        n.NeedID,
 		IsRead:        n.IsRead,
 		IsApprove:     n.IsApprove,
+		IsDeleted:     n.IsDeleted,
 	}
 
 	c.JSON(http.StatusOK, resp)

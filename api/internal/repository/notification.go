@@ -31,6 +31,23 @@ type NotificationRepository interface {
 	// и помечает его как прочитанное. Если уведомление не найдено или принадлежит другому
 	// получателю, возвращается ошибка ErrNotificationNotFound.
 	GetByIDForReceiverAndMarkRead(ctx context.Context, id int64, receiverID int64) (*model.NotificationWithCreator, error)
+
+	// MarkAsDeleted помечает уведомление как удаленное (is_deleted = true)
+	MarkAsDeleted(ctx context.Context, id int64, userID int64) error
+}
+
+// MarkAsDeleted помечает уведомление как удаленное (is_deleted = true) для receiver или creator
+func (r *notificationRepository) MarkAsDeleted(ctx context.Context, id int64, userID int64) error {
+	// Можно удалять только если пользователь — receiver или creator
+	query := `UPDATE notifications SET is_deleted = TRUE WHERE id = $1 AND (receiver_id = $2 OR creator_id = $2)`
+	res, err := r.pool.Exec(ctx, query, id, userID)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotificationNotFound
+	}
+	return nil
 }
 
 type notificationRepository struct {
@@ -93,12 +110,12 @@ func (r *notificationRepository) ListByReceiverAndType(
 	}
 
 	query := `
-		SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve
-		FROM notifications
-		WHERE receiver_id = $1 AND type = $2
-		ORDER BY created_at DESC
-		LIMIT $3 OFFSET $4
-	`
+	       SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve, is_deleted
+	       FROM notifications
+	       WHERE receiver_id = $1 AND type = $2 AND is_deleted = FALSE
+	       ORDER BY created_at DESC
+	       LIMIT $3 OFFSET $4
+       `
 
 	rows, err := r.pool.Query(ctx, query, receiverID, nType, limit, offset)
 	if err != nil {
@@ -120,6 +137,7 @@ func (r *notificationRepository) ListByReceiverAndType(
 			&n.NeedID,
 			&n.IsRead,
 			&n.IsApprove,
+			&n.IsDeleted,
 		); err != nil {
 			return nil, err
 		}
@@ -131,10 +149,10 @@ func (r *notificationRepository) ListByReceiverAndType(
 
 func (r *notificationRepository) CountUnreadByReceiver(ctx context.Context, receiverID int64) (int64, error) {
 	query := `
-		SELECT COUNT(*)
-		FROM notifications
-		WHERE receiver_id = $1 AND is_read = FALSE
-	`
+	       SELECT COUNT(*)
+	       FROM notifications
+	       WHERE receiver_id = $1 AND is_read = FALSE AND is_deleted = FALSE
+       `
 	var count int64
 	if err := r.pool.QueryRow(ctx, query, receiverID).Scan(&count); err != nil {
 		return 0, err
@@ -144,10 +162,10 @@ func (r *notificationRepository) CountUnreadByReceiver(ctx context.Context, rece
 
 func (r *notificationRepository) GetByID(ctx context.Context, id int64) (*model.Notification, error) {
 	query := `
-		SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve
-		FROM notifications
-		WHERE id = $1
-	`
+	       SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve, is_deleted
+	       FROM notifications
+	       WHERE id = $1 AND is_deleted = FALSE
+       `
 	var n model.Notification
 	if err := r.pool.QueryRow(ctx, query, id).Scan(
 		&n.ID,
@@ -160,6 +178,7 @@ func (r *notificationRepository) GetByID(ctx context.Context, id int64) (*model.
 		&n.NeedID,
 		&n.IsRead,
 		&n.IsApprove,
+		&n.IsDeleted,
 	); err != nil {
 		return nil, err
 	}
@@ -207,14 +226,14 @@ func (r *notificationRepository) ListIncoming(
 	}
 
 	baseQuery := `
-		SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
-		       n.message, n.need_id, n.is_read, n.is_approve,
-		       COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
-		FROM notifications n
-		JOIN tarelka_users u ON u.id = n.creator_id
-		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
-		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
-		WHERE n.receiver_id = $1`
+		 SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
+			 n.message, n.need_id, n.is_read, n.is_approve, n.is_deleted,
+			 COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
+		 FROM notifications n
+		 JOIN tarelka_users u ON u.id = n.creator_id
+		 LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		 LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		 WHERE n.receiver_id = $1 AND n.is_deleted = FALSE`
 
 	args := []interface{}{receiverID}
 	idx := 2
@@ -278,14 +297,14 @@ func (r *notificationRepository) ListOutgoing(
 	}
 
 	baseQuery := `
-		SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
-		       n.message, n.need_id, n.is_read, n.is_approve,
-		       COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
-		FROM notifications n
-		JOIN tarelka_users u ON u.id = n.creator_id
-		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
-		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
-		WHERE n.creator_id = $1`
+		 SELECT n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
+			 n.message, n.need_id, n.is_read, n.is_approve, n.is_deleted,
+			 COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
+		 FROM notifications n
+		 JOIN tarelka_users u ON u.id = n.creator_id
+		 LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		 LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		 WHERE n.creator_id = $1 AND n.is_deleted = FALSE`
 
 	args := []interface{}{creatorID}
 	idx := 2

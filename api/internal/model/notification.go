@@ -24,6 +24,8 @@ type Notification struct {
 	IsRead        bool             `json:"isRead"`
 	// IsApprove — реакция получателя на приглашение в команду (true/false для TeamInvite, null для других типов)
 	IsApprove *bool `json:"isApprove,omitempty"`
+	// IsDeleted — уведомление помечено как удаленное (скрытое для пользователя)
+	IsDeleted bool `json:"isDeleted"`
 }
 
 type NotificationResponse struct {
@@ -37,6 +39,7 @@ type NotificationResponse struct {
 	NeedID        *int64           `json:"needId,omitempty"`
 	IsRead        bool             `json:"isRead"`
 	IsApprove     *bool            `json:"isApprove,omitempty"`
+	IsDeleted     bool             `json:"isDeleted"`
 }
 
 // NotificationWithCreator расширенная модель уведомления, включающая имя отправителя.
@@ -60,4 +63,5 @@ type NotificationWithCreatorResponse struct {
 	NeedID        *int64           `json:"needId,omitempty"`
 	IsRead        bool             `json:"isRead"`
 	IsApprove     *bool            `json:"isApprove,omitempty"`
+	IsDeleted     bool             `json:"isDeleted"`
 }
