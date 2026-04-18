@@ -27,13 +27,23 @@ type NotificationService interface {
 	SendTeamInviteNotification(ctx context.Context, creatorID, publicationID, receiverID int64) (*model.Notification, error)
 	RespondToTeamInvite(ctx context.Context, receiverID, notificationID int64, isApprove bool) (*model.Notification, error)
 
-	// Общие ручки для уведомлений
-	// Входящие уведомления для пользователя (где он receiver).
-	ListIncomingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
-	// Исходящие уведомления для пользователя (где он creator).
-	ListOutgoingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
-	// Получить одно уведомление по id для конкретного получателя с пометкой как прочитанное.
+	// Получить список приглашений в команду для пользователя
+	ListTeamInviteNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
+
+	// Получить одно уведомление по id для конкретного получателя с пометкой как прочитанное
 	GetNotificationForReceiver(ctx context.Context, id, receiverID int64) (*model.NotificationWithCreator, error)
+
+	// Входящие уведомления для пользователя (где он receiver)
+	ListIncomingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// Исходящие уведомления для пользователя (где он creator)
+	ListOutgoingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+
+	// Общие ручки для уведомлений
+	// ...existing code...
+}
+
+func (s *notificationService) ListTeamInviteNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error) {
+	return s.notifRepo.ListByReceiverAndType(ctx, userID, model.NotificationTypeTeamInvite, limit, offset)
 }
 
 type notificationService struct {

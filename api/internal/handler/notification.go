@@ -281,6 +281,54 @@ func (h *NotificationHandler) ListNeedResponses(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ListTeamInviteResponses godoc
+// @Summary Список приглашений в команду
+// @Description Возвращает уведомления типа TeamInvite для текущего пользователя
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.NotificationResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/team-invite/response [get]
+func (h *NotificationHandler) ListTeamInviteResponses(c *gin.Context) {
+	userIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	list, err := h.svc.ListTeamInviteNotifications(c.Request.Context(), userID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	resp := make([]model.NotificationResponse, 0, len(list))
+	for _, n := range list {
+		resp = append(resp, model.NotificationResponse{
+			ID:            n.ID,
+			Type:          n.Type,
+			PublicationID: n.PublicationID,
+			CreatedAtISO:  n.CreatedAt.Format(time.RFC3339),
+			CreatorID:     n.CreatorID,
+			ReceiverID:    n.ReceiverID,
+			Message:       n.Message,
+			NeedID:        n.NeedID,
+			IsRead:        n.IsRead,
+			IsApprove:     n.IsApprove,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // CreateTeamInvite godoc
 // @Summary Отправить приглашение в команду проекта
 // @Description Создает уведомление типа TeamInvite (сокомандники) и отправляет Telegram-сообщение получателю
