@@ -271,6 +271,7 @@ func (r *notificationRepository) ListIncoming(
 			&n.NeedID,
 			&n.IsRead,
 			&n.IsApprove,
+			&n.IsDeleted,
 			&n.CreatorName,
 		); err != nil {
 			return nil, err
@@ -342,6 +343,7 @@ func (r *notificationRepository) ListOutgoing(
 			&n.NeedID,
 			&n.IsRead,
 			&n.IsApprove,
+			&n.IsDeleted,
 			&n.CreatorName,
 		); err != nil {
 			return nil, err
