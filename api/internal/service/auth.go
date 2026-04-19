@@ -135,12 +135,14 @@ func (s *authService) validateInviteAndIncrement(ctx context.Context, senderID s
 		return 0, fmt.Errorf("invalid_sender_id")
 	}
 
+	// Найдём tarelka_user (чтобы вернуть его ID), но считаем/инкремент считаем на уровне tg_user
 	inviter, err := s.tarelkaUserRepo.FindByTgUserID(ctx, tgID)
 	if err != nil {
 		return 0, err
 	}
 
-	_, _, err = s.tarelkaUserRepo.IncreaseInviteCountWithLimit(ctx, inviter.ID)
+	// Инкрементируем счётчик для самого Telegram-пользователя (tg_users)
+	_, _, err = s.tgUserRepo.IncreaseInviteCountWithLimit(ctx, tgID)
 	if err != nil {
 		// если лимит исчерпан или пользователя нет — считаем, что инвайт недействителен
 		return 0, fmt.Errorf("invite_limit_reached")
@@ -204,7 +206,12 @@ func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) 
 		return "", err
 	}
 
-	if user.InviteAccountType == model.InviteAccountTypeDefault && user.InviteReferralCount >= 5 {
+	// Получаем поля инвайт-системы из tg_users (логика хранится на уровне Telegram-пользователя)
+	acctType, cnt, err := s.tgUserRepo.GetInviteFields(ctx, user.TgUserID)
+	if err != nil {
+		return "", err
+	}
+	if acctType == model.InviteAccountTypeDefault && cnt >= 5 {
 		return "", fmt.Errorf("invite_limit_reached")
 	}
 

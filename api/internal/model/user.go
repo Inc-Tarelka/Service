@@ -25,8 +25,10 @@ const (
 
 // TgUser - Telegram пользователь (владелец)
 type TgUser struct {
-	TelegramID int64     `json:"telegram_id" db:"telegram_id"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	TelegramID          int64             `json:"telegram_id" db:"telegram_id"`
+	CreatedAt           time.Time         `json:"created_at" db:"created_at"`
+	InviteAccountType   InviteAccountType `json:"invite_account_type" db:"invite_account_type"`
+	InviteReferralCount int               `json:"invite_referral_count" db:"invite_referral_count"`
 }
 
 // TarelkaUser - базовая identity и auth-сущность
