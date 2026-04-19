@@ -193,6 +193,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				notifs.POST("/need-response", h.notification.CreateNeedResponse)
 				notifs.GET("/need-response", h.notification.ListNeedResponses)
 				notifs.POST("/team-invite", h.notification.CreateTeamInvite)
+				notifs.GET("/team-invite/response", h.notification.ListTeamInviteResponses)
 				notifs.POST("/team-invite/response", h.notification.RespondTeamInvite)
 				notifs.GET("/incoming", h.notification.ListIncomingNotifications)
 				notifs.GET("/outgoing", h.notification.ListOutgoingNotifications)
