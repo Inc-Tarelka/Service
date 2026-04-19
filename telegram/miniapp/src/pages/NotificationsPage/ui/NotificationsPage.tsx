@@ -1,9 +1,10 @@
-import { Center, Stack, Text } from '@mantine/core';
+import { Center, Loader, Stack, Text } from '@mantine/core';
 import ChatErrorIcon from 'shared/assets/icons/ChatError';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from 'app/StoreProvider';
 import {
   CollaborationDrawer,
@@ -11,9 +12,11 @@ import {
   NotificationItemSkeleton,
   NOTIFICATION_CARD_VARIANT,
   NOTIFICATION_TAB,
+  ResponseDrawer,
 } from 'entities/notification';
 import type { NotificationTab } from 'entities/notification';
 import type { Notification } from 'shared/api/service/Notification/types';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import type { TabItem } from 'shared/ui/TabsSwitcher';
 import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
 import { Page } from 'widgets/Page';
@@ -23,52 +26,122 @@ dayjs.locale('ru');
 
 export const NotificationsPage = observer(() => {
   const { notificationsStore } = useStore();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const [activeTab, setActiveTab] = useState<NotificationTab>(
     NOTIFICATION_TAB.ALL,
   );
-  const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
   const [detailOpened, setDetailOpened] = useState(false);
+  const [previewNotification, setPreviewNotification] =
+    useState<Notification | null>(null);
+  const [openedTabs, setOpenedTabs] = useState<Set<NotificationTab>>(
+    new Set([NOTIFICATION_TAB.ALL]),
+  );
 
   useEffect(() => {
-    notificationsStore.fetchIncomingAction();
-  }, [notificationsStore]);
+    if (pathname !== RoutePath[AppRoutes.NOTIFICATIONS]) {
+      return;
+    }
 
-  const { incoming, isLoadingIncoming, unreadCount, incomingByType } =
-    notificationsStore;
+    void notificationsStore.initializeNotificationsPageAction();
+  }, [notificationsStore, pathname]);
 
-  const collaborationItems = incomingByType('Collaboration');
-  const responseItems = incomingByType('Response');
-  const teamInviteItems = incomingByType('TeamInvite');
-  const noticeItems = incomingByType('Notice');
+  const {
+    allNotifications,
+    collaborationNotifications,
+    responseNotifications,
+    mentionNotifications,
+    selectedNotification,
+    isLoadingAll,
+    isLoadingCollaboration,
+    isLoadingResponses,
+    isLoadingMentions,
+    isLoadingMoreAll,
+    isLoadingDetail,
+    collaborationUnreadCount,
+    responseUnreadCount,
+    mentionUnreadCount,
+  } = notificationsStore;
+  const detailNotification = selectedNotification ?? previewNotification;
 
-  const allItems = [...incoming].sort(
-    (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
-  );
+  const getTabBadge = (tab: NotificationTab, unreadCount: number) => {
+    if (tab === NOTIFICATION_TAB.ALL) {
+      return undefined;
+    }
+
+    if (openedTabs.has(tab) || unreadCount === 0) {
+      return undefined;
+    }
+
+    return String(unreadCount);
+  };
 
   const TABS: TabItem<NotificationTab>[] = [
     { label: 'Все', value: NOTIFICATION_TAB.ALL },
     {
       label: 'Сотрудничество',
       value: NOTIFICATION_TAB.COLLABORATION,
-      badge: unreadCount > 0 ? String(unreadCount) : undefined,
+      badge: getTabBadge(
+        NOTIFICATION_TAB.COLLABORATION,
+        collaborationUnreadCount,
+      ),
     },
-    { label: 'Отклики', value: NOTIFICATION_TAB.RESPONSES },
-    { label: 'Отметки', value: NOTIFICATION_TAB.MENTIONS },
+    {
+      label: 'Отклики',
+      value: NOTIFICATION_TAB.RESPONSES,
+      badge: getTabBadge(NOTIFICATION_TAB.RESPONSES, responseUnreadCount),
+    },
+    {
+      label: 'Отметки',
+      value: NOTIFICATION_TAB.MENTIONS,
+      badge: getTabBadge(NOTIFICATION_TAB.MENTIONS, mentionUnreadCount),
+    },
   ];
 
   const handleNotificationClick = async (item: Notification) => {
-    setSelectedNotification(item);
-    setDetailOpened(true);
-    if (!item.isRead) {
-      await notificationsStore.markAsReadAction(item.id);
+    if (item.type === 'TeamInvite') {
+      const detailed =
+        await notificationsStore.openNotificationDetailAction(item);
+      const publicationId = detailed?.publicationId ?? item.publicationId;
+
+      if (publicationId) {
+        navigate(
+          `${RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(publicationId))}?teamInviteNotificationId=${detailed?.id ?? item.id}`,
+        );
+      }
+      return;
     }
+
+    setPreviewNotification(item);
+    setDetailOpened(true);
+    void notificationsStore.openNotificationDetailAction(item);
   };
 
   const handleCloseDetail = () => {
     setDetailOpened(false);
-    setSelectedNotification(null);
+    setPreviewNotification(null);
+    notificationsStore.clearSelectedNotificationAction();
+  };
+
+  const handleTabChange = (tab: NotificationTab) => {
+    setActiveTab(tab);
+    setOpenedTabs((prev) => {
+      if (prev.has(tab)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.add(tab);
+      return next;
+    });
+  };
+
+  const handleAllTabScrollEnd = (tab: NotificationTab) => {
+    if (tab !== NOTIFICATION_TAB.ALL) {
+      return;
+    }
+
+    notificationsStore.loadMoreAllAction();
   };
 
   const renderEmpty = (text: string) => (
@@ -109,15 +182,50 @@ export const NotificationsPage = observer(() => {
     </Stack>
   );
 
-  const responseGroups = responseItems.reduce<Map<number, Notification[]>>(
-    (acc, item) => {
-      const key = item.needId ?? 0;
-      if (!acc.has(key)) acc.set(key, []);
-      acc.get(key)!.push(item);
-      return acc;
-    },
-    new Map(),
-  );
+  const renderAllTab = () => {
+    if (isLoadingAll && allNotifications.length === 0) {
+      return renderSkeletons(4);
+    }
+
+    if (allNotifications.length === 0) {
+      return renderEmpty('Пока нет уведомлений');
+    }
+
+    return (
+      <Stack gap={8}>
+        {allNotifications.map((item) => (
+          <NotificationItem
+            key={item.id}
+            variant={
+              item.message
+                ? NOTIFICATION_CARD_VARIANT.WITH_BODY
+                : NOTIFICATION_CARD_VARIANT.WITHOUT_BODY
+            }
+            username={item.creatorName}
+            title={getNotificationTitle(item)}
+            body={item.message}
+            date={dayjs(item.createdAt).format('DD MMM, HH:mm')}
+            isRead={item.isRead}
+            onClick={() => handleNotificationClick(item)}
+          />
+        ))}
+        {isLoadingMoreAll && (
+          <Center py={6}>
+            <Loader size="sm" color="var(--accent-color)" />
+          </Center>
+        )}
+      </Stack>
+    );
+  };
+
+  const responseGroups = responseNotifications.reduce<
+    Map<number, Notification[]>
+  >((acc, item) => {
+    const key = item.needId ?? 0;
+    if (!acc.has(key)) acc.set(key, []);
+    acc.get(key)!.push(item);
+    return acc;
+  }, new Map());
 
   return (
     <Page smallPaddingBottom className={classes.page}>
@@ -127,34 +235,32 @@ export const NotificationsPage = observer(() => {
         contentPaddingTop={24}
         tabs={TABS}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
+        onTabScrollEnd={handleAllTabScrollEnd}
         className={classes.tabs}
         renderTab={(tab) => {
           if (tab === NOTIFICATION_TAB.ALL) {
-            if (isLoadingIncoming && allItems.length === 0) {
-              return renderSkeletons(4);
-            }
-            if (allItems.length === 0) {
-              return renderEmpty('Пока нет уведомлений');
-            }
-            return renderList(allItems);
+            return renderAllTab();
           }
 
           if (tab === NOTIFICATION_TAB.COLLABORATION) {
-            if (isLoadingIncoming && collaborationItems.length === 0) {
+            if (
+              isLoadingCollaboration &&
+              collaborationNotifications.length === 0
+            ) {
               return renderSkeletons();
             }
-            if (collaborationItems.length === 0) {
+            if (collaborationNotifications.length === 0) {
               return renderEmpty('Пока нет уведомлений\nо сотрудничестве');
             }
-            return renderList(collaborationItems);
+            return renderList(collaborationNotifications);
           }
 
           if (tab === NOTIFICATION_TAB.RESPONSES) {
-            if (isLoadingIncoming && responseItems.length === 0) {
+            if (isLoadingResponses && responseNotifications.length === 0) {
               return renderSkeletons();
             }
-            if (responseItems.length === 0) {
+            if (responseNotifications.length === 0) {
               return renderEmpty('Пока нет откликов\nна ваши потребности');
             }
             return (
@@ -162,7 +268,9 @@ export const NotificationsPage = observer(() => {
                 {Array.from(responseGroups.entries()).map(([needId, items]) => (
                   <Stack key={needId} gap={12}>
                     <Text className={classes.groupTitle}>
-                      {`Потребность #${needId}`}
+                      {items[0]?.needDetails?.title
+                        ? `Потребность "${items[0].needDetails.title}"`
+                        : `Потребность #${needId}`}
                     </Text>
                     <Stack gap={8}>
                       {items.map((item) => (
@@ -185,36 +293,32 @@ export const NotificationsPage = observer(() => {
           }
 
           if (tab === NOTIFICATION_TAB.MENTIONS) {
-            const mentionItems = [...teamInviteItems, ...noticeItems];
-            if (isLoadingIncoming && mentionItems.length === 0) {
+            if (isLoadingMentions && mentionNotifications.length === 0) {
               return renderSkeletons();
             }
-            if (mentionItems.length === 0) {
+            if (mentionNotifications.length === 0) {
               return renderEmpty('Пока нет отметок');
             }
-            return renderList(mentionItems);
+            return renderList(mentionNotifications);
           }
 
           return null;
         }}
       />
 
-      {selectedNotification?.type === 'Collaboration' && (
-        <CollaborationDrawer
-          opened={detailOpened}
-          onClose={handleCloseDetail}
-          sender={{
-            name: selectedNotification.creatorName,
-            username: selectedNotification.creatorName,
-            meta: '',
-          }}
-          project={{
-            title: `Проект #${selectedNotification.publicationId}`,
-            description: '',
-          }}
-          comment={selectedNotification.message ?? ''}
-        />
-      )}
+      <CollaborationDrawer
+        opened={detailOpened && detailNotification?.type === 'Collaboration'}
+        onClose={handleCloseDetail}
+        notification={detailNotification}
+        isLoading={isLoadingDetail}
+      />
+
+      <ResponseDrawer
+        opened={detailOpened && detailNotification?.type === 'Response'}
+        onClose={handleCloseDetail}
+        notification={detailNotification}
+        isLoading={isLoadingDetail}
+      />
     </Page>
   );
 });

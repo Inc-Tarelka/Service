@@ -10,10 +10,11 @@ interface ProfileBannerProps {
   isOwnProfile: boolean;
   coverImage?: string;
   minimal?: boolean;
+  onShare?: () => void;
 }
 
 export const ProfileBanner = (props: ProfileBannerProps) => {
-  const { user, isOwnProfile, coverImage, minimal = false } = props;
+  const { user, isOwnProfile, coverImage, minimal = false, onShare } = props;
   const coverClassName = coverImage
     ? `${classes.cover} ${classes.withImage}`
     : classes.cover;
@@ -33,7 +34,7 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
               {isOwnProfile ? (
                 <EditProfileButton />
               ) : (
-                <ActionIcon variant="transparent" c="white">
+                <ActionIcon variant="transparent" c="white" onClick={onShare}>
                   <ShareIcon />
                 </ActionIcon>
               )}

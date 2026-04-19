@@ -8,7 +8,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
+import type { Notification } from 'shared/api/service/Notification/types';
 import { SimpleTabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { ErrorPage } from 'widgets/ErrorPage/ui/ErrorPage';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -17,7 +19,7 @@ import { ProfilePageSkeleton } from './ProfilePage.skeleton';
 
 export const ProfilePage = observer(() => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
-  const { userStore } = useStore();
+  const { userStore, notificationsStore } = useStore();
   const navigate = useNavigate();
 
   useBackToSearch();
@@ -26,9 +28,22 @@ export const ProfilePage = observer(() => {
     navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(id)));
   };
 
+  const handleDeleteNotification = (id: number) => {
+    notificationsStore.deleteNotificationAction(id);
+  };
+
+  const handleOpenOutgoingDetail = async (notification: Notification) => {
+    await notificationsStore.openOutgoingNotificationDetailAction(notification);
+  };
+
   useEffect(() => {
     userStore.getMyExtendedProfileAction();
-  }, [userStore]);
+    notificationsStore.fetchOutgoingAction();
+
+    return () => {
+      notificationsStore.clearSelectedOutgoingNotificationAction();
+    };
+  }, [userStore, notificationsStore]);
 
   if (userStore.isLoadingProfile) {
     return <ProfilePageSkeleton />;
@@ -37,7 +52,7 @@ export const ProfilePage = observer(() => {
   const user = userStore.profile;
 
   if (!user) {
-    return <div>Ошибка загрузки профиля</div>;
+    return <ErrorPage />;
   }
 
   return (
@@ -63,7 +78,17 @@ export const ProfilePage = observer(() => {
           )}
           {activeTab === 'info' && <ProfileInfoSection user={user} />}
           {activeTab === 'interactions' && (
-            <InteractionsList interactions={userStore.interactions} canEdit />
+            <InteractionsList
+              notifications={notificationsStore.outgoing}
+              canEdit
+              onOpenDetail={handleOpenOutgoingDetail}
+              onDelete={handleDeleteNotification}
+              isDeleting={notificationsStore.isDeleting}
+              selectedNotification={
+                notificationsStore.selectedOutgoingNotification
+              }
+              isLoadingDetail={notificationsStore.isLoadingOutgoingDetail}
+            />
           )}
         </SimpleTabsSwitcher>
       </Box>

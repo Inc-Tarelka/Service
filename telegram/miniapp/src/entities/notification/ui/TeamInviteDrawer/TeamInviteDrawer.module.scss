@@ -4,7 +4,6 @@
   font-size: 18px;
   font-weight: 600;
   line-height: 1.2;
-  margin: 0;
   position: relative;
   z-index: 1;
 }
@@ -21,94 +20,91 @@
   z-index: 1;
 }
 
-.sectionTitle {
+.sectionLabel {
   color: var(--text-color);
   font: var(--font-body);
   font-weight: 600;
-  margin-bottom: 8px;
 }
 
-.card {
+.infoCard {
   border: 1px solid var(--card-bg);
   border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   padding: 12px;
 }
 
-.cardTitle {
-  color: var(--text-color);
-  font: var(--font-body);
-  font-weight: 500;
-}
-
-.cardDescription {
-  color: var(--text-color);
-  font: var(--font-caption);
-  font-weight: 400;
-  margin: 0;
-}
-
-.cardDescriptionNeed {
-  -webkit-box-orient: vertical;
-  color: var(--text-color);
-  display: -webkit-box;
-  font: var(--font-caption);
-  font-weight: 400;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.serviceContent {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-}
-
-.serviceText {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.serviceImage {
-  border-radius: 8px;
+.avatar {
+  border-radius: 50%;
   flex-shrink: 0;
   height: 40px;
   object-fit: cover;
   width: 40px;
 }
 
-.comment {
+.senderName {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.senderUsername {
+  color: var(--green);
+  font: var(--font-caption);
+  font-weight: 600;
+}
+
+.senderMeta {
   color: var(--text-color);
   font: var(--font-caption);
-  font-weight: 400;
+}
+
+.thumbnail {
+  background: var(--tertiary-bg-color);
+  border-radius: 8px;
+  flex-shrink: 0;
+  height: 40px;
+  overflow: hidden;
+  width: 40px;
+}
+
+.thumbnailImg {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.itemTitle {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.itemDesc {
+  color: var(--text-color-secondary);
+  font: var(--font-body);
+  line-height: 1.2;
+}
+
+.comment {
+  color: var(--text-color);
+  font: var(--font-body);
+  line-height: 1.2;
 }
 
 .footer {
-  display: flex;
   flex-shrink: 0;
-  gap: 8px;
   padding: 16px 20px 30px;
-  position: relative;
-  width: 100%;
-  z-index: 1;
-}
-
-.closeButton {
-  border-color: var(--text-color) !important;
-  color: var(--text-color) !important;
-  flex-shrink: 0;
 }
 
 .deleteButton {
   border-color: var(--text-color) !important;
   color: var(--text-color) !important;
+  flex: 1;
+}
+
+.acceptButton {
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  flex: 1;
   font: var(--font-body);
   font-weight: 500;
 }

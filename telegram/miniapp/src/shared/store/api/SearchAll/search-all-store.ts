@@ -26,6 +26,7 @@ export class SearchAllStore {
   needsList: SearchNeedItem[] = [];
   usersList: SearchUser[] = [];
   private requestVersion = 0;
+  private cache = new Map<string, SearchAllApiResponse>();
 
   constructor() {
     makeAutoObservable(this);
@@ -38,6 +39,18 @@ export class SearchAllStore {
       limit: params?.limit ?? DEFAULT_LIMIT,
       offset: 0,
     };
+
+    const cacheKey = JSON.stringify(normalizedParams);
+
+    if (this.cache.has(cacheKey)) {
+      const cachedData = this.cache.get(cacheKey)!;
+      this.itemsList = mapSearchAllApiResponseToItems(cachedData);
+      this.servicesList = mapSearchAllApiResponseToServices(cachedData);
+      this.needsList = mapSearchAllApiResponseToNeeds(cachedData);
+      this.usersList = mapSearchAllApiResponseToUsers(cachedData);
+      this.searchData = fromPromise.resolve(cachedData);
+      return;
+    }
 
     try {
       this.currentParams = normalizedParams;
@@ -53,6 +66,8 @@ export class SearchAllStore {
       const response = await promise;
 
       if (requestVersion !== this.requestVersion) return;
+
+      this.cache.set(cacheKey, response);
 
       this.itemsList = mapSearchAllApiResponseToItems(response);
       this.servicesList = mapSearchAllApiResponseToServices(response);
@@ -104,5 +119,6 @@ export class SearchAllStore {
     this.servicesList = [];
     this.needsList = [];
     this.usersList = [];
+    this.cache.clear();
   };
 }

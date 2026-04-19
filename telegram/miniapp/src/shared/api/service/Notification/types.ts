@@ -4,22 +4,61 @@ export type NotificationType =
   | 'Notice'
   | 'TeamInvite';
 
+export interface NotificationInitiator {
+  avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  profession?: string;
+  city?: string;
+  telegramUrl?: string;
+}
+
+export interface NotificationNeedDetails {
+  title: string;
+  description: string;
+}
+
+export interface NotificationServiceDetails {
+  title: string;
+  description: string;
+  imageUrl?: string;
+}
+
+export interface NotificationProjectDetails {
+  title: string;
+  description: string;
+  imageUrl?: string;
+}
+
 export interface Notification {
   createdAt: string;
-  creatorName: string;
   id: number;
   isRead: boolean;
   publicationId: number;
   receiverId: number;
   type: NotificationType;
+  creatorId?: number;
+  creatorName?: string;
+  isDeleted?: boolean;
   message?: string;
   needId?: number;
   isApprove?: boolean | null;
+  senderId?: number;
+  initiator?: NotificationInitiator;
+  needDetails?: NotificationNeedDetails;
+  serviceDetails?: NotificationServiceDetails;
+  projectDetails?: NotificationProjectDetails;
 }
 
 export interface GetNotificationsParams {
   type?: NotificationType;
   size?: number;
+  offset?: number;
+}
+
+export interface GetCategoryNotificationsParams {
+  limit?: number;
   offset?: number;
 }
 
@@ -49,6 +88,6 @@ export interface SendTeamInviteResponseRequest {
 }
 
 export interface TeamInviteNotification extends Omit<Notification, 'type'> {
-  isApprove: boolean | null;
   type: 'TeamInvite';
+  isApprove: boolean | null;
 }

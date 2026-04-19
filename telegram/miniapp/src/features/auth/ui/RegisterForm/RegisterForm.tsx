@@ -1,13 +1,17 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
-import { getReferralSenderIdFromInviteLink } from 'shared/lib/utils/telegram-startapp';
+import {
+  buildTelegramStartAppLink,
+  getReferralSenderIdFromInviteLink,
+  getStoredReferralInviteLink,
+} from 'shared/lib/utils/telegram-startapp';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
@@ -34,6 +38,7 @@ export const RegisterForm = observer(
       [inviteLink],
     );
     const hasStoredInvite = authStore.hasRegistrationSenderId;
+    const isInviteLocked = hasStoredInvite;
     const canRegister = hasStoredInvite || !!parsedInviteSenderId;
     const referralHintText = canRegister
       ? 'Регистрация по приглашению'
@@ -42,6 +47,18 @@ export const RegisterForm = observer(
       !hasStoredInvite && inviteLink.trim() && !parsedInviteSenderId
         ? 'Введите валидную пригласительную ссылку'
         : undefined;
+
+    useEffect(() => {
+      const senderId = authStore.syncRegistrationSenderId();
+      if (!senderId) {
+        return;
+      }
+
+      const storedInviteLink =
+        getStoredReferralInviteLink() ?? buildTelegramStartAppLink(senderId);
+
+      setInviteLink((previous) => previous || storedInviteLink);
+    }, [authStore]);
 
     const {
       values,
@@ -124,20 +141,29 @@ export const RegisterForm = observer(
           <h1 className={s.title}>Регистрация</h1>
           <div className={s.referralHint}>{referralHintText}</div>
 
-          <div className={s.inputGroup}>
-            <span className={s.label}>Пригласительная ссылка</span>
-            <TextInput
-              classNames={{
-                input: `${s.input} ${inviteLinkError ? s.error : ''}`,
-              }}
-              value={inviteLink}
-              onChange={(event) => setInviteLink(event.currentTarget.value)}
-              placeholder="https://t.me/Tarelka_dev_weak_bot?startapp=..."
-              error={inviteLinkError}
-              radius="xl"
-              size="lg"
-            />
-          </div>
+          {!isInviteLocked && (
+            <div className={s.inputGroup}>
+              <span className={s.label}>Пригласительная ссылка</span>
+              <TextInput
+                classNames={{
+                  input: `${s.input} ${inviteLinkError ? s.error : ''}`,
+                }}
+                value={inviteLink}
+                onChange={(event) => setInviteLink(event.currentTarget.value)}
+                placeholder="https://t.me/Tarelka_dev_weak_bot?startapp=..."
+                error={inviteLinkError}
+                radius="xl"
+                size="lg"
+              />
+            </div>
+          )}
+
+          {isInviteLocked && (
+            <div className={s.inputGroup}>
+              <span className={s.label}>Пригласительная ссылка</span>
+              <span className={s.hint}>Ссылка добавлена автоматически</span>
+            </div>
+          )}
 
           <div className={s.inputGroup}>
             <span className={s.label}>Телефон</span>

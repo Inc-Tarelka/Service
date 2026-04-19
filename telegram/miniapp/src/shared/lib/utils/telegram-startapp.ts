@@ -2,7 +2,9 @@ import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 const DEFAULT_TELEGRAM_BOT_USERNAME = 'Tarelka_dev_weak_bot';
 const SERVICE_STARTAPP_PREFIX = 'service_';
+const USER_STARTAPP_PREFIX = 'user_';
 const REFERRAL_SENDER_ID_STORAGE_KEY = 'tarelka_referral_sender_id';
+const REFERRAL_INVITE_LINK_STORAGE_KEY = 'tarelka_referral_invite_link';
 
 export const TELEGRAM_BOT_USERNAME =
   import.meta.env.VITE_TELEGRAM_BOT_USERNAME?.trim() ||
@@ -25,8 +27,28 @@ export type ParsedTelegramStartParam =
   | ParsedServiceStartParam
   | ParsedReferralStartParam;
 
+const getStartParamFromLocation = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const url = new URL(window.location.href);
+    return (
+      url.searchParams.get('startapp')?.trim() ??
+      url.searchParams.get('start_param')?.trim() ??
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
 export const getTelegramStartParam = (): string | null => {
-  return window.Telegram?.WebApp?.initDataUnsafe?.start_param?.trim() ?? null;
+  return (
+    window.Telegram?.WebApp?.initDataUnsafe?.start_param?.trim() ??
+    getStartParamFromLocation()
+  );
 };
 
 export const parseTelegramStartParam = (
@@ -86,6 +108,10 @@ export const setStoredReferralSenderId = (senderId: string): void => {
   }
 
   storage.setItem(REFERRAL_SENDER_ID_STORAGE_KEY, normalized);
+  storage.setItem(
+    REFERRAL_INVITE_LINK_STORAGE_KEY,
+    buildTelegramStartAppLink(normalized),
+  );
 };
 
 export const getStoredReferralSenderId = (): string | null => {
@@ -104,6 +130,22 @@ export const clearStoredReferralSenderId = (): void => {
   }
 
   storage.removeItem(REFERRAL_SENDER_ID_STORAGE_KEY);
+  storage.removeItem(REFERRAL_INVITE_LINK_STORAGE_KEY);
+};
+
+export const getStoredReferralInviteLink = (): string | null => {
+  const storage = getStorage();
+  if (!storage) {
+    return null;
+  }
+
+  const storedInviteLink = storage.getItem(REFERRAL_INVITE_LINK_STORAGE_KEY);
+  if (storedInviteLink?.trim()) {
+    return storedInviteLink.trim();
+  }
+
+  const senderId = getStoredReferralSenderId();
+  return senderId ? buildTelegramStartAppLink(senderId) : null;
 };
 
 export const getReferralSenderIdFromStartParam = (
@@ -214,4 +256,12 @@ export const buildServiceStartAppLink = (publicationId: number): string => {
 export const buildSharedServiceRoute = (publicationId: number): string => {
   const route = RoutePath.service_detail.replace(':id', String(publicationId));
   return `${route}?shared=1`;
+};
+
+export const buildUserStartAppParam = (userId: number | string): string => {
+  return `${USER_STARTAPP_PREFIX}${userId}`;
+};
+
+export const buildUserStartAppLink = (userId: number | string): string => {
+  return buildTelegramStartAppLink(buildUserStartAppParam(userId));
 };

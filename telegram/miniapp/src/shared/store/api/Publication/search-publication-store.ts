@@ -13,6 +13,7 @@ export class SearchPublicationStore {
     string,
     IPromiseBasedObservable<SearchPublicationsResponse>
   >();
+  private requestVersion = 0;
 
   constructor() {
     makeAutoObservable(this, {
@@ -23,6 +24,9 @@ export class SearchPublicationStore {
   searchPublicationsAction = async (
     params?: SearchPublicationsParams,
   ): Promise<void> => {
+    this.requestVersion += 1;
+    const version = this.requestVersion;
+
     try {
       const cacheKey = JSON.stringify(params || {});
 
@@ -31,8 +35,10 @@ export class SearchPublicationStore {
         cached &&
         (cached.state === 'fulfilled' || cached.state === 'pending')
       ) {
-        this.currentParams = params || {};
-        this.searchData = cached;
+        if (version === this.requestVersion) {
+          this.currentParams = params || {};
+          this.searchData = cached;
+        }
         return;
       }
 
@@ -40,10 +46,15 @@ export class SearchPublicationStore {
       const promise = fromPromise<SearchPublicationsResponse>(
         searchPublications(params),
       );
-      this.searchData = promise;
-      this.cache.set(cacheKey, promise);
+
+      if (version === this.requestVersion) {
+        this.searchData = promise;
+        this.cache.set(cacheKey, promise);
+      }
     } catch (error) {
-      console.error('Failed to search publications:', error);
+      if (version === this.requestVersion) {
+        console.error('Failed to search publications:', error);
+      }
     }
   };
 
@@ -66,5 +77,7 @@ export class SearchPublicationStore {
   reset = (): void => {
     this.searchData = undefined;
     this.currentParams = {};
+    this.cache.clear();
+    this.requestVersion += 1;
   };
 }

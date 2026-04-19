@@ -3,6 +3,7 @@ import {
   ProfileListingList,
   ServiceListingList,
 } from 'entities/search-listing';
+import { Loader } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { SearchNeedItem } from 'shared/api/service/PublicationNeedsSearch';
 import { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
@@ -59,8 +60,21 @@ export const ListingContent = observer((params: ListingContentProps) => {
 
   switch (activeTab) {
     case SearchPublicationsType.ALL:
+      if (isLoading) {
+        return (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '24px 0',
+            }}
+          >
+            <Loader color="var(--accent-color)" />
+          </div>
+        );
+      }
+
       if (
-        !isLoading &&
         allNeeds.length === 0 &&
         allServices.length === 0 &&
         allUsers.length === 0
@@ -78,7 +92,7 @@ export const ListingContent = observer((params: ListingContentProps) => {
       }
 
       return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {allItems.map((item) => {
             if (item.type === 'service') {
               const service = allServices.find((entry) => entry.id === item.id);

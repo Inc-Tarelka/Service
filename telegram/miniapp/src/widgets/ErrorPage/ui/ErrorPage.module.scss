@@ -2,10 +2,11 @@
     background: var(--bg-color);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: var(--tg-viewport-stable-height, 100dvh);
     inset: 0;
     position: fixed;
     width: 100%;
+    z-index: 30;
 }
 
 .center {
@@ -13,36 +14,62 @@
     display: flex;
     flex: 1;
     justify-content: center;
+    padding: calc(24px + var(--tg-safe-area-inset-top)) 24px 24px;
+}
+
+.content {
+    margin: 0 auto;
+    max-width: 360px;
+    width: 100%;
 }
 
 .text {
     color: var(--text-color-secondary);
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 400;
-    line-height: 1.2em;
+    line-height: 1.35;
     text-align: center;
     white-space: pre-line;
 }
 
 .bottom {
-    padding: 16px 16px calc(16px + var(--tg-safe-area-inset-bottom));
+    padding: 0 24px calc(20px + var(--tg-safe-area-inset-bottom));
 }
 
 .button {
     background: var(--green);
     border: none;
-    border-radius: 40px;
-    color: var(--bg-color);
-    font-size: 14px;
+    border-radius: 22px;
+    color: var(--tertiary-text-color);
+    font-size: 18px;
     font-weight: 500;
-    height: 48px;
+    height: 60px;
 
     &:hover {
         background: var(--green);
         opacity: 0.9;
     }
 
-    svg path {
-        stroke: var(--bg-color);
+    &:global(.mantine-Button-root) {
+        color: var(--tertiary-text-color);
+    }
+
+    :global(.mantine-Button-label) {
+        color: var(--tertiary-text-color);
+    }
+}
+
+.arrowIcon path {
+    stroke: var(--bg-color);
+}
+
+@media (width <= 360px) {
+    .text {
+        font-size: 16px;
+    }
+
+    .button {
+        font-size: 16px;
+        height: 56px;
     }
 }

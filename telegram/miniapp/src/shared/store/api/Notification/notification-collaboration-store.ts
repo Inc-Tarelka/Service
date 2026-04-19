@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import {
+  deleteNotification,
   getIncomingNotifications,
   sendCollaborationNotification,
 } from 'shared/api/service/Notification/api';
@@ -12,6 +13,7 @@ export class NotificationCollaborationStore {
   notifications: Notification[] = [];
   isLoading = false;
   isSending = false;
+  isDeleting = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -50,6 +52,21 @@ export class NotificationCollaborationStore {
       return false;
     } finally {
       this.isSending = false;
+    }
+  };
+
+  deleteNotificationAction = async (id: number): Promise<boolean> => {
+    if (this.isDeleting) return false;
+    this.isDeleting = true;
+    try {
+      await deleteNotification(id);
+      this.notifications = this.notifications.filter((n) => n.id !== id);
+      return true;
+    } catch (error) {
+      console.error('Failed to delete collaboration notification:', error);
+      return false;
+    } finally {
+      this.isDeleting = false;
     }
   };
 

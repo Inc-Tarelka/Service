@@ -72,6 +72,8 @@ export const API_URL = {
   notifications_team_invite: () => '/notifications/team-invite',
   notifications_team_invite_response: () =>
     '/notifications/team-invite/response',
+  notifications_read: () => '/notifications/read',
+  notification_delete: (id: number) => `/notifications/${id}`,
 
   // My projects
   my_projects: () => '/publications/my/projects',

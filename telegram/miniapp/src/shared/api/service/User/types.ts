@@ -46,6 +46,7 @@ export interface User {
   tg_user_id?: number;
   type: 'PERSON' | 'COMPANY';
   username: string;
+  telegram_url?: string;
   phone?: string;
   created_at?: string;
 

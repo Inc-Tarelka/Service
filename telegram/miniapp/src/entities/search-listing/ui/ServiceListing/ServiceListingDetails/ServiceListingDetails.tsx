@@ -22,10 +22,19 @@ import LikeIcon from 'shared/assets/icons/like';
 import MoreHorizontalIcon from 'shared/assets/icons/MoreHorizontalIcon';
 import ShareIcon from 'shared/assets/icons/share';
 import TrashIcon from 'shared/assets/icons/trash';
+import XIcon from 'shared/assets/icons/x';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import s from './ServiceListingDetails.module.scss';
 
 dayjs.locale('ru');
+
+interface TeamInviteBanner {
+  senderName: string;
+  notificationId: number;
+  isResponding?: boolean;
+  onAccept?: (notificationId: number) => void | Promise<void>;
+  onDecline?: (notificationId: number) => void | Promise<void>;
+}
 
 interface ServiceListingDetailsProps {
   service: SearchServiceItem;
@@ -40,6 +49,7 @@ interface ServiceListingDetailsProps {
   onEdit?: () => void;
   onShare?: (id: number) => void;
   isViewOnly?: boolean;
+  teamInviteBanner?: TeamInviteBanner | null;
 }
 
 const formatCount = (count: number): string | number => {
@@ -74,6 +84,7 @@ export const ServiceListingDetails = observer(
       onEdit,
       onShare,
       isViewOnly = false,
+      teamInviteBanner,
     } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
@@ -225,10 +236,48 @@ export const ServiceListingDetails = observer(
             )}
           </div>
 
-          {coAuthors.length > 0 && (
+          {(teamInviteBanner || coAuthors.length > 0) && (
             <div className={s.section}>
               <h3 className={s.sectionTitle}>Команда</h3>
               <div className={s.teamList}>
+                {teamInviteBanner && (
+                  <div className={s.teamInviteCard}>
+                    <div className={s.teamInviteTitle}>
+                      {teamInviteBanner.senderName} хочет отметить вас в проекте
+                    </div>
+                    <p className={s.teamInviteHint}>
+                      Ваш аккаунт не будет отображаться в сокомандниках, пока вы
+                      не дадите подтверждение.
+                    </p>
+                    <div className={s.teamInviteButtons}>
+                      <button
+                        type="button"
+                        className={s.teamInviteDeclineButton}
+                        onClick={() =>
+                          void teamInviteBanner.onDecline?.(
+                            teamInviteBanner.notificationId,
+                          )
+                        }
+                        disabled={teamInviteBanner.isResponding}
+                        aria-label="Отклонить приглашение"
+                      >
+                        <XIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className={s.teamInviteAcceptButton}
+                        onClick={() =>
+                          void teamInviteBanner.onAccept?.(
+                            teamInviteBanner.notificationId,
+                          )
+                        }
+                        disabled={teamInviteBanner.isResponding}
+                      >
+                        Согласен
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {coAuthors.map((author) => (
                   <TeamMemberItem
                     key={author.userId}

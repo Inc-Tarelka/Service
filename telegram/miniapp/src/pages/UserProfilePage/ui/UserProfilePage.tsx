@@ -11,7 +11,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
+import { buildUserStartAppLink } from 'shared/lib/utils/telegram-startapp';
 import { SimpleTabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { ErrorPage } from 'widgets/ErrorPage/ui/ErrorPage';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -29,6 +31,24 @@ export const UserProfilePage = observer(() => {
     navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(pubId)));
   };
 
+  const handleShareProfile = () => {
+    if (!id) return;
+
+    const shareLink = buildUserStartAppLink(id);
+    const shareText = 'Смотри профиль в Tarelka';
+
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      shareLink,
+    )}&text=${encodeURIComponent(shareText)}`;
+
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+      return;
+    }
+
+    window.open(telegramShareUrl, '_blank');
+  };
+
   useBackToSearch();
 
   useEffect(() => {
@@ -44,16 +64,16 @@ export const UserProfilePage = observer(() => {
   const user = userProfileStore.profile;
 
   if (!user) {
-    return (
-      <Page className={classes.profilePage}>
-        <div>Ошибка загрузки профиля пользователя</div>
-      </Page>
-    );
+    return <ErrorPage />;
   }
 
   return (
     <Page className={classes.profilePage}>
-      <ProfileBanner user={user} isOwnProfile={false} />
+      <ProfileBanner
+        user={user}
+        isOwnProfile={false}
+        onShare={handleShareProfile}
+      />
 
       <Box className={classes.buttonWrapper}>
         <OfferCollaborationButton onClick={() => setIsDrawerOpen(true)} />
