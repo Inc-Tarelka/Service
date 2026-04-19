@@ -1,0 +1,96 @@
+-- psql script to fully synchronize dictionary tables from txt files.
+-- It replaces dictionary values by NAME (adds missing, removes obsolete),
+-- without deleting users/publications.
+--
+-- Paths below are for запуск из корня `Service/`:
+--   api/dictionary/specializations.txt
+--   api/dictionary/tags.txt
+--   api/dictionary/cities.txt
+
+\set ON_ERROR_STOP on
+
+\echo 'Starting dictionary sync...'
+\echo 'specializations file: api/dictionary/specializations.txt'
+\echo 'tags file: api/dictionary/tags.txt'
+\echo 'cities file: api/dictionary/cities.txt'
+
+BEGIN;
+
+\echo 'Sync specializations...'
+CREATE TEMP TABLE tmp_specializations(name TEXT);
+\copy tmp_specializations(name) FROM 'api/dictionary/specializations.txt' WITH (FORMAT text);
+DELETE FROM tmp_specializations WHERE TRIM(name) = '';
+UPDATE tmp_specializations SET name = TRIM(name);
+
+INSERT INTO specializations (name)
+SELECT DISTINCT t.name
+FROM tmp_specializations t
+WHERE NOT EXISTS (
+	SELECT 1 FROM specializations s WHERE s.name = t.name
+);
+
+DELETE FROM specializations s
+WHERE NOT EXISTS (
+	SELECT 1 FROM tmp_specializations t WHERE t.name = s.name
+);
+
+DROP TABLE tmp_specializations;
+SELECT 'specializations' AS table_name, COUNT(*) AS rows FROM specializations;
+
+\echo 'Sync publication_tags + need_tags...'
+CREATE TEMP TABLE tmp_tags(name TEXT);
+\copy tmp_tags(name) FROM 'api/dictionary/tags.txt' WITH (FORMAT text);
+DELETE FROM tmp_tags WHERE TRIM(name) = '';
+UPDATE tmp_tags SET name = TRIM(name);
+
+INSERT INTO publication_tags (name)
+SELECT DISTINCT t.name
+FROM tmp_tags t
+WHERE NOT EXISTS (
+	SELECT 1 FROM publication_tags p WHERE p.name = t.name
+);
+
+DELETE FROM publication_tags p
+WHERE NOT EXISTS (
+	SELECT 1 FROM tmp_tags t WHERE t.name = p.name
+);
+
+INSERT INTO need_tags (name)
+SELECT DISTINCT t.name
+FROM tmp_tags t
+WHERE NOT EXISTS (
+	SELECT 1 FROM need_tags n WHERE n.name = t.name
+);
+
+DELETE FROM need_tags n
+WHERE NOT EXISTS (
+	SELECT 1 FROM tmp_tags t WHERE t.name = n.name
+);
+
+DROP TABLE tmp_tags;
+SELECT 'publication_tags' AS table_name, COUNT(*) AS rows FROM publication_tags;
+SELECT 'need_tags' AS table_name, COUNT(*) AS rows FROM need_tags;
+
+\echo 'Sync cities...'
+CREATE TEMP TABLE tmp_cities(name TEXT);
+\copy tmp_cities(name) FROM 'api/dictionary/cities.txt' WITH (FORMAT text);
+DELETE FROM tmp_cities WHERE TRIM(name) = '';
+UPDATE tmp_cities SET name = TRIM(name);
+
+INSERT INTO cities (name)
+SELECT DISTINCT t.name
+FROM tmp_cities t
+WHERE NOT EXISTS (
+	SELECT 1 FROM cities c WHERE c.name = t.name
+);
+
+DELETE FROM cities c
+WHERE NOT EXISTS (
+	SELECT 1 FROM tmp_cities t WHERE t.name = c.name
+);
+
+DROP TABLE tmp_cities;
+SELECT 'cities' AS table_name, COUNT(*) AS rows FROM cities;
+
+COMMIT;
+\echo 'Dictionary sync finished.'
