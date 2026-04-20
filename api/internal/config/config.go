@@ -57,7 +57,7 @@ func Load() *Config {
 		RefreshTokenTTL:      parseDuration(getEnv("REFRESH_TOKEN_TTL", "168h")), // 7 days
 		// Defaults suitable for development; can be overridden via env:
 		// ALLOWED_ORIGINS and ALLOWED_ORIGIN_SUFFIXES (comma-separated)
-		AllowedOrigins:        splitAndTrim(getEnv("ALLOWED_ORIGINS", "https://talerla-dev-app.web.app")),
+		AllowedOrigins:        splitAndTrim(getEnv("ALLOWED_ORIGINS", "https://talerla-dev-app.web.app,https://tarelka-app.pages.dev")),
 		AllowedOriginSuffixes: splitAndTrim(getEnv("ALLOWED_ORIGIN_SUFFIXES", ".trycloudflare.com")),
 
 		// S3/Storage
