@@ -140,6 +140,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				users.GET("/me", h.user.GetCurrentUser)
 				users.GET("/me/profile", h.user.GetMyProfile)
 				users.GET("/me/teammates", h.user.GetMyTeammates)
+				users.GET("/:id/teammates", h.user.GetUserTeammates)
 				users.GET(":id", h.user.GetUser)
 				users.GET(":id/profile", h.user.GetUserProfile)
 				users.POST("/:id/logo/presign", h.user.PresignLogoUpload)

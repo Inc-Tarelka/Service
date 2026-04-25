@@ -110,6 +110,35 @@ func (h *UserHandler) GetMyTeammates(c *gin.Context) {
 	c.JSON(http.StatusOK, teammates)
 }
 
+// GetUserTeammates godoc
+// @Summary Список сокомандников пользователя
+// @Description Сокомандники определяются так же, как в teammatesCount профиля: пользователи, с которыми есть общие публикации (как автора, так и соавтора).
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID пользователя"
+// @Success 200 {array} model.TeammateItem
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /users/{id}/teammates [get]
+func (h *UserHandler) GetUserTeammates(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	teammates, err := h.userService.GetUserTeammates(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, teammates)
+}
+
 // GetUser godoc
 // @Summary Получить пользователя
 // @Description Получение информации о пользователе по ID
