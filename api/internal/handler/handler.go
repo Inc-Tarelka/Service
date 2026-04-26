@@ -166,6 +166,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				pubs.GET(":id", h.publication.GetPublication)
 				pubs.PUT(":id", h.publication.UpdatePublication)
 				pubs.PATCH(":id", h.publication.PatchPublication)
+				pubs.DELETE(":id", h.publication.DeletePublication)
 				pubs.POST(":id/comments", h.publication.AddComment)
 				pubs.GET(":id/comments", h.publication.GetServiceComments)
 				pubs.POST(":id/likes", h.publication.LikePublication)

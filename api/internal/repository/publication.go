@@ -14,11 +14,13 @@ import (
 
 var (
 	ErrPublicationNotFound = errors.New("publication not found")
+	ErrPublicationAccess   = errors.New("publication access denied")
 )
 
 type PublicationRepository interface {
 	Create(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	Update(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
+	SoftDelete(ctx context.Context, pubID int64, authorID int64) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error)
 	GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error)
 	// ToggleLike ставит лайк, если его нет, и убирает, если он уже есть; возвращает итоговое состояние isLiked
@@ -58,12 +60,12 @@ func (r *publicationRepository) GetUserPublications(ctx context.Context, userID 
 		WITH user_publications AS (
 			SELECT p.id, p.type, p.created_at, TRUE AS is_author, p.name, p.description
 			FROM publications p
-			WHERE p.author_id = $1
+			WHERE p.author_id = $1 AND p.is_deleted = FALSE
 			UNION ALL
 			SELECT p.id, p.type, p.created_at, FALSE AS is_author, p.name, p.description
 			FROM publication_co_authors ca
 			JOIN publications p ON p.id = ca.publication_id
-			WHERE ca.user_id = $1
+			WHERE ca.user_id = $1 AND p.is_deleted = FALSE
 		)
 		SELECT
 			up.id,
@@ -123,7 +125,7 @@ func (r *publicationRepository) GetUserProjectsCount(ctx context.Context, userID
 		SELECT COUNT(DISTINCT p.id)
 		FROM publications p
 		LEFT JOIN publication_co_authors ca ON ca.publication_id = p.id
-		WHERE p.type = 'PROJECT' AND (p.author_id = $1 OR ca.user_id = $1)
+		WHERE p.type = 'PROJECT' AND p.is_deleted = FALSE AND (p.author_id = $1 OR ca.user_id = $1)
 	`
 	var count int64
 	if err := r.pool.QueryRow(ctx, query, userID).Scan(&count); err != nil {
@@ -171,7 +173,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64, userID *i
 				WHERE pl.publication_id = p.id AND pl.author_id = $2
 				LIMIT 1
 			) ul ON TRUE
-			WHERE p.id = $1`, id, *userID)
+			WHERE p.id = $1 AND p.is_deleted = FALSE`, id, *userID)
 	} else {
 		// Если пользователь не передан, считаем, что лайк не поставлен
 		row = r.pool.QueryRow(ctx, `
@@ -202,7 +204,7 @@ func (r *publicationRepository) GetByID(ctx context.Context, id int64, userID *i
 			LEFT JOIN LATERAL (
 				SELECT url FROM publication_images pi WHERE pi.publication_id = p.id AND pi.position = 1 ORDER BY pi.id ASC LIMIT 1
 			) ti ON TRUE
-			WHERE p.id = $1`, id)
+			WHERE p.id = $1 AND p.is_deleted = FALSE`, id)
 	}
 
 	var p model.Publication
@@ -507,7 +509,7 @@ func (r *publicationRepository) Update(ctx context.Context, pubID int64, authorI
 
 	// verify publication exists and author
 	var exists bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND author_id = $2)`, pubID, authorID).Scan(&exists); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND author_id = $2 AND is_deleted = FALSE)`, pubID, authorID).Scan(&exists); err != nil {
 		return err
 	}
 	if !exists {
@@ -617,11 +619,15 @@ func (r *publicationRepository) AddComment(ctx context.Context, pubID int64, aut
 	var c model.Comment
 	err := r.pool.QueryRow(ctx,
 		`INSERT INTO publication_comments (publication_id, author_id, content, parent_comment_id)
-	         VALUES ($1, $2, $3, $4)
+	         SELECT $1, $2, $3, $4
+	         WHERE EXISTS (SELECT 1 FROM publications p WHERE p.id = $1 AND p.is_deleted = FALSE)
 	         RETURNING id, content, author_id, created_at`,
 		pubID, authorID, content, parentCommentID,
 	).Scan(&c.ID, &c.Content, &c.AuthorID, &c.CreatedAt)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrPublicationNotFound
+		}
 		return nil, err
 	}
 	return &c, nil
@@ -635,6 +641,17 @@ func (r *publicationRepository) ToggleLike(ctx context.Context, pubID int64, aut
 		return false, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+
+	var pubExists bool
+	if err := tx.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND is_deleted = FALSE)`,
+		pubID,
+	).Scan(&pubExists); err != nil {
+		return false, err
+	}
+	if !pubExists {
+		return false, ErrPublicationNotFound
+	}
 
 	var exists bool
 	if err := tx.QueryRow(ctx,
@@ -681,7 +698,7 @@ func (r *publicationRepository) AddImages(ctx context.Context, pubID int64, auth
 
 	// verify publication exists and owned by author
 	var exists bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND author_id = $2)`, pubID, authorID).Scan(&exists); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND author_id = $2 AND is_deleted = FALSE)`, pubID, authorID).Scan(&exists); err != nil {
 		return nil, err
 	}
 	if !exists {
@@ -715,7 +732,7 @@ func (r *publicationRepository) AddCoAuthor(ctx context.Context, pubID int64, us
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO publication_co_authors (publication_id, user_id)
 		SELECT $1, $2
-		WHERE EXISTS (SELECT 1 FROM publications WHERE id = $1 AND type = 'PROJECT')
+		WHERE EXISTS (SELECT 1 FROM publications WHERE id = $1 AND type = 'PROJECT' AND is_deleted = FALSE)
 		ON CONFLICT DO NOTHING
 	`, pubID, userID)
 	return err
@@ -743,6 +760,7 @@ func (r *publicationRepository) GetServiceComments(ctx context.Context, pubID in
 			tc.company_name AS author_org_name,
 			COUNT(*) OVER() AS total_count
 		FROM publication_comments pc
+		JOIN publications p ON p.id = pc.publication_id AND p.is_deleted = FALSE
 		JOIN tarelka_users u ON u.id = pc.author_id
 		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
 		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
@@ -825,7 +843,7 @@ func (r *publicationRepository) Search(ctx context.Context, f model.PublicationS
 			WHERE pl.publication_id = p.id AND pl.author_id = $1
 			LIMIT 1
 		) ul ON TRUE
-		WHERE 1=1`
+		WHERE 1=1 AND p.is_deleted = FALSE`
 
 	args := []interface{}{}
 	idx := 1
@@ -923,7 +941,7 @@ func (r *publicationRepository) SearchNeeds(ctx context.Context, f model.NeedSea
 		JOIN publications p ON p.id = n.publication_id
 		-- Return city name from need.city_id if present, otherwise fallback to publication.city_id
 		LEFT JOIN cities c ON c.id = COALESCE(n.city_id, p.city_id)
-		WHERE 1=1`
+		WHERE 1=1 AND p.is_deleted = FALSE`
 
 	args := []interface{}{}
 	idx := 1
@@ -985,9 +1003,10 @@ func (r *publicationRepository) SearchNeeds(ctx context.Context, f model.NeedSea
 func (r *publicationRepository) GetNeedByID(ctx context.Context, id int64) (*model.Need, error) {
 	var n model.Need
 	row := r.pool.QueryRow(ctx, `
-		SELECT id, publication_id, name, description, budget, deadline_start, deadline_end, city_id
-		FROM needs
-		WHERE id = $1
+		SELECT n.id, n.publication_id, n.name, n.description, n.budget, n.deadline_start, n.deadline_end, n.city_id
+		FROM needs n
+		JOIN publications p ON p.id = n.publication_id
+		WHERE n.id = $1 AND p.is_deleted = FALSE
 	`, id)
 	if err := row.Scan(
 		&n.ID,
@@ -1031,4 +1050,33 @@ func (r *publicationRepository) GetNeedByID(ctx context.Context, id int64) (*mod
 
 	n.Tags = tags
 	return &n, nil
+}
+
+func (r *publicationRepository) SoftDelete(ctx context.Context, pubID int64, authorID int64) error {
+	res, err := r.pool.Exec(ctx,
+		`UPDATE publications
+		 SET is_deleted = TRUE
+		 WHERE id = $1 AND author_id = $2 AND is_deleted = FALSE`,
+		pubID,
+		authorID,
+	)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() > 0 {
+		return nil
+	}
+
+	var exists bool
+	if err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1 AND is_deleted = FALSE)`,
+		pubID,
+	).Scan(&exists); err != nil {
+		return err
+	}
+	if exists {
+		return ErrPublicationAccess
+	}
+
+	return ErrPublicationNotFound
 }

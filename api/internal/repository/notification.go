@@ -112,7 +112,15 @@ func (r *notificationRepository) ListByReceiverAndType(
 	query := `
 	       SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve, is_deleted
 	       FROM notifications
-	       WHERE receiver_id = $1 AND type = $2 AND is_deleted = FALSE
+	       WHERE receiver_id = $1
+	         AND type = $2
+	         AND is_deleted = FALSE
+	         AND (
+	           publication_id IS NULL OR EXISTS (
+	             SELECT 1 FROM publications p
+	             WHERE p.id = notifications.publication_id AND p.is_deleted = FALSE
+	           )
+	         )
 	       ORDER BY created_at DESC
 	       LIMIT $3 OFFSET $4
        `
@@ -151,7 +159,15 @@ func (r *notificationRepository) CountUnreadByReceiver(ctx context.Context, rece
 	query := `
 	       SELECT COUNT(*)
 	       FROM notifications
-	       WHERE receiver_id = $1 AND is_read = FALSE AND is_deleted = FALSE
+	       WHERE receiver_id = $1
+	         AND is_read = FALSE
+	         AND is_deleted = FALSE
+	         AND (
+	           publication_id IS NULL OR EXISTS (
+	             SELECT 1 FROM publications p
+	             WHERE p.id = notifications.publication_id AND p.is_deleted = FALSE
+	           )
+	         )
        `
 	var count int64
 	if err := r.pool.QueryRow(ctx, query, receiverID).Scan(&count); err != nil {
@@ -164,7 +180,14 @@ func (r *notificationRepository) GetByID(ctx context.Context, id int64) (*model.
 	query := `
 	       SELECT id, type, publication_id, created_at, creator_id, receiver_id, message, need_id, is_read, is_approve, is_deleted
 	       FROM notifications
-	       WHERE id = $1 AND is_deleted = FALSE
+	       WHERE id = $1
+	         AND is_deleted = FALSE
+	         AND (
+	           publication_id IS NULL OR EXISTS (
+	             SELECT 1 FROM publications p
+	             WHERE p.id = notifications.publication_id AND p.is_deleted = FALSE
+	           )
+	         )
        `
 	var n model.Notification
 	if err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -231,9 +254,11 @@ func (r *notificationRepository) ListIncoming(
 			 COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
 		 FROM notifications n
 		 JOIN tarelka_users u ON u.id = n.creator_id
+		 LEFT JOIN publications p ON p.id = n.publication_id
 		 LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
 		 LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
-		 WHERE n.receiver_id = $1 AND n.is_deleted = FALSE`
+		 WHERE n.receiver_id = $1 AND n.is_deleted = FALSE
+		   AND (n.publication_id IS NULL OR p.is_deleted = FALSE)`
 
 	args := []interface{}{receiverID}
 	idx := 2
@@ -303,9 +328,11 @@ func (r *notificationRepository) ListOutgoing(
 			 COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name
 		 FROM notifications n
 		 JOIN tarelka_users u ON u.id = n.creator_id
+		 LEFT JOIN publications p ON p.id = n.publication_id
 		 LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
 		 LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
-		 WHERE n.creator_id = $1 AND n.is_deleted = FALSE`
+		 WHERE n.creator_id = $1 AND n.is_deleted = FALSE
+		   AND (n.publication_id IS NULL OR p.is_deleted = FALSE)`
 
 	args := []interface{}{creatorID}
 	idx := 2
@@ -367,7 +394,15 @@ func (r *notificationRepository) GetByIDForReceiverAndMarkRead(
 		FROM tarelka_users u
 		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
 		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
-		WHERE n.id = $1 AND n.receiver_id = $2 AND u.id = n.creator_id
+		WHERE n.id = $1
+		  AND n.receiver_id = $2
+		  AND u.id = n.creator_id
+		  AND (
+		    n.publication_id IS NULL OR EXISTS (
+		      SELECT 1 FROM publications p
+		      WHERE p.id = n.publication_id AND p.is_deleted = FALSE
+		    )
+		  )
 		RETURNING n.id, n.type, n.publication_id, n.created_at, n.creator_id, n.receiver_id,
 		          n.message, n.need_id, n.is_read, n.is_approve,
 		          COALESCE(tp.name || ' ' || tp.surname, tc.company_name, u.username) AS creator_name

@@ -14,6 +14,7 @@ import (
 type PublicationService interface {
 	CreatePublication(ctx context.Context, authorID int64, req model.CreateOrUpdatePublicationRequest) (int64, error)
 	UpdatePublication(ctx context.Context, pubID int64, authorID int64, req model.CreateOrUpdatePublicationRequest) error
+	DeletePublication(ctx context.Context, pubID int64, authorID int64) error
 	AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error)
 	GetServiceComments(ctx context.Context, pubID int64, limit, offset int) (int64, []model.PublicationCommentItem, error)
 	// LikePublication теперь реализует toggle-логику и возвращает итоговое значение isLiked
@@ -97,6 +98,20 @@ func (s *publicationService) UpdatePublication(ctx context.Context, pubID int64,
 		}
 	}
 	return s.repo.Update(ctx, pubID, authorID, req)
+}
+
+func (s *publicationService) DeletePublication(ctx context.Context, pubID int64, authorID int64) error {
+	err := s.repo.SoftDelete(ctx, pubID, authorID)
+	if err != nil {
+		if errors.Is(err, repository.ErrPublicationNotFound) {
+			return errors.New("publication not found")
+		}
+		if errors.Is(err, repository.ErrPublicationAccess) {
+			return errors.New("forbidden")
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *publicationService) AddComment(ctx context.Context, pubID int64, authorID int64, content string, parentCommentID *int64) (*model.Comment, error) {

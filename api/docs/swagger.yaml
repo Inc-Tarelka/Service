@@ -1894,6 +1894,46 @@ paths:
       tags:
       - publications
   /publications/{id}:
+    delete:
+      description: Помечает публикацию как удаленную. Удалять может только автор.
+      parameters:
+      - description: ID публикации
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить публикацию (soft delete)
+      tags:
+      - publications
     get:
       description: Возвращает детали публикации с лайками, комментариями, автором,
         соавторами и потребностями

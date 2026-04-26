@@ -252,6 +252,52 @@ func (h *PublicationHandler) PatchPublication(c *gin.Context) {
 	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
 }
 
+// DeletePublication godoc
+// @Summary Удалить публикацию (soft delete)
+// @Description Помечает публикацию как удаленную. Удалять может только автор.
+// @Tags publications
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID публикации"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /publications/{id} [delete]
+func (h *PublicationHandler) DeletePublication(c *gin.Context) {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	authorID := uid.(int64)
+
+	idStr := c.Param("id")
+	pubID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_id"})
+		return
+	}
+
+	if err := h.svc.DeletePublication(c.Request.Context(), pubID, authorID); err != nil {
+		switch err.Error() {
+		case "publication not found":
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "not_found"})
+			return
+		case "forbidden":
+			c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "forbidden"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error", Message: err.Error()})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, model.SuccessResponse{Success: true})
+}
+
 // AddComment godoc
 // @Summary Добавить комментарий к публикации
 // @Tags publications
