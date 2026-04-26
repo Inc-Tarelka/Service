@@ -2,16 +2,20 @@ name: Deploy API to Server
 
 on:
   workflow_dispatch:
-  # При желании можно раскомментировать, чтобы деплой запускался на push в main,
-  # и только при изменениях внутри api/
-  # push:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'api/**'
-  #     - '.github/workflows/deploy.yml'
+    inputs:
+      force_target:
+        description: "Optional override: auto | test | prod"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - test
+          - prod
 
 jobs:
-  deploy:
+  deploy-test-backend:
+    if: ${{ github.event.inputs.force_target == 'test' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'backend') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -61,3 +65,58 @@ jobs:
             docker compose pull || true
             docker compose build
             docker compose up -d --remove-orphans
+
+  deploy-prod-main:
+    if: ${{ github.event.inputs.force_target == 'prod' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'main') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Backup existing .env.prod on production server (if any)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 193.187.94.235
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            mkdir -p /root/api || true
+            cd /root/api || true
+            if [ -f .env.prod ]; then
+              cp .env.prod .env.prod.bak
+            fi
+
+      - name: Copy API project to production server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 193.187.94.235
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "api/**"
+          target: "/root"
+
+      - name: Deploy production docker-compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 193.187.94.235
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/api
+            if [ -f .env.prod.bak ]; then
+              mv .env.prod.bak .env.prod
+            fi
+
+            if [ ! -f .env.prod ]; then
+              echo ".env.prod is missing on production server. Create /root/api/.env.prod before deploy."
+              exit 1
+            fi
+
+            mkdir -p ./letsencrypt
+            touch ./letsencrypt/acme.json
+            chmod 600 ./letsencrypt/acme.json || true
+
+            docker compose -f docker-compose.prod.yml --env-file .env.prod pull || true
+            docker compose -f docker-compose.prod.yml --env-file .env.prod build
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
