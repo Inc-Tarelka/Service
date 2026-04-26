@@ -221,27 +221,21 @@ func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) 
 // PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
 // На этом шаге:
 //   - валидируем initData и получаем telegramID и (опционально) username
-//   - проверяем и списываем инвайт по senderId (если включён закрытый режим)
 //   - проверяем уникальность username
 //   - создаём или находим tg_user
 //   - хэшируем пароль
+//   - проверяем и списываем инвайт по senderId (если включён закрытый режим) непосредственно перед созданием пользователя
 //   - создаём tarelka_user с conversation = 0 без подтипа и связей
 //
 // Токены здесь НЕ выдаются.
 func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error) {
-	// 0. Проверка и применение инвайта (senderID) + получение ID пригласителя
-	inviterID, err := s.validateInviteAndIncrement(ctx, req.SenderID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 1. Валидация initData и извлечение telegramID + username
+	// 0. Валидация initData и извлечение telegramID + username
 	telegramID, telegramUsername, err := s.validateInitData(req.InitData)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Проверка уникальности username
+	// 1. Проверка уникальности username
 	exists, err := s.tarelkaUserRepo.ExistsByUsername(ctx, req.Account.Username)
 	if err != nil {
 		return nil, fmt.Errorf("check username: %w", err)
@@ -250,7 +244,7 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		return nil, ErrUserExists
 	}
 
-	// 3. Базовая валидация и нормализация телефона (без проверки кода)
+	// 2. Базовая валидация и нормализация телефона (без проверки кода)
 	var phonePtr *string
 	if req.Account.Phone != "" {
 		if !isValidPhone(req.Account.Phone) {
@@ -260,24 +254,31 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		phonePtr = &norm
 	}
 
-	// 4. Найти или создать tg_user
+	// 3. Найти или создать tg_user
 	tgUser, err := s.tgUserRepo.FindOrCreate(ctx, telegramID)
 	if err != nil {
 		return nil, fmt.Errorf("find or create tg user: %w", err)
 	}
 
-	// 5. Хэширование пароля
+	// 4. Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Account.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	// 6.1. Заполняем telegram_url на основе username из initData, если он есть.
+	// 5.1. Заполняем telegram_url на основе username из initData, если он есть.
 	// Храним в нормализованном виде (например, @username), чтобы можно было искать по нику.
 	var telegramURL *string
 	if telegramUsername != nil && strings.TrimSpace(*telegramUsername) != "" {
 		norm := normalizeTelegramURL(*telegramUsername)
 		telegramURL = &norm
+	}
+
+	// 5.2. Проверка и применение инвайта (senderID) + получение ID пригласителя.
+	// Выполняем как можно позже, чтобы не расходовать инвайт на заведомо невалидные запросы.
+	inviterID, err := s.validateInviteAndIncrement(ctx, req.SenderID)
+	if err != nil {
+		return nil, err
 	}
 
 	// 6. Создание tarelka_user с conversation = 0
