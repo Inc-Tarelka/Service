@@ -43,6 +43,7 @@ services:
       - "--log.level=DEBUG"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=tarelka-network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
@@ -83,4 +84,5 @@ volumes:
 
 networks:
   tarelka-network:
+    name: tarelka-network
     driver: bridge
