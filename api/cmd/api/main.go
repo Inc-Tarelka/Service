@@ -151,12 +151,6 @@ func main() {
 		docs.SwaggerInfo.Schemes = []string{"http"}
 	}
 
-	// Backward compatibility for Swagger UI instances trying to load
-	// /swagger/v1/swagger.json instead of /swagger/doc.json.
-	router.GET("/swagger/v1/swagger.json", func(c *gin.Context) {
-		c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(docs.SwaggerInfo.ReadDoc()))
-	})
-
 	// Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
