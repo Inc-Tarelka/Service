@@ -141,15 +141,15 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				users.GET("/me/profile", h.user.GetMyProfile)
 				users.GET("/me/teammates", h.user.GetMyTeammates)
 				users.GET("/:id/teammates", h.user.GetUserTeammates)
-				users.GET(":id", h.user.GetUser)
-				users.GET(":id/profile", h.user.GetUserProfile)
+				users.GET("/:id", h.user.GetUser)
+				users.GET("/:id/profile", h.user.GetUserProfile)
 				users.POST("/:id/logo/presign", h.user.PresignLogoUpload)
 				users.POST("/:id/logo/confirm", h.user.ConfirmLogoUpload)
 				users.POST("/:id/logo/url", h.user.SetLogoURL)
 				// Wallpaper endpoints
-				users.POST(":id/wallpaper/presign", h.user.PresignWallpaperUpload)
-				users.POST(":id/wallpaper/confirm", h.user.ConfirmWallpaperUpload)
-				users.POST(":id/wallpaper/url", h.user.SetWallpaperURL)
+				users.POST("/:id/wallpaper/presign", h.user.PresignWallpaperUpload)
+				users.POST("/:id/wallpaper/confirm", h.user.ConfirmWallpaperUpload)
+				users.POST("/:id/wallpaper/url", h.user.SetWallpaperURL)
 				// Search endpoints
 				users.GET("/search/name", h.user.SearchUsersByName)
 				users.GET("/search/telegram", h.user.SearchUsersByTelegram)
@@ -163,13 +163,13 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			pubs := protected.Group("/publications")
 			{
 				pubs.POST("", h.publication.CreatePublication)
-				pubs.GET(":id", h.publication.GetPublication)
-				pubs.PUT(":id", h.publication.UpdatePublication)
-				pubs.PATCH(":id", h.publication.PatchPublication)
-				pubs.DELETE(":id", h.publication.DeletePublication)
-				pubs.POST(":id/comments", h.publication.AddComment)
-				pubs.GET(":id/comments", h.publication.GetServiceComments)
-				pubs.POST(":id/likes", h.publication.LikePublication)
+				pubs.GET("/:id", h.publication.GetPublication)
+				pubs.PUT("/:id", h.publication.UpdatePublication)
+				pubs.PATCH("/:id", h.publication.PatchPublication)
+				pubs.DELETE("/:id", h.publication.DeletePublication)
+				pubs.POST("/:id/comments", h.publication.AddComment)
+				pubs.GET("/:id/comments", h.publication.GetServiceComments)
+				pubs.POST("/:id/likes", h.publication.LikePublication)
 				pubs.GET("/search", h.publication.SearchPublications)
 				pubs.GET("/services/search", h.publication.SearchServicePublications)
 				pubs.GET("/needs/search", h.publication.SearchNeeds)
@@ -177,14 +177,14 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				pubs.GET("/my/services", h.publication.GetMyServicePublications)
 				// Images upload for publications
 				pubs.POST("/images/presign", h.publication.PresignImagesGeneric)
-				pubs.POST(":id/images/presign", h.publication.PresignImagesForPublication)
-				pubs.POST(":id/images", h.publication.AttachImagesToPublication)
+				pubs.POST("/:id/images/presign", h.publication.PresignImagesForPublication)
+				pubs.POST("/:id/images", h.publication.AttachImagesToPublication)
 			}
 
 			// Needs
 			needs := protected.Group("/needs")
 			{
-				needs.GET(":id", h.publication.GetNeed)
+				needs.GET("/:id", h.publication.GetNeed)
 			}
 
 			// Notifications
@@ -199,7 +199,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 				notifs.POST("/team-invite/response", h.notification.RespondTeamInvite)
 				notifs.GET("/incoming", h.notification.ListIncomingNotifications)
 				notifs.GET("/outgoing", h.notification.ListOutgoingNotifications)
-				notifs.GET(":id", h.notification.GetNotification)
+				notifs.GET("/:id", h.notification.GetNotification)
 			}
 		}
 	}
