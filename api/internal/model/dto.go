@@ -8,6 +8,9 @@ type RegisterRequest struct {
 	DirectionIDs      []int64           `json:"directionIds"`
 	CityIDs           []int64           `json:"cityIds"`
 	PhoneVerification PhoneVerification `json:"phoneVerification,omitempty"`
+	// senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
+	// Обязателен, если включён закрытый режим регистрации.
+	SenderID string `json:"senderId,omitempty"`
 }
 
 // AccountData - данные аккаунта при регистрации
@@ -36,6 +39,29 @@ type RegisterResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 	UserID       int64  `json:"userId"`
+}
+
+// PreRegisterRequest - предварительный шаг регистрации (stage 0)
+// Создаёт базовую учётку с username/phone/password и initData без проверки кода телефона и без выдачи токенов.
+// На этом шаге также проверяется инвайт (senderId) и списывается 1 приглашение у пригласившего.
+type PreRegisterRequest struct {
+	InitData string      `json:"initData" binding:"required"`
+	Account  AccountData `json:"account" binding:"required"`
+	// senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
+	// Обязателен в текущей конфигурации (закрытый режим регистрации).
+	SenderID string `json:"senderId" binding:"required"`
+}
+
+// InviteLinkResponse - ответ с данными для формирования пригласительной ссылки
+type InviteLinkResponse struct {
+	// SenderID — зашифрованный идентификатор пригласителя, который нужно передавать в startapp
+	SenderID string `json:"senderId"`
+}
+
+// PreRegisterResponse - ответ на предварительную регистрацию
+// Возвращает ID созданного пользователя, чтобы фронт мог ссылаться на него при следующих шагах.
+type PreRegisterResponse struct {
+	UserID int64 `json:"userId"`
 }
 
 // RefreshRequest - запрос на обновление токена
@@ -147,4 +173,64 @@ type ConfirmLogoUploadResponse struct {
 // SetLogoURLRequest - запрос на установку внешней ссылки лого
 type SetLogoURLRequest struct {
 	LogoURL string `json:"logoUrl" binding:"required"`
+}
+
+// Wallpaper/cover reuse same confirm request; response contains wallpaper url
+type ConfirmWallpaperUploadResponse struct {
+	WallpaperURL string `json:"wallpaperUrl"`
+}
+
+type SetWallpaperURLRequest struct {
+	WallpaperURL string `json:"wallpaperUrl" binding:"required"`
+}
+
+// UpdateUserRequest - partial update (PATCH) for user profile.
+// Все поля опциональны: передаём только то, что хотим изменить.
+type UpdateUserRequest struct {
+	// Общие поля
+	Username string  `json:"username,omitempty"`
+	CityID   *int64  `json:"cityId,omitempty"`
+	Bio      *string `json:"bio,omitempty"`
+	// Use the same enum values as model.FindWork (string values)
+	FindWork  *string `json:"find_work,omitempty"`
+	Education *string `json:"education,omitempty"`
+
+	// Список специализаций. nil — не менять, пустой массив — очистить.
+	SpecializationIDs *[]int64 `json:"specializationIds,omitempty"`
+
+	// Для PERSON: имя и фамилия
+	Name    *string `json:"name,omitempty"`
+	Surname *string `json:"surname,omitempty"`
+
+	// Для COMPANY: название
+	CompanyName *string `json:"companyName,omitempty"`
+
+	// Master: опционально можно указать мастера пользователя.
+	// Если IsMasterFromTable = true и передано MasterName, будет создана запись в таблице masters
+	// и пользователь будет привязан к ней. Если IsMasterFromTable = true и передан MasterID,
+	// пользователь будет привязан к существующей записи masters.
+	// Если IsMasterFromTable = false и передан MasterID, он трактуется как id другого tarelka пользователя.
+	IsMasterFromTable *bool   `json:"isMasterFromTable,omitempty"`
+	MasterID          *int64  `json:"masterId,omitempty"`
+	MasterName        *string `json:"masterName,omitempty"`
+}
+
+// UserSearchItem - упрощённый ответ для поиска пользователей
+// Используется в /users/search/name
+type UserSearchItem struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Surname        string  `json:"surname"`
+	TelegramURL    *string `json:"telegram_url,omitempty"`
+	City           *City   `json:"city,omitempty"`
+	Specialization *string `json:"specialisation,omitempty"`
+	LogoURL        *string `json:"logo_url,omitempty"`
+}
+
+// GlobalSearchResponse — ответ глобального поиска по услугам, потребностям и пользователям.
+// Каждая категория отсортирована от новых к старым по дате создания в своей таблице.
+type GlobalSearchResponse struct {
+	Services []Publication      `json:"services"`
+	Needs    []NeedSearchItem   `json:"needs"`
+	Users    []*TarelkaUserFull `json:"users"`
 }

@@ -19,6 +19,69 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
+// PreRegister godoc
+// @Summary Предварительная регистрация через Telegram
+// @Description Создаёт черновой аккаунт (stage 0) по initData и данным аккаунта без проверки кода телефона и без выдачи токенов
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body model.PreRegisterRequest true "Данные предварительной регистрации"
+// @Success 201 {object} model.PreRegisterResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 409 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /auth/pre-register [post]
+func (h *AuthHandler) PreRegister(c *gin.Context) {
+	var req model.PreRegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	resp, err := h.authService.PreRegister(c.Request.Context(), &req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrInvalidInitData):
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_init_data"})
+		case errors.Is(err, service.ErrInitDataExpired):
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "init_data_expired"})
+		case errors.Is(err, service.ErrUserExists):
+			c.JSON(http.StatusConflict, model.ErrorResponse{Error: "user_exists"})
+		default:
+			// Маппим строковые коды invite-ошибок из сервиса в HTTP-статусы
+			msg := err.Error()
+			if strings.Contains(msg, "invite_required") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_required"})
+				return
+			}
+			if strings.Contains(msg, "invite_not_configured") {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "invite_not_configured"})
+				return
+			}
+			if strings.Contains(msg, "invalid_sender_id") {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_sender_id"})
+				return
+			}
+			if strings.Contains(msg, "invite_limit_reached") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_limit_reached"})
+				return
+			}
+			// Ошибка формата телефона и прочие — считаем bad_request
+			if strings.Contains(err.Error(), "invalid phone format") {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_phone"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, resp)
+}
+
 // RegisterViaTelegram godoc
 // @Summary Регистрация через Telegram
 // @Description Регистрация нового пользователя Tarelka через Telegram Mini App
@@ -55,6 +118,24 @@ func (h *AuthHandler) RegisterViaTelegram(c *gin.Context) {
 		case errors.Is(err, service.ErrInvalidReferences):
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_references"})
 		default:
+			// Маппим строковые коды invite-ошибок из сервиса в HTTP-статусы
+			msg := err.Error()
+			if strings.Contains(msg, "invite_required") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_required"})
+				return
+			}
+			if strings.Contains(msg, "invite_not_configured") {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "invite_not_configured"})
+				return
+			}
+			if strings.Contains(msg, "invalid_sender_id") {
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "invalid_sender_id"})
+				return
+			}
+			if strings.Contains(msg, "invite_limit_reached") {
+				c.JSON(http.StatusForbidden, model.ErrorResponse{Error: "invite_limit_reached"})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		}
 		return

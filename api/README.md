@@ -276,3 +276,28 @@ make tools        # Установка инструментов (swag, sql-migra
 ## License
 
 MIT
+
+---
+
+## Ручной деплой через GitHub Actions
+
+Workflow: `.github/workflows/deploy.yml`
+
+- `backend` ветка → тестовый сервер (текущий сценарий, `docker-compose.yml`)
+- `main` ветка → production сервер `193.187.94.235` (`docker-compose.prod.yml`)
+
+### Как запускать
+
+1. Откройте **Actions** → **Deploy API to Server**.
+2. Нажмите **Run workflow**.
+3. Выберите ветку:
+   - `backend` для тестового деплоя
+   - `main` для production деплоя
+4. `force_target` оставьте `auto` (или задайте вручную `test`/`prod`).
+
+### Важно для production
+
+- На `193.187.94.235` должен существовать файл `/root/api/.env.prod`.
+- В `.env.prod` обязательно задать рабочий `DATABASE_URL` к внешней БД.
+- Для домена используется `API_HOST=`tarelka-kino.ru`,`www.tarelka-kino.ru``.
+- Workflow не хранит прод-секреты в репозитории: он переиспользует уже созданный на сервере `.env.prod`.

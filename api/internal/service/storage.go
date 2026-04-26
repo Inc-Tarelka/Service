@@ -49,8 +49,10 @@ func NewS3Storage(cfg *config.Config) (StorageService, error) {
 		// Force our custom endpoint for S3 service
 		if service == s3.ServiceID {
 			return aws.Endpoint{
-				URL:               fmt.Sprintf("https://%s", strings.TrimSpace(cfg.S3Endpoint)),
-				HostnameImmutable: true,
+				URL: fmt.Sprintf("https://%s", strings.TrimSpace(cfg.S3Endpoint)),
+				// Allow SDK to rewrite host for virtual-host addressing when UsePathStyle=false
+				// (i.e., use bucket.s3.endpoint instead of path-style endpoint/bucket)
+				// HostnameImmutable must be false or omitted to enable virtual-host addressing.
 			}, nil
 		}
 		return aws.Endpoint{}, fmt.Errorf("unknown endpoint requested: %s", service)

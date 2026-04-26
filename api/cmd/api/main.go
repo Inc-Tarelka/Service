@@ -73,6 +73,9 @@ func main() {
 		TelegramBotToken:     cfg.TelegramBotToken,
 		TelegramGatewayToken: cfg.TelegramGatewayToken,
 		TelegramGatewayURL:   cfg.TelegramGatewayURL,
+		InviteSecret:         cfg.InviteSecret,
+		TelegramAPIBaseURL:   cfg.TelegramAPIBaseURL,
+		TelegramProxySecret:  cfg.TelegramProxySecret,
 		Storage:              storage,
 	})
 

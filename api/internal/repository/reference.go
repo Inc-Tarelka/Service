@@ -22,6 +22,12 @@ type ReferenceRepository interface {
 	GetAllCities(ctx context.Context) ([]model.City, error)
 	GetCitiesByIDs(ctx context.Context, ids []int64) ([]model.City, error)
 	CitiesExist(ctx context.Context, ids []int64) (bool, error)
+
+	// Publication tags
+	GetAllPublicationTags(ctx context.Context) ([]model.PublicationTagRef, error)
+
+	// Need tags
+	GetAllNeedTags(ctx context.Context) ([]model.NeedTagRef, error)
 }
 
 type referenceRepository struct {
@@ -201,4 +207,44 @@ func (r *referenceRepository) CitiesExist(ctx context.Context, ids []int64) (boo
 		return false, err
 	}
 	return count == len(ids), nil
+}
+
+// Publication tags
+func (r *referenceRepository) GetAllPublicationTags(ctx context.Context) ([]model.PublicationTagRef, error) {
+	query := `SELECT id, name FROM publication_tags ORDER BY name`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := make([]model.PublicationTagRef, 0)
+	for rows.Next() {
+		var t model.PublicationTagRef
+		if err := rows.Scan(&t.ID, &t.Name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, t)
+	}
+	return tags, nil
+}
+
+// Need tags
+func (r *referenceRepository) GetAllNeedTags(ctx context.Context) ([]model.NeedTagRef, error) {
+	query := `SELECT id, name FROM need_tags ORDER BY name`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := make([]model.NeedTagRef, 0)
+	for rows.Next() {
+		var t model.NeedTagRef
+		if err := rows.Scan(&t.ID, &t.Name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, t)
+	}
+	return tags, nil
 }

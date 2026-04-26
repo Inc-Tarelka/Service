@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
 	"github.com/jackc/pgx/v5"
@@ -19,10 +22,37 @@ type TarelkaUserRepository interface {
 	Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error)
 	FindByID(ctx context.Context, id int64) (*model.TarelkaUser, error)
 	FindByUsername(ctx context.Context, username string) (*model.TarelkaUser, error)
+	FindByTgUserID(ctx context.Context, tgUserID int64) (*model.TarelkaUser, error)
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
 	GetFullUser(ctx context.Context, id int64) (*model.TarelkaUserFull, error)
 	UpdatePasswordHash(ctx context.Context, userID int64, newHash string) error
 	UpdateLogoURL(ctx context.Context, userID int64, url string) error
+	UpdateWallpaperURL(ctx context.Context, userID int64, url string) error
+	// UpdateConversation bumps user's conversation stage to at least the given value
+	UpdateConversation(ctx context.Context, userID int64, stage int) error
+	// UpdateProfile updates profile fields (name/surname or company name, username, city, bio, find_work, education).
+	// Pass nil for pointer fields and empty string for username if they shouldn't be changed.
+	UpdateProfile(ctx context.Context, userID int64,
+		personName *string, personSurname *string,
+		companyName *string,
+		username string,
+		cityID *int64,
+		bio *string,
+		findWork *model.FindWork,
+		education *string,
+	) error
+	// Delete user and related rows
+	Delete(ctx context.Context, userID int64) error
+
+	// Search helpers
+	// SearchByName finds users by person name/surname or company name (ILIKE, contains)
+	SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+	// SearchByTelegram finds users by telegram_url (ILIKE, contains)
+	SearchByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error)
+
+	// Advanced filters
+	// SearchByFilters finds users by optional filters: name, specialization IDs, account type, status (find_work), city IDs
+	SearchByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error)
 
 	// Person
 	CreatePerson(ctx context.Context, person *model.TarelkaPerson) error
@@ -34,11 +64,33 @@ type TarelkaUserRepository interface {
 
 	// Relations
 	AddSpecializations(ctx context.Context, userID int64, ids []int64) error
+	// ReplaceSpecializations заменяет все специализации пользователя на переданный список.
+	ReplaceSpecializations(ctx context.Context, userID int64, ids []int64) error
 	AddDirections(ctx context.Context, userID int64, ids []int64) error
 	AddCities(ctx context.Context, userID int64, ids []int64) error
 	GetSpecializations(ctx context.Context, userID int64) ([]model.Specialization, error)
 	GetDirections(ctx context.Context, userID int64) ([]model.Direction, error)
 	GetCities(ctx context.Context, userID int64) ([]model.City, error)
+	// GetSenderInfo возвращает краткую информацию о пригласителе (sender) для указанного пользователя.
+	// Если пользователь был создан без инвайта или пригласитель не найден, возвращает (nil, nil).
+	GetSenderInfo(ctx context.Context, userID int64) (*model.SenderInfo, error)
+	// Invite system helpers
+	GetInviteAccountType(ctx context.Context, userID int64) (model.InviteAccountType, error)
+	UpdateInviteAccountType(ctx context.Context, userID int64, t model.InviteAccountType) error
+	// IncreaseInviteCountWithLimit увеличивает счётчик приглашённых, соблюдая лимит для DEFAULT.
+	// Возвращает актуальные invite_account_type и invite_referral_count после обновления.
+	IncreaseInviteCountWithLimit(ctx context.Context, userID int64) (model.InviteAccountType, int, error)
+	// GetTeammatesCount возвращает число «сокомандников» пользователя —
+	// других пользователей, с которыми у него есть общие публикации (как автора, так и соавтора).
+	GetTeammatesCount(ctx context.Context, userID int64) (int64, error)
+	// GetTeammates возвращает список сокомандников по той же логике, что и GetTeammatesCount.
+	GetTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error)
+	// UpdateMaster обновляет мастера пользователя (master_id и is_master_from_table).
+	// Если masterID или isMasterFromTable равны nil, соответствующее поле не изменяется.
+	UpdateMaster(ctx context.Context, userID int64, masterID *int64, isMasterFromTable *bool) error
+	// GetMasterInfo возвращает информацию о мастере пользователя, если он указан.
+	// Если мастер не задан, возвращает (nil, nil).
+	GetMasterInfo(ctx context.Context, userID int64) (*model.MasterInfo, error)
 }
 
 type tarelkaUserRepository struct {
@@ -49,13 +101,127 @@ func NewTarelkaUserRepository(pool *pgxpool.Pool) TarelkaUserRepository {
 	return &tarelkaUserRepository{pool: pool}
 }
 
+// UpdateMaster обновляет поля master_id и is_master_from_table для пользователя.
+// Если masterID или isMasterFromTable равны nil, соответствующее поле не изменяется.
+func (r *tarelkaUserRepository) UpdateMaster(ctx context.Context, userID int64, masterID *int64, isMasterFromTable *bool) error {
+	parts := []string{}
+	args := []interface{}{}
+	idx := 1
+
+	if masterID != nil {
+		parts = append(parts, fmt.Sprintf("master_id = $%d", idx))
+		args = append(args, *masterID)
+		idx++
+	}
+	if isMasterFromTable != nil {
+		parts = append(parts, fmt.Sprintf("is_master_from_table = $%d", idx))
+		args = append(args, *isMasterFromTable)
+		idx++
+	}
+
+	if len(parts) == 0 {
+		return nil
+	}
+
+	args = append(args, userID)
+	query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(parts, ", "), idx)
+	cmd, err := r.pool.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// GetMasterInfo возвращает информацию о мастере пользователя, если она указана.
+func (r *tarelkaUserRepository) GetMasterInfo(ctx context.Context, userID int64) (*model.MasterInfo, error) {
+	query := `
+		SELECT
+			CASE WHEN tu.is_master_from_table THEN m.id ELSE mu.id END AS master_id,
+			CASE WHEN tu.is_master_from_table THEN m.name
+				 ELSE COALESCE(tp.name || ' ' || tp.surname, mc.company_name, mu.username)
+			END AS master_name,
+			NOT tu.is_master_from_table AS is_tarelka_user
+		FROM tarelka_users tu
+		LEFT JOIN masters m ON m.id = tu.master_id AND tu.is_master_from_table = TRUE
+		LEFT JOIN tarelka_users mu ON mu.id = tu.master_id AND tu.is_master_from_table = FALSE
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = mu.id
+		LEFT JOIN tarelka_companies mc ON mc.tarelka_user_id = mu.id
+		WHERE tu.id = $1 AND tu.master_id IS NOT NULL
+	`
+	var (
+		id            int64
+		name          string
+		isTarelkaUser bool
+	)
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&id, &name, &isTarelkaUser)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.MasterInfo{ID: id, Name: name, IsTarelkaUser: isTarelkaUser}, nil
+}
+
+// FindByTgUserID возвращает пользователя по Telegram ID владельца.
+func (r *tarelkaUserRepository) FindByTgUserID(ctx context.Context, tgUserID int64) (*model.TarelkaUser, error) {
+	query := `
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
+		FROM tarelka_users WHERE tg_user_id = $1
+	`
+	var user model.TarelkaUser
+	var fw *string
+	err := r.pool.QueryRow(ctx, query, tgUserID).Scan(
+		&user.ID,
+		&user.TgUserID,
+		&user.Type,
+		&user.Username,
+		&user.Phone,
+		&user.PasswordHash,
+		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
+		&user.TelegramURL,
+		&user.TelegramChatID,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
+		&user.CreatedAt,
+		&user.InviteAccountType,
+		&user.InviteReferralCount,
+		&user.InvitedByUserID,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
+	}
+	return &user, nil
+}
+
 func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaUser) (*model.TarelkaUser, error) {
 	query := `
-		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		INSERT INTO tarelka_users (tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, telegram_chat_id, conversation, invite_account_type, invite_referral_count, invited_by_user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		RETURNING id, tg_user_id, type, username, phone, password_hash,
+		          logo_url, wallpaper_url, bio, education, find_work,
+		          telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		          created_at, invite_account_type, invite_referral_count, invited_by_user_id
 	`
 
+	var fw *string
 	err := r.pool.QueryRow(ctx, query,
 		user.TgUserID,
 		user.Type,
@@ -64,6 +230,11 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		user.PasswordHash,
 		user.LogoURL,
 		user.TelegramURL,
+		user.TelegramChatID,
+		user.Conversation,
+		user.InviteAccountType,
+		user.InviteReferralCount,
+		user.InvitedByUserID,
 	).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -72,22 +243,40 @@ func (r *tarelkaUserRepository) Create(ctx context.Context, user *model.TarelkaU
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
+		&user.TelegramChatID,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
+		&user.InviteAccountType,
+		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		return nil, err
+	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
 	}
 	return user, nil
 }
 
 func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
 		FROM tarelka_users WHERE id = $1
 	`
 
 	var user model.TarelkaUser
+	var fw *string
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -96,8 +285,18 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
+		&user.TelegramChatID,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
+		&user.InviteAccountType,
+		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -105,16 +304,24 @@ func (r *tarelkaUserRepository) FindByID(ctx context.Context, id int64) (*model.
 		}
 		return nil, err
 	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
+	}
 	return &user, nil
 }
 
 func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username string) (*model.TarelkaUser, error) {
 	query := `
-		SELECT id, tg_user_id, type, username, phone, password_hash, logo_url, telegram_url, created_at
+		SELECT id, tg_user_id, type, username, phone, password_hash,
+		       logo_url, wallpaper_url, bio, education, find_work,
+		       telegram_url, telegram_chat_id, conversation, conversation_updated_at,
+		       created_at, invite_account_type, invite_referral_count, invited_by_user_id
 		FROM tarelka_users WHERE username = $1
 	`
 
 	var user model.TarelkaUser
+	var fw *string
 	err := r.pool.QueryRow(ctx, query, username).Scan(
 		&user.ID,
 		&user.TgUserID,
@@ -123,14 +330,28 @@ func (r *tarelkaUserRepository) FindByUsername(ctx context.Context, username str
 		&user.Phone,
 		&user.PasswordHash,
 		&user.LogoURL,
+		&user.WallpaperURL,
+		&user.Bio,
+		&user.Education,
+		&fw,
 		&user.TelegramURL,
+		&user.TelegramChatID,
+		&user.Conversation,
+		&user.ConversationUpdatedAt,
 		&user.CreatedAt,
+		&user.InviteAccountType,
+		&user.InviteReferralCount,
+		&user.InvitedByUserID,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
+	}
+	if fw != nil {
+		v := model.FindWork(*fw)
+		user.FindWork = &v
 	}
 	return &user, nil
 }
@@ -167,6 +388,86 @@ func (r *tarelkaUserRepository) GetFullUser(ctx context.Context, id int64) (*mod
 	return fullUser, nil
 }
 
+// GetSenderInfo возвращает краткую информацию о пригласителе (sender) для указанного пользователя.
+// Если пользователь создан без инвайта или пригласитель не найден, возвращает (nil, nil).
+func (r *tarelkaUserRepository) GetSenderInfo(ctx context.Context, userID int64) (*model.SenderInfo, error) {
+	query := `
+		SELECT u.id, tp.name, tp.surname
+		FROM tarelka_users child
+		JOIN tarelka_users u ON child.invited_by_user_id = u.id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		WHERE child.id = $1
+	`
+	var (
+		id          int64
+		name, sname *string
+	)
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&id, &name, &sname)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.SenderInfo{
+		ID:      id,
+		Name:    valueOrEmpty(name),
+		Surname: valueOrEmpty(sname),
+	}, nil
+}
+
+// GetInviteAccountType возвращает приглашательный статус пользователя.
+func (r *tarelkaUserRepository) GetInviteAccountType(ctx context.Context, userID int64) (model.InviteAccountType, error) {
+	query := `SELECT invite_account_type FROM tarelka_users WHERE id = $1`
+	var t model.InviteAccountType
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&t); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrUserNotFound
+		}
+		return "", err
+	}
+	return t, nil
+}
+
+// UpdateInviteAccountType обновляет приглашательный статус пользователя.
+func (r *tarelkaUserRepository) UpdateInviteAccountType(ctx context.Context, userID int64, t model.InviteAccountType) error {
+	query := `UPDATE tarelka_users SET invite_account_type = $1 WHERE id = $2`
+	cmd, err := r.pool.Exec(ctx, query, t, userID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// IncreaseInviteCountWithLimit увеличивает invite_referral_count, соблюдая лимит для DEFAULT.
+// Для CLUB_PARTICIPANT лимитов нет.
+func (r *tarelkaUserRepository) IncreaseInviteCountWithLimit(ctx context.Context, userID int64) (model.InviteAccountType, int, error) {
+	query := `
+		UPDATE tarelka_users
+		SET invite_referral_count = invite_referral_count + 1
+		WHERE id = $1
+		  AND (
+		    invite_account_type = 'CLUB_PARTICIPANT'
+		    OR (invite_account_type = 'DEFAULT' AND invite_referral_count < 5)
+		  )
+		RETURNING invite_account_type, invite_referral_count
+	`
+	var t model.InviteAccountType
+	var cnt int
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&t, &cnt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// либо пользователя нет, либо лимит исчерпан
+			return "", 0, ErrUserNotFound
+		}
+		return "", 0, err
+	}
+	return t, cnt, nil
+}
+
 // Person methods
 func (r *tarelkaUserRepository) CreatePerson(ctx context.Context, person *model.TarelkaPerson) error {
 	query := `INSERT INTO tarelka_persons (tarelka_user_id, name, surname) VALUES ($1, $2, $3)`
@@ -199,6 +500,17 @@ func (r *tarelkaUserRepository) GetCompany(ctx context.Context, userID int64) (*
 		return nil, err
 	}
 	return &company, nil
+}
+
+// UpdateTelegramChatIDByTelegramURL updates telegram_chat_id for a user identified by telegram_url
+func (r *tarelkaUserRepository) UpdateTelegramChatIDByTelegramURL(ctx context.Context, telegramURL string, chatID int64) error {
+	query := `
+		UPDATE tarelka_users
+		SET telegram_chat_id = $1
+		WHERE telegram_url = $2
+	`
+	_, err := r.pool.Exec(ctx, query, chatID, telegramURL)
+	return err
 }
 
 // Relations
@@ -337,6 +649,457 @@ func (r *tarelkaUserRepository) GetCities(ctx context.Context, userID int64) ([]
 	return cities, nil
 }
 
+// GetTeammatesCount возвращает количество уникальных пользователей,
+// с которыми у данного пользователя есть общие публикации (проекты/услуги).
+// Под общими публикациями понимаются случаи, когда пользователь является
+// автором или соавтором одной и той же публикации вместе с другим пользователем.
+func (r *tarelkaUserRepository) GetTeammatesCount(ctx context.Context, userID int64) (int64, error) {
+	query := `
+		WITH user_publications AS (
+			SELECT id AS publication_id
+			FROM publications
+			WHERE author_id = $1
+			UNION
+			SELECT publication_id
+			FROM publication_co_authors
+			WHERE user_id = $1
+		), teammates AS (
+			-- авторы этих же публикаций
+			SELECT DISTINCT p.author_id AS teammate_id
+			FROM publications p
+			JOIN user_publications up ON up.publication_id = p.id
+			WHERE p.author_id <> $1
+			UNION
+			-- соавторы этих же публикаций
+			SELECT DISTINCT ca.user_id AS teammate_id
+			FROM publication_co_authors ca
+			JOIN user_publications up ON up.publication_id = ca.publication_id
+			WHERE ca.user_id <> $1
+		)
+		SELECT COUNT(*)::BIGINT FROM teammates;
+	`
+	var cnt int64
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&cnt); err != nil {
+		return 0, err
+	}
+	return cnt, nil
+}
+
+// GetTeammates возвращает список сокомандников пользователя по той же логике,
+// что и GetTeammatesCount: все уникальные пользователи, с которыми есть общие
+// публикации (как автора, так и соавтора).
+func (r *tarelkaUserRepository) GetTeammates(ctx context.Context, userID int64) ([]model.TeammateItem, error) {
+	query := `
+		WITH user_publications AS (
+			SELECT id AS publication_id
+			FROM publications
+			WHERE author_id = $1
+			UNION
+			SELECT publication_id
+			FROM publication_co_authors
+			WHERE user_id = $1
+		), teammates AS (
+			-- авторы этих же публикаций
+			SELECT DISTINCT p.author_id AS teammate_id
+			FROM publications p
+			JOIN user_publications up ON up.publication_id = p.id
+			WHERE p.author_id <> $1
+			UNION
+			-- соавторы этих же публикаций
+			SELECT DISTINCT ca.user_id AS teammate_id
+			FROM publication_co_authors ca
+			JOIN user_publications up ON up.publication_id = ca.publication_id
+			WHERE ca.user_id <> $1
+		)
+		SELECT 
+			u.id,
+			COALESCE(tp.name, ''),
+			COALESCE(tp.surname, ''),
+			u.telegram_url,
+			(
+				SELECT s.name
+				FROM user_specializations us
+				JOIN specializations s ON s.id = us.specialization_id
+				WHERE us.tarelka_user_id = u.id
+				ORDER BY us.specialization_id
+				LIMIT 1
+			) AS specialization,
+			(
+				SELECT c.name
+				FROM user_cities uc
+				JOIN cities c ON c.id = uc.city_id
+				WHERE uc.tarelka_user_id = u.id
+				ORDER BY uc.city_id
+				LIMIT 1
+			) AS city_name
+		FROM teammates t
+		JOIN tarelka_users u ON u.id = t.teammate_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		ORDER BY tp.name, tp.surname, u.id
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]model.TeammateItem, 0)
+	for rows.Next() {
+		var (
+			id    int64
+			fname string
+			lname string
+			tgURL *string
+			spec  *string
+			city  *string
+		)
+		if err := rows.Scan(&id, &fname, &lname, &tgURL, &spec, &city); err != nil {
+			return nil, err
+		}
+		items = append(items, model.TeammateItem{
+			ID:             id,
+			FirstName:      fname,
+			LastName:       lname,
+			TelegramURL:    tgURL,
+			Specialization: spec,
+			City:           city,
+		})
+	}
+	return items, rows.Err()
+}
+
+// GetLastProjectTopImages возвращает до 3 URL главных изображений (position = 0)
+// последних по дате создания проектов пользователя.
+func (r *tarelkaUserRepository) GetLastProjectTopImages(ctx context.Context, userID int64, limit int) ([]string, error) {
+	if limit <= 0 {
+		limit = 3
+	}
+	query := `
+		SELECT pi.url
+		FROM publications p
+		JOIN publication_images pi ON pi.publication_id = p.id AND pi.position = 0
+		WHERE p.author_id = $1 AND p.type = 'PROJECT'
+		ORDER BY p.created_at DESC
+		LIMIT $2
+	`
+	rows, err := r.pool.Query(ctx, query, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []string
+	for rows.Next() {
+		var u string
+		if err := rows.Scan(&u); err != nil {
+			return nil, err
+		}
+		urls = append(urls, u)
+	}
+	return urls, nil
+}
+
+// SearchByName finds users by person name/surname or company name
+func (r *tarelkaUserRepository) SearchByName(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	// Если строка поиска пустая, возвращаем всех пользователей (как в SearchByFilters при пустом name)
+	if strings.TrimSpace(q) == "" {
+		q = ""
+	}
+	// Delegate search logic to shared helper so it behaves like SearchByFilters (name + telegram_url)
+	rows, err := r.searchUsersWithNameLike(ctx, q, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u           model.TarelkaUser
+			name        *string
+			surname     *string
+			companyName *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
+			&name, &surname, &companyName,
+		); err != nil {
+			return nil, err
+		}
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		if name != nil || surname != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(name), Surname: valueOrEmpty(surname)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		// Обогащаем PERSON городами и специализациями, как в SearchByFilters
+		if u.Type == model.AccountTypePerson {
+			if specs, err := r.GetSpecializations(ctx, u.ID); err == nil {
+				fu.Specializations = specs
+			}
+			if cities, err := r.GetCities(ctx, u.ID); err == nil {
+				fu.Cities = cities
+			}
+		}
+		// Добавляем главные изображения последних проектов (для всех типов аккаунта)
+		if imgs, err := r.GetLastProjectTopImages(ctx, u.ID, 3); err == nil {
+			fu.ProjectTopImages = imgs
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// searchUsersWithNameLike реализует общую логику поиска по имени/фамилии/компании и telegram_url
+// и используется в SearchByName и SearchByFilters, чтобы поведение оставалось единым.
+func (r *tarelkaUserRepository) searchUsersWithNameLike(ctx context.Context, raw string, limit, offset int) (pgx.Rows, error) {
+	base := strings.TrimSpace(raw)
+
+	args := []interface{}{}
+	where := ""
+
+	// Если base пустая, не добавляем WHERE и просто возвращаем всех пользователей
+	if base != "" {
+		pattern := "%" + base + "%"
+		tokens := strings.Fields(base)
+
+		where = "WHERE ( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+		args = append(args, pattern)
+
+		if len(tokens) >= 2 {
+			t1 := "%" + tokens[0] + "%"
+			t2 := "%" + tokens[1] + "%"
+			where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+			args = append(args, t1, t2)
+		}
+
+		// также ищем по telegram_url, как в SearchByFilters
+		handle := strings.TrimPrefix(base, "@")
+		if handle != "" {
+			patternTg := "%" + handle + "%"
+			pos := len(args) + 1
+			where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
+			args = append(args, patternTg)
+		}
+	}
+
+	limPos := len(args) + 1
+	offPos := len(args) + 2
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
+		%s
+		ORDER BY u.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, where, limPos, offPos)
+
+	args = append(args, limit, offset)
+	return r.pool.Query(ctx, query, args...)
+}
+
+// SearchByTelegram finds users by telegram_url
+func (r *tarelkaUserRepository) SearchByTelegram(ctx context.Context, q string, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	if strings.TrimSpace(q) == "" {
+		return []*model.TarelkaUserFull{}, nil
+	}
+	// Normalize handle: strip leading '@' and whitespace; search as substring in telegram_url
+	handle := strings.TrimSpace(q)
+	handle = strings.TrimPrefix(handle, "@")
+	pattern := "%" + handle + "%"
+	query := `
+		SELECT 
+			u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
+			p.name, p.surname, c.company_name
+		FROM tarelka_users u
+		LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id
+		WHERE u.telegram_url ILIKE $1
+		ORDER BY u.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, pattern, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u             model.TarelkaUser
+			name, surname *string
+			companyName   *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
+			&name, &surname, &companyName,
+		); err != nil {
+			return nil, err
+		}
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		if name != nil || surname != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(name), Surname: valueOrEmpty(surname)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// SearchByFilters finds users by optional filters combining name/company, specializations, type, status (find_work) and cities
+func (r *tarelkaUserRepository) SearchByFilters(ctx context.Context, name string, specializationIDs []int64, accountType *model.AccountType, status *model.FindWork, cityIDs []int64, limit, offset int) ([]*model.TarelkaUserFull, error) {
+	// Base SELECT with DISTINCT ON to avoid duplicates due to joins
+	// Build joins dynamically based on provided filters
+	joins := []string{
+		"LEFT JOIN tarelka_persons p ON p.tarelka_user_id = u.id",
+		"LEFT JOIN tarelka_companies c ON c.tarelka_user_id = u.id",
+	}
+	if len(specializationIDs) > 0 {
+		joins = append(joins, "INNER JOIN user_specializations us ON us.tarelka_user_id = u.id")
+	}
+	if len(cityIDs) > 0 {
+		joins = append(joins, "INNER JOIN user_cities uc ON uc.tarelka_user_id = u.id")
+	}
+
+	whereParts := []string{}
+	args := []interface{}{}
+
+	// Name filter: similar to SearchByName
+	name = strings.TrimSpace(name)
+	if name != "" {
+		pattern := "%" + name + "%"
+		tokens := strings.Fields(name)
+		where := "( (p.name ILIKE $1 OR p.surname ILIKE $1 OR (p.name || ' ' || p.surname) ILIKE $1) OR c.company_name ILIKE $1 )"
+		args = append(args, pattern)
+		if len(tokens) >= 2 {
+			t1 := "%" + tokens[0] + "%"
+			t2 := "%" + tokens[1] + "%"
+			where += " OR ((p.name ILIKE $2 AND p.surname ILIKE $3) OR (p.name ILIKE $3 AND p.surname ILIKE $2))"
+			args = append(args, t1, t2)
+		}
+		// Also match by Telegram URL/handle when provided in 'name'
+		// Normalize: strip leading '@' for handle to match stored urls like https://t.me/<handle>
+		tgPattern := "%" + strings.TrimPrefix(name, "@") + "%"
+		pos := len(args) + 1
+		where += fmt.Sprintf(" OR u.telegram_url ILIKE $%d", pos)
+		args = append(args, tgPattern)
+		whereParts = append(whereParts, where)
+	}
+
+	// Type filter
+	if accountType != nil {
+		whereParts = append(whereParts, fmt.Sprintf("u.type = $%d", len(args)+1))
+		args = append(args, *accountType)
+	}
+
+	// Status (find_work) filter
+	if status != nil {
+		whereParts = append(whereParts, fmt.Sprintf("u.find_work = $%d", len(args)+1))
+		args = append(args, *status)
+	}
+
+	// Specializations filter (any of provided)
+	if len(specializationIDs) > 0 {
+		whereParts = append(whereParts, fmt.Sprintf("us.specialization_id = ANY($%d::bigint[])", len(args)+1))
+		args = append(args, specializationIDs)
+	}
+
+	// Cities filter (any of provided)
+	if len(cityIDs) > 0 {
+		whereParts = append(whereParts, fmt.Sprintf("uc.city_id = ANY($%d::bigint[])", len(args)+1))
+		args = append(args, cityIDs)
+	}
+
+	whereSQL := ""
+	if len(whereParts) > 0 {
+		whereSQL = "WHERE " + strings.Join(whereParts, " AND ")
+	}
+
+	// Compute positions for limit/offset
+	limPos := len(args) + 1
+	offPos := len(args) + 2
+
+	// DISTINCT ON требует, чтобы ORDER BY начинался с тех же полей, что и список DISTINCT ON.
+	// Внутренний запрос выбирает по одному ряду на пользователя и сортирует по u.id, u.created_at DESC,
+	// а внешний слой уже сортирует готовый набор пользователей по created_at DESC, id DESC.
+	query := fmt.Sprintf(`
+		WITH base AS (
+			SELECT DISTINCT ON (u.id)
+				u.id, u.tg_user_id, u.type, u.username, u.phone, u.logo_url, u.telegram_url, u.conversation, u.conversation_updated_at, u.created_at,
+				p.name, p.surname, c.company_name
+			FROM tarelka_users u
+			%s
+			%s
+			ORDER BY u.id, u.created_at DESC
+		)
+		SELECT *
+		FROM base
+		ORDER BY created_at DESC, id DESC
+		LIMIT $%d OFFSET $%d
+	`, strings.Join(joins, "\n"), whereSQL, limPos, offPos)
+
+	args = append(args, limit, offset)
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []*model.TarelkaUserFull
+	for rows.Next() {
+		var (
+			u                   model.TarelkaUser
+			namePtr, surnamePtr *string
+			companyName         *string
+		)
+		if err := rows.Scan(
+			&u.ID, &u.TgUserID, &u.Type, &u.Username, &u.Phone, &u.LogoURL, &u.TelegramURL, &u.Conversation, &u.ConversationUpdatedAt, &u.CreatedAt,
+			&namePtr, &surnamePtr, &companyName,
+		); err != nil {
+			return nil, err
+		}
+		fu := &model.TarelkaUserFull{TarelkaUser: u}
+		if namePtr != nil || surnamePtr != nil {
+			fu.Person = &model.TarelkaPerson{TarelkaUserID: u.ID, Name: valueOrEmpty(namePtr), Surname: valueOrEmpty(surnamePtr)}
+		}
+		if companyName != nil {
+			fu.Company = &model.TarelkaCompany{TarelkaUserID: u.ID, CompanyName: *companyName}
+		}
+		// Enrich PERSON with specializations and cities
+		if u.Type == model.AccountTypePerson {
+			if specs, err := r.GetSpecializations(ctx, u.ID); err == nil {
+				fu.Specializations = specs
+			}
+			if cities, err := r.GetCities(ctx, u.ID); err == nil {
+				fu.Cities = cities
+			}
+		}
+		// Attach last project top images (up to 3) for every user
+		if imgs, err := r.GetLastProjectTopImages(ctx, u.ID, 3); err == nil {
+			fu.ProjectTopImages = imgs
+		}
+		result = append(result, fu)
+	}
+	return result, nil
+}
+
+// helper to deref *string with empty fallback
+func valueOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 // UpdatePasswordHash обновляет хеш пароля пользователя
 func (r *tarelkaUserRepository) UpdatePasswordHash(ctx context.Context, userID int64, newHash string) error {
 	query := `UPDATE tarelka_users SET password_hash = $1 WHERE id = $2`
@@ -359,6 +1122,213 @@ func (r *tarelkaUserRepository) UpdateLogoURL(ctx context.Context, userID int64,
 	}
 	if cmd.RowsAffected() == 0 {
 		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateWallpaperURL обновляет ссылку на обложку пользователя
+func (r *tarelkaUserRepository) UpdateWallpaperURL(ctx context.Context, userID int64, url string) error {
+	query := `UPDATE tarelka_users SET wallpaper_url = $1 WHERE id = $2`
+	cmd, err := r.pool.Exec(ctx, query, url, userID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateConversation обновляет стадию conversation пользователя, не понижая её.
+// Использует GREATEST, чтобы гарантировать монотонный рост стадии.
+func (r *tarelkaUserRepository) UpdateConversation(ctx context.Context, userID int64, stage int) error {
+	query := `UPDATE tarelka_users SET conversation = GREATEST(conversation, $1), conversation_updated_at = NOW() WHERE id = $2`
+	cmd, err := r.pool.Exec(ctx, query, stage, userID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
+// UpdateProfile updates profile fields selectively
+func (r *tarelkaUserRepository) UpdateProfile(
+	ctx context.Context,
+	userID int64,
+	personName *string,
+	personSurname *string,
+	companyName *string,
+	username string,
+	cityID *int64,
+	bio *string,
+	findWork *model.FindWork,
+	education *string,
+) error {
+	// Начинаем транзакцию, так как будем обновлять несколько связанных таблиц.
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Определяем тип аккаунта, чтобы понимать, куда писать name/surname или company_name.
+	var accType model.AccountType
+	if err := tx.QueryRow(ctx, "SELECT type FROM tarelka_users WHERE id = $1", userID).Scan(&accType); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	// Собираем обновления для tarelka_users (username, bio, find_work, education).
+	userParts := []string{}
+	userArgs := []interface{}{}
+	idx := 1
+
+	if username != "" {
+		userParts = append(userParts, "username = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, username)
+		idx++
+	}
+	if bio != nil {
+		userParts = append(userParts, "bio = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *bio)
+		idx++
+	}
+	if findWork != nil {
+		userParts = append(userParts, "find_work = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *findWork)
+		idx++
+	}
+	if education != nil {
+		userParts = append(userParts, "education = $"+strconv.Itoa(idx))
+		userArgs = append(userArgs, *education)
+		idx++
+	}
+
+	if len(userParts) > 0 {
+		argsWithUser := append(userArgs, userID)
+		query := fmt.Sprintf("UPDATE tarelka_users SET %s WHERE id = $%d", strings.Join(userParts, ", "), idx)
+		cmd, err := tx.Exec(ctx, query, argsWithUser...)
+		if err != nil {
+			return err
+		}
+		if cmd.RowsAffected() == 0 {
+			return ErrUserNotFound
+		}
+	}
+
+	// Обновляем имя/фамилию или company_name в зав-ти от типа пользователя.
+	if accType == model.AccountTypePerson {
+		personParts := []string{}
+		personArgs := []interface{}{}
+		pIdx := 1
+		if personName != nil {
+			personParts = append(personParts, "name = $"+strconv.Itoa(pIdx))
+			personArgs = append(personArgs, *personName)
+			pIdx++
+		}
+		if personSurname != nil {
+			personParts = append(personParts, "surname = $"+strconv.Itoa(pIdx))
+			personArgs = append(personArgs, *personSurname)
+			pIdx++
+		}
+		if len(personParts) > 0 {
+			personArgs = append(personArgs, userID)
+			query := fmt.Sprintf("UPDATE tarelka_persons SET %s WHERE tarelka_user_id = $%d", strings.Join(personParts, ", "), pIdx)
+			cmd, err := tx.Exec(ctx, query, personArgs...)
+			if err != nil {
+				return err
+			}
+			// Если по какой-то причине записи нет, не создаём автоматически, предполагаем корректную регистрацию.
+			if cmd.RowsAffected() == 0 {
+				// Игнорируем тихо либо можно вернуть ErrUserNotFound; выберем тихое игнорирование.
+			}
+		}
+	} else if accType == model.AccountTypeCompany {
+		if companyName != nil {
+			query := "UPDATE tarelka_companies SET company_name = $1 WHERE tarelka_user_id = $2"
+			cmd, err := tx.Exec(ctx, query, *companyName, userID)
+			if err != nil {
+				return err
+			}
+			if cmd.RowsAffected() == 0 {
+				// Аналогично PERSON: если записи нет, не считаем это фатальной ошибкой на уровне профиля.
+			}
+		}
+	}
+
+	// city: для простоты обновим user_cities, установив один основной город
+	if cityID != nil {
+		// Удалим старые связи и добавим одну новую
+		if _, err := tx.Exec(ctx, "DELETE FROM user_cities WHERE tarelka_user_id = $1", userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, "INSERT INTO user_cities (tarelka_user_id, city_id) VALUES ($1, $2)", userID, *cityID); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ReplaceSpecializations удаляет все специализации пользователя и добавляет заново список ids.
+func (r *tarelkaUserRepository) ReplaceSpecializations(ctx context.Context, userID int64, ids []int64) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, "DELETE FROM user_specializations WHERE tarelka_user_id = $1", userID); err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		if _, err := tx.Exec(ctx, "INSERT INTO user_specializations (tarelka_user_id, specialization_id) VALUES ($1, $2)", userID, id); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete удаляет пользователя и связанные сущности в транзакции
+func (r *tarelkaUserRepository) Delete(ctx context.Context, userID int64) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// remove relations and subtype entries
+	stmts := []string{
+		"DELETE FROM user_specializations WHERE tarelka_user_id = $1",
+		"DELETE FROM user_directions WHERE tarelka_user_id = $1",
+		"DELETE FROM user_cities WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_persons WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_companies WHERE tarelka_user_id = $1",
+		"DELETE FROM tokens WHERE tarelka_user_id = $1",
+		"DELETE FROM tarelka_users WHERE id = $1",
+	}
+	for _, q := range stmts {
+		if _, err := tx.Exec(ctx, q, userID); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
 	}
 	return nil
 }

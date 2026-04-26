@@ -309,6 +309,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/pre-register": {
+            "post": {
+                "description": "Создаёт черновой аккаунт (stage 0) по initData и данным аккаунта без проверки кода телефона и без выдачи токенов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Предварительная регистрация через Telegram",
+                "parameters": [
+                    {
+                        "description": "Данные предварительной регистрации",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PreRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.PreRegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "description": "Обновление access token с помощью refresh token",
@@ -413,6 +465,1715 @@ const docTemplate = `{
                 }
             }
         },
+        "/createInviteLink": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Генерирует senderId для текущего пользователя для формирования Telegram Mini App ссылки (?startapp=senderId)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Создать пригласительную ссылку",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.InviteLinkResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/needs/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает данные о потребности: название, описание, теги, сроки и бюджет",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "needs"
+                ],
+                "summary": "Получить потребность по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID потребности",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetNeedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/collaboration": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает уведомления типа Collaboration для текущего пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список уведомлений о сотрудничестве",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает уведомление типа Collaboration и отправляет Telegram-сообщение получателю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Отправить уведомление о сотрудничестве",
+                "parameters": [
+                    {
+                        "description": "Параметры заявки на сотрудничество",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CollaborationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/incoming": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает входящие уведомления для текущего пользователя (где он receiver)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список входящих уведомлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Тип уведомлений (Collaboration/Response/Notice/TeamInvite)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Размер страницы",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationWithCreatorResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/need-response": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает уведомления типа Response для текущего пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список откликов на потребности",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает уведомление типа Response и отправляет Telegram-сообщение получателю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Отправить отклик на потребность",
+                "parameters": [
+                    {
+                        "description": "Параметры отклика на потребность",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.NeedResponseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/outgoing": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает исходящие уведомления для текущего пользователя (где он creator)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список исходящих уведомлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Тип уведомлений (Collaboration/Response/Notice/TeamInvite)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Размер страницы",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationWithCreatorResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/team-invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает уведомление типа TeamInvite (сокомандники) и отправляет Telegram-сообщение получателю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Отправить приглашение в команду проекта",
+                "parameters": [
+                    {
+                        "description": "Параметры приглашения в команду",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TeamInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/team-invite/response": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает уведомления типа TeamInvite для текущего пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Список приглашений в команду",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotificationResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Фиксирует реакцию пользователя на приглашение и при одобрении добавляет его в соавторы проекта",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Ответить на приглашение в команду проекта",
+                "parameters": [
+                    {
+                        "description": "Ответ на приглашение в команду",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TeamInviteResponseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает уведомление по id для текущего пользователя (как receiver) и помечает его прочитанным",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Получить уведомление по id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID уведомления",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NotificationWithCreatorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Создать публикацию",
+                "parameters": [
+                    {
+                        "description": "Данные публикации",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateOrUpdatePublicationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/images/presign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Сгенерировать presigned URL'ы для загрузки изображений публикации (без ID публикации)",
+                "parameters": [
+                    {
+                        "description": "Список файлов",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignPublicationImagesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignPublicationImagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/my/projects": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список публикаций типа PROJECT, где текущий пользователь является автором.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Список проектов текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserPublicationShort"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/my/services": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список публикаций типа SERVICE, где текущий пользователь является автором.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Список сервисов текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserPublicationShort"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/needs/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Поиск потребностей по городу, названию, тегам публикации, тегам потребности, дате и максимальному бюджету",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "needs"
+                ],
+                "summary": "Поиск потребностей",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID города (need.city_id)",
+                        "name": "cityId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Подстрочный поиск по имени потребности (ILIKE)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID тегов публикации через запятую",
+                        "name": "publicationTagIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID тегов потребности через запятую",
+                        "name": "needTagIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата ISO-8601; попадание в интервал [deadline_start, deadline_end]",
+                        "name": "date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Максимальный бюджет (\u003c=)",
+                        "name": "budgetMax",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NeedSearchItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Поиск публикаций с фильтрами по типу, городу, статусу поиска работы автора и специализации автора",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Поиск публикаций",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Тип публикации (PROJECT|SERVICE)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID города",
+                        "name": "cityId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус занятости автора (LOOKING|NOT_LOOKING|OPEN_TO_OFFERS)",
+                        "name": "workingStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID специализации автора",
+                        "name": "specializationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Publication"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/services/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Поиск публикаций типа SERVICE с фильтрами по городу, названию и тегам (множественный выбор)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Поиск сервис-публикаций",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID города",
+                        "name": "cityId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Поиск по названию публикации (ILIKE)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Список ID тегов через запятую",
+                        "name": "tagIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Publication"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает детали публикации с лайками, комментариями, автором, соавторами и потребностями",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Получить публикацию по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetPublicationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Обновить публикацию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные публикации",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateOrUpdatePublicationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Помечает публикацию как удаленную. Удалять может только автор.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Удалить публикацию (soft delete)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "В текущей реализации требуется передавать все поля так же, как при создании публикации.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Частичное обновление публикации",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные публикации",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateOrUpdatePublicationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Получить комментарии публикации (включая ответы на комментарии)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.PublicationCommentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Добавить комментарий к публикации",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Комментарий",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AddCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Comment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/{id}/images": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Подтвердить загрузку и прикрепить изображения к публикации",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Список ключей и позиций",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AttachPublicationImagesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.AttachPublicationImagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/{id}/images/presign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Сгенерировать presigned URL'ы для загрузки изображений для конкретной публикации",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Список файлов",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignPublicationImagesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignPublicationImagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/publications/{id}/likes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "publications"
+                ],
+                "summary": "Поставить лайк публикации (идемпотентно)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID публикации",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/references/cities": {
             "get": {
                 "description": "Получение списка всех городов",
@@ -471,6 +2232,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/references/need-tags": {
+            "get": {
+                "description": "Получение списка всех тегов потребностей",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "references"
+                ],
+                "summary": "Список тегов потребностей",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NeedTagRef"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/references/publication-tags": {
+            "get": {
+                "description": "Получение списка всех тегов публикаций",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "references"
+                ],
+                "summary": "Список тегов публикаций",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.PublicationTagRef"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/references/specializations": {
             "get": {
                 "description": "Получение списка всех специализаций",
@@ -489,6 +2308,59 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/model.Specialization"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/all": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает услуги, потребности и пользователей без фильтров, отсортированных от новых к старым в каждой категории.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Глобальный поиск сущностей",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов на категорию",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GlobalSearchResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
                         }
                     },
                     "500": {
@@ -530,6 +2402,414 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Удалить аккаунт текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Расширенная информация о текущем пользователе: данные профиля, публикации и агрегированные метрики.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Мой профиль",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserProfileResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Частичное обновление профиля: имя, фамилия, логин, город, bio, специализации, статус поиска работы, образование и мастер.",
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "users",
+                    "users"
+                ],
+                "summary": "Обновить профиль текущего пользователя",
+                "parameters": [
+                    {
+                        "description": "Поля для обновления профиля",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/teammates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Сокомандники определяются так же, как в teammatesCount профиля: пользователи, с которыми есть общие публикации (как автора, так и соавтора).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Список сокомандников текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TeammateItem"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search/filters": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Фильтрация по имени/компании или Telegram (передается в поле name), специализациям, типу аккаунта, статусу (find_work), городам",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Поиск пользователей по фильтрам",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Имя/фамилия или название компании",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "ID специализаций (можно несколько)",
+                        "name": "specializationIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип аккаунта (PERSON | COMPANY)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Статус поиска работы (LOOKING | NOT_LOOKING | OPEN_TO_OFFERS)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "ID городов (можно несколько)",
+                        "name": "cityIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TarelkaUserFull"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search/name": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ищет профили по имени/фамилии (PERSON), названию компании (COMPANY) и telegram_url (хэндл или ссылка)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Поиск пользователей по имени и Telegram",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска (может быть пустой)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserSearchItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search/telegram": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ищет профили по ссылке/нику Telegram (поле telegram_url)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Поиск пользователей по Telegram",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска (@ник или часть ссылки)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TarelkaUserFull"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -783,9 +3063,422 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/{id}/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Расширенная информация о пользователе по ID: данные профиля, публикации и агрегированные метрики.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Профиль пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/teammates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Сокомандники определяются так же, как в teammatesCount профиля: пользователи, с которыми есть общие публикации (как автора, так и соавтора).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Список сокомандников пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.TeammateItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/wallpaper/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Подтвердить загрузку обложки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные подтверждения",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ConfirmLogoUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ConfirmWallpaperUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/wallpaper/presign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Presigned URL для загрузки обложки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные запроса",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.PresignUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/wallpaper/url": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Установить внешнюю ссылку обложки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Ссылка на обложку",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SetWallpaperURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "handler.CollaborationRequest": {
+            "type": "object",
+            "required": [
+                "publicationId",
+                "receiverId"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.GetNeedResponse": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "deadlineEnd": {
+                    "type": "string"
+                },
+                "deadlineStart": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NeedTag"
+                    }
+                }
+            }
+        },
+        "handler.GetPublicationResponse": {
+            "type": "object",
+            "properties": {
+                "needs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Need"
+                    }
+                },
+                "publication": {
+                    "$ref": "#/definitions/model.Publication"
+                },
+                "team": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationTeamMember"
+                    }
+                }
+            }
+        },
+        "handler.NeedResponseRequest": {
+            "type": "object",
+            "required": [
+                "needId",
+                "publicationId"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "needId": {
+                    "type": "integer"
+                },
+                "publicationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.TeamInviteRequest": {
+            "type": "object",
+            "required": [
+                "publicationId",
+                "receiverId"
+            ],
+            "properties": {
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.TeamInviteResponseRequest": {
+            "type": "object",
+            "required": [
+                "isApprove",
+                "notificationId"
+            ],
+            "properties": {
+                "isApprove": {
+                    "type": "boolean"
+                },
+                "notificationId": {
+                    "type": "integer"
+                }
+            }
+        },
         "model.AccountData": {
             "type": "object",
             "required": [
@@ -840,6 +3533,59 @@ const docTemplate = `{
                 "AccountTypeCompany"
             ]
         },
+        "model.AddCommentRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.AttachPublicationImageItem": {
+            "type": "object",
+            "required": [
+                "key"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.AttachPublicationImagesRequest": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AttachPublicationImageItem"
+                    }
+                }
+            }
+        },
+        "model.AttachPublicationImagesResponse": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationImage"
+                    }
+                }
+            }
+        },
         "model.City": {
             "type": "object",
             "properties": {
@@ -848,6 +3594,23 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.Comment": {
+            "type": "object",
+            "properties": {
+                "authorId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         },
@@ -876,6 +3639,67 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ConfirmWallpaperUploadResponse": {
+            "type": "object",
+            "properties": {
+                "wallpaperUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.CreateOrUpdatePublicationRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "cityId": {
+                    "type": "integer"
+                },
+                "coAuthorIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "imageUrls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NeedUpsertItem"
+                    }
+                },
+                "tagIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "type": {
+                    "enum": [
+                        "PROJECT",
+                        "SERVICE"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.PublicationType"
+                        }
+                    ]
+                }
+            }
+        },
         "model.Direction": {
             "type": "object",
             "properties": {
@@ -894,6 +3718,73 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.FileUploadSpec": {
+            "type": "object",
+            "required": [
+                "contentType"
+            ],
+            "properties": {
+                "contentType": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.FindWork": {
+            "type": "string",
+            "enum": [
+                "LOOKING",
+                "NOT_LOOKING",
+                "OPEN_TO_OFFERS"
+            ],
+            "x-enum-varnames": [
+                "FindWorkLooking",
+                "FindWorkNotLooking",
+                "FindWorkOpenToOffer"
+            ]
+        },
+        "model.GlobalSearchResponse": {
+            "type": "object",
+            "properties": {
+                "needs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NeedSearchItem"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Publication"
+                    }
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TarelkaUserFull"
+                    }
+                }
+            }
+        },
+        "model.InviteAccountType": {
+            "type": "string",
+            "enum": [
+                "DEFAULT",
+                "CLUB_PARTICIPANT"
+            ],
+            "x-enum-varnames": [
+                "InviteAccountTypeDefault",
+                "InviteAccountTypeClubParticipant"
+            ]
+        },
+        "model.InviteLinkResponse": {
+            "type": "object",
+            "properties": {
+                "senderId": {
+                    "description": "SenderID — зашифрованный идентификатор пригласителя, который нужно передавать в startapp",
                     "type": "string"
                 }
             }
@@ -924,6 +3815,228 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "integer"
+                }
+            }
+        },
+        "model.MasterInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isTarelkaUser": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Need": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "cityId": {
+                    "type": "integer"
+                },
+                "deadlineEnd": {
+                    "type": "string"
+                },
+                "deadlineStart": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NeedTag"
+                    }
+                }
+            }
+        },
+        "model.NeedSearchItem": {
+            "type": "object",
+            "properties": {
+                "cityName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publicationDescription": {
+                    "type": "string"
+                },
+                "publicationName": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NeedTag": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NeedTagRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NeedUpsertItem": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "budget": {
+                    "type": "integer"
+                },
+                "cityId": {
+                    "type": "integer"
+                },
+                "deadlineEnd": {
+                    "type": "string"
+                },
+                "deadlineStart": {
+                    "description": "ISO-8601",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "if provided, update; otherwise create",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tagIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "model.NotificationResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creatorId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isApprove": {
+                    "type": "boolean"
+                },
+                "isDeleted": {
+                    "type": "boolean"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "needId": {
+                    "type": "integer"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.NotificationType"
+                }
+            }
+        },
+        "model.NotificationType": {
+            "type": "string",
+            "enum": [
+                "Collaboration",
+                "Response",
+                "Notice",
+                "TeamInvite"
+            ],
+            "x-enum-varnames": [
+                "NotificationTypeCollaboration",
+                "NotificationTypeResponse",
+                "NotificationTypeNotice",
+                "NotificationTypeTeamInvite"
+            ]
+        },
+        "model.NotificationWithCreatorResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creatorName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isApprove": {
+                    "type": "boolean"
+                },
+                "isDeleted": {
+                    "type": "boolean"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "needId": {
+                    "type": "integer"
+                },
+                "publicationId": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.NotificationType"
                 }
             }
         },
@@ -989,6 +4102,79 @@ const docTemplate = `{
                 }
             }
         },
+        "model.PreRegisterRequest": {
+            "type": "object",
+            "required": [
+                "account",
+                "initData",
+                "senderId"
+            ],
+            "properties": {
+                "account": {
+                    "$ref": "#/definitions/model.AccountData"
+                },
+                "initData": {
+                    "type": "string"
+                },
+                "senderId": {
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен в текущей конфигурации (закрытый режим регистрации).",
+                    "type": "string"
+                }
+            }
+        },
+        "model.PreRegisterResponse": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PresignPublicationImagesRequest": {
+            "type": "object",
+            "required": [
+                "files"
+            ],
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.FileUploadSpec"
+                    }
+                }
+            }
+        },
+        "model.PresignPublicationImagesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PresignUploadItem"
+                    }
+                }
+            }
+        },
+        "model.PresignUploadItem": {
+            "type": "object",
+            "properties": {
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "key": {
+                    "type": "string"
+                },
+                "publicUrl": {
+                    "type": "string"
+                },
+                "uploadUrl": {
+                    "type": "string"
+                }
+            }
+        },
         "model.PresignUploadRequest": {
             "type": "object",
             "required": [
@@ -1016,6 +4202,196 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "model.Publication": {
+            "type": "object",
+            "properties": {
+                "authorFirstName": {
+                    "type": "string"
+                },
+                "authorId": {
+                    "type": "integer"
+                },
+                "authorLastName": {
+                    "type": "string"
+                },
+                "authorTelegramUrl": {
+                    "description": "AuthorTelegramURL — ссылка на Telegram автора, если задано",
+                    "type": "string"
+                },
+                "cityId": {
+                    "type": "integer"
+                },
+                "coAuthors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TarelkaUser"
+                    }
+                },
+                "commentsCount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationImage"
+                    }
+                },
+                "isLiked": {
+                    "description": "IsLiked показывает, поставил ли текущий пользователь лайк этой публикации",
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Need"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationTag"
+                    }
+                },
+                "topImageUrl": {
+                    "description": "TopImageURL — URL изображения с приоритетом 1, если задано",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.PublicationCommentItem": {
+            "type": "object",
+            "properties": {
+                "authorFirstName": {
+                    "type": "string"
+                },
+                "authorId": {
+                    "type": "integer"
+                },
+                "authorLastName": {
+                    "type": "string"
+                },
+                "authorOrgName": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PublicationCommentsResponse": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PublicationCommentItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PublicationImage": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PublicationTag": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PublicationTagRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PublicationTeamMember": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "cityName": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "specialization": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PublicationType": {
+            "type": "string",
+            "enum": [
+                "PROJECT",
+                "SERVICE"
+            ],
+            "x-enum-varnames": [
+                "PublicationTypeProject",
+                "PublicationTypeService"
+            ]
         },
         "model.RefreshRequest": {
             "type": "object",
@@ -1067,6 +4443,10 @@ const docTemplate = `{
                 "phoneVerification": {
                     "$ref": "#/definitions/model.PhoneVerification"
                 },
+                "senderId": {
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен, если включён закрытый режим регистрации.",
+                    "type": "string"
+                },
                 "specializationIds": {
                     "type": "array",
                     "items": {
@@ -1108,6 +4488,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.SenderInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                }
+            }
+        },
         "model.SetLogoURLRequest": {
             "type": "object",
             "required": [
@@ -1115,6 +4509,17 @@ const docTemplate = `{
             ],
             "properties": {
                 "logoUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SetWallpaperURLRequest": {
+            "type": "object",
+            "required": [
+                "wallpaperUrl"
+            ],
+            "properties": {
+                "wallpaperUrl": {
                     "type": "string"
                 }
             }
@@ -1164,44 +4569,70 @@ const docTemplate = `{
                 }
             }
         },
-        "model.TarelkaUserFull": {
+        "model.TarelkaUser": {
             "type": "object",
             "properties": {
-                "cities": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.City"
-                    }
+                "bio": {
+                    "description": "Short bio / about me",
+                    "type": "string"
                 },
-                "company": {
-                    "$ref": "#/definitions/model.TarelkaCompany"
+                "conversation": {
+                    "type": "integer"
+                },
+                "conversation_updated_at": {
+                    "description": "ConversationUpdatedAt — when conversation stage was last changed",
+                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"
                 },
-                "directions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Direction"
-                    }
+                "education": {
+                    "description": "Education — free text",
+                    "type": "string"
+                },
+                "find_work": {
+                    "description": "FindWork — enum indicating whether user is looking for a job",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.FindWork"
+                        }
+                    ]
                 },
                 "id": {
                     "type": "integer"
                 },
+                "invite_account_type": {
+                    "description": "InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.InviteAccountType"
+                        }
+                    ]
+                },
+                "invite_referral_count": {
+                    "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
+                    "type": "integer"
+                },
+                "invitedByUserId": {
+                    "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
+                    "type": "integer"
+                },
+                "isMasterFromTable": {
+                    "description": "IsMasterFromTable — если true, masterId ссылается на таблицу masters.\nЕсли false, masterId трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
                 "logo_url": {
                     "type": "string"
                 },
-                "person": {
-                    "$ref": "#/definitions/model.TarelkaPerson"
+                "masterId": {
+                    "description": "MasterID — идентификатор мастера. В зависимости от IsMasterFromTable\nлибо указывает на запись в таблице masters, либо на другого tarelka пользователя.",
+                    "type": "integer"
                 },
                 "phone": {
                     "type": "string"
                 },
-                "specializations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Specialization"
-                    }
+                "telegram_chat_id": {
+                    "type": "integer"
                 },
                 "telegram_url": {
                     "type": "string"
@@ -1213,6 +4644,308 @@ const docTemplate = `{
                     "$ref": "#/definitions/model.AccountType"
                 },
                 "username": {
+                    "type": "string"
+                },
+                "wallpaper_url": {
+                    "description": "Wallpaper (cover image) URL — stored in S3 similarly to LogoURL",
+                    "type": "string"
+                }
+            }
+        },
+        "model.TarelkaUserFull": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "description": "Short bio / about me",
+                    "type": "string"
+                },
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.City"
+                    }
+                },
+                "company": {
+                    "$ref": "#/definitions/model.TarelkaCompany"
+                },
+                "conversation": {
+                    "type": "integer"
+                },
+                "conversation_updated_at": {
+                    "description": "ConversationUpdatedAt — when conversation stage was last changed",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "directions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Direction"
+                    }
+                },
+                "education": {
+                    "description": "Education — free text",
+                    "type": "string"
+                },
+                "find_work": {
+                    "description": "FindWork — enum indicating whether user is looking for a job",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.FindWork"
+                        }
+                    ]
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "invite_account_type": {
+                    "description": "InviteAccountType — приглашательный статус (DEFAULT/CLUB_PARTICIPANT)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.InviteAccountType"
+                        }
+                    ]
+                },
+                "invite_referral_count": {
+                    "description": "InviteReferralCount — сколько пользователей уже зарегалось по его инвайт‑ссылке",
+                    "type": "integer"
+                },
+                "invitedByUserId": {
+                    "description": "InvitedByUserID — идентификатор пользователя-пригласителя (sender), если есть",
+                    "type": "integer"
+                },
+                "isMasterFromTable": {
+                    "description": "IsMasterFromTable — если true, masterId ссылается на таблицу masters.\nЕсли false, masterId трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "masterId": {
+                    "description": "MasterID — идентификатор мастера. В зависимости от IsMasterFromTable\nлибо указывает на запись в таблице masters, либо на другого tarelka пользователя.",
+                    "type": "integer"
+                },
+                "person": {
+                    "$ref": "#/definitions/model.TarelkaPerson"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "projectTopImages": {
+                    "description": "ProjectTopImages содержит URL главных изображений (position = 0)\nпоследних (по created_at) до трёх проектов пользователя.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specializations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Specialization"
+                    }
+                },
+                "telegram_chat_id": {
+                    "type": "integer"
+                },
+                "telegram_url": {
+                    "type": "string"
+                },
+                "tg_user_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.AccountType"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "wallpaper_url": {
+                    "description": "Wallpaper (cover image) URL — stored in S3 similarly to LogoURL",
+                    "type": "string"
+                }
+            }
+        },
+        "model.TeammateItem": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "specialization": {
+                    "type": "string"
+                },
+                "telegramUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string"
+                },
+                "cityId": {
+                    "type": "integer"
+                },
+                "companyName": {
+                    "description": "Для COMPANY: название",
+                    "type": "string"
+                },
+                "education": {
+                    "type": "string"
+                },
+                "find_work": {
+                    "description": "Use the same enum values as model.FindWork (string values)",
+                    "type": "string"
+                },
+                "isMasterFromTable": {
+                    "description": "Master: опционально можно указать мастера пользователя.\nЕсли IsMasterFromTable = true и передано MasterName, будет создана запись в таблице masters\nи пользователь будет привязан к ней. Если IsMasterFromTable = true и передан MasterID,\nпользователь будет привязан к существующей записи masters.\nЕсли IsMasterFromTable = false и передан MasterID, он трактуется как id другого tarelka пользователя.",
+                    "type": "boolean"
+                },
+                "masterId": {
+                    "type": "integer"
+                },
+                "masterName": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Для PERSON: имя и фамилия",
+                    "type": "string"
+                },
+                "specializationIds": {
+                    "description": "Список специализаций. nil — не менять, пустой массив — очистить.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Общие поля",
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserProfilePublicationItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "master": {
+                    "description": "Master содержит информацию о мастере пользователя, если указан.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MasterInfo"
+                        }
+                    ]
+                },
+                "outgoingRequestsCount": {
+                    "type": "integer"
+                },
+                "projectsCount": {
+                    "type": "integer"
+                },
+                "publications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UserProfilePublicationItem"
+                    }
+                },
+                "sender": {
+                    "description": "Sender содержит краткую информацию о пользователе, по чьей инвайт-ссылке произошла регистрация.\nМожет быть nil, если пользователь зарегистрировался без инвайта или связь не зафиксирована.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SenderInfo"
+                        }
+                    ]
+                },
+                "teammatesCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/model.TarelkaUserFull"
+                }
+            }
+        },
+        "model.UserPublicationShort": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "isAuthor": {
+                    "type": "boolean"
+                },
+                "likesCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.PublicationType"
+                }
+            }
+        },
+        "model.UserSearchItem": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "$ref": "#/definitions/model.City"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "specialisation": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "telegram_url": {
                     "type": "string"
                 }
             }

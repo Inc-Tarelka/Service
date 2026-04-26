@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -43,7 +44,12 @@ const (
 )
 
 type AuthService interface {
+	// RegisterViaTelegram завершает регистрацию через Telegram Mini App (stage 1/2)
 	RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error)
+	// PreRegister создаёт базового пользователя (stage 0) по initData и учётным данным
+	PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error)
+	// GenerateInviteSenderID генерирует senderId для текущего пользователя для формирования инвайт-ссылки.
+	GenerateInviteSenderID(ctx context.Context, userID int64) (string, error)
 	Login(ctx context.Context, req *model.LoginRequest) (*model.LoginResponse, error)
 	RefreshTokens(ctx context.Context, refreshToken string) (*model.RefreshResponse, error)
 	ValidateAccessToken(token string) (*model.JWTClaims, error)
@@ -53,6 +59,8 @@ type AuthService interface {
 	SendPhoneVerification(ctx context.Context, phone string) (*model.SendPhoneVerificationResponse, error)
 	// VerifyPhoneCode выполняет раннюю проверку кода верификации через Telegram Gateway
 	VerifyPhoneCode(ctx context.Context, requestID, code string) (*model.VerifyCodeResponse, error)
+	// ValidateInviteAndIncrement проверяет senderID и увеличивает счётчик приглашений.
+	ValidateInviteAndIncrement(ctx context.Context, senderID string) error
 	// BeginPasswordReset отправляет код на телефон, привязанный к пользователю (по username)
 	BeginPasswordReset(ctx context.Context, username string) (*model.SendPhoneVerificationResponse, error)
 	// ResetPasswordWithCode проверяет код через Gateway, сверяет телефон и меняет пароль
@@ -64,6 +72,7 @@ type authService struct {
 	tarelkaUserRepo repository.TarelkaUserRepository
 	referenceRepo   repository.ReferenceRepository
 	tokenRepo       repository.TokenRepository
+	regLogRepo      repository.RegistrationLogRepository
 
 	jwtSecret       string
 	accessTokenTTL  time.Duration
@@ -71,6 +80,11 @@ type authService struct {
 	botToken        string
 	gatewayToken    string
 	gatewayURL      string
+	// inviteSecret используется для подписи/проверки senderID.
+	inviteSecret string
+	// proxySecret добавляется в заголовок X-Secret при обращении к Telegram Gateway
+	// (например, при проксировании через Cloudflare Workers).
+	proxySecret string
 }
 
 func NewAuthService(
@@ -78,36 +92,150 @@ func NewAuthService(
 	tarelkaUserRepo repository.TarelkaUserRepository,
 	referenceRepo repository.ReferenceRepository,
 	tokenRepo repository.TokenRepository,
+	regLogRepo repository.RegistrationLogRepository,
 	jwtSecret string,
 	accessTokenTTL time.Duration,
 	refreshTokenTTL time.Duration,
 	botToken string,
 	gatewayToken string,
 	gatewayURL string,
+	inviteSecret string,
+	proxySecret string,
 ) AuthService {
 	return &authService{
 		tgUserRepo:      tgUserRepo,
 		tarelkaUserRepo: tarelkaUserRepo,
 		referenceRepo:   referenceRepo,
 		tokenRepo:       tokenRepo,
+		regLogRepo:      regLogRepo,
 		jwtSecret:       jwtSecret,
 		accessTokenTTL:  accessTokenTTL,
 		refreshTokenTTL: refreshTokenTTL,
 		botToken:        botToken,
 		gatewayToken:    gatewayToken,
 		gatewayURL:      gatewayURL,
+		inviteSecret:    inviteSecret,
+		proxySecret:     proxySecret,
 	}
 }
 
-// RegisterViaTelegram регистрация через Telegram Mini App
-func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
-	// 1. Валидация initData
-	telegramID, err := s.validateInitData(req.InitData)
+// validateInviteAndIncrement внутренний помощник, который повторяет логику ValidateInviteAndIncrement,
+// но дополнительно возвращает ID пользователя-пригласителя. Используется при pre-register,
+// чтобы сохранить связь sender -> invited user.
+func (s *authService) validateInviteAndIncrement(ctx context.Context, senderID string) (int64, error) {
+	if strings.TrimSpace(senderID) == "" {
+		return 0, fmt.Errorf("invite_required")
+	}
+	if s.inviteSecret == "" {
+		return 0, fmt.Errorf("invite_not_configured")
+	}
+
+	tgID, err := decodeSenderID(senderID, s.inviteSecret)
+	if err != nil {
+		return 0, fmt.Errorf("invalid_sender_id")
+	}
+
+	// Найдём tarelka_user (чтобы вернуть его ID), но считаем/инкремент считаем на уровне tg_user
+	inviter, err := s.tarelkaUserRepo.FindByTgUserID(ctx, tgID)
+	if err != nil {
+		return 0, err
+	}
+
+	// Инкрементируем счётчик для самого Telegram-пользователя (tg_users)
+	_, _, err = s.tgUserRepo.IncreaseInviteCountWithLimit(ctx, tgID)
+	if err != nil {
+		// если лимит исчерпан или пользователя нет — считаем, что инвайт недействителен
+		return 0, fmt.Errorf("invite_limit_reached")
+	}
+
+	return inviter.ID, nil
+}
+
+// ValidateInviteAndIncrement проверяет senderID и увеличивает счётчик приглашённых у инвайтера.
+// Правила:
+//   - если senderID пустой или inviteSecret не задан — возвращаем ошибку
+//   - декодируем senderID в telegramID
+//   - находим пользователя по tg_user_id
+//   - атомарно инкрементим invite_referral_count с учётом лимита.
+func (s *authService) ValidateInviteAndIncrement(ctx context.Context, senderID string) error {
+	_, err := s.validateInviteAndIncrement(ctx, senderID)
+	return err
+}
+
+// encodeSenderID кодирует telegramID в безопасную строку senderID.
+// Формат: base64url("<tgID>:<hex(hmac_sha256(secret, tgID))>")
+func encodeSenderID(tgID int64, secret string) string {
+	data := fmt.Sprintf("%d", tgID)
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(data))
+	sig := hex.EncodeToString(h.Sum(nil))
+	plain := fmt.Sprintf("%s:%s", data, sig)
+	return base64.RawURLEncoding.EncodeToString([]byte(plain))
+}
+
+// decodeSenderID декодирует senderID обратно в telegramID и проверяет подпись.
+func decodeSenderID(senderID, secret string) (int64, error) {
+	buf, err := base64.RawURLEncoding.DecodeString(senderID)
+	if err != nil {
+		return 0, err
+	}
+	parts := strings.SplitN(string(buf), ":", 2)
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid format")
+	}
+	data, sigHex := parts[0], parts[1]
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(data))
+	expectedSig := hex.EncodeToString(h.Sum(nil))
+	if !hmac.Equal([]byte(expectedSig), []byte(sigHex)) {
+		return 0, fmt.Errorf("invalid signature")
+	}
+	return strconv.ParseInt(data, 10, 64)
+}
+
+// GenerateInviteSenderID генерирует senderId для формирования инвайт-ссылки для указанного пользователя.
+// Для DEFAULT-пользователя дополнительно проверяется, что лимит приглашённых ещё не исчерпан
+// (invite_referral_count < 5). Для CLUB_PARTICIPANT ограничений нет.
+func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) (string, error) {
+	if s.inviteSecret == "" {
+		return "", fmt.Errorf("invite_not_configured")
+	}
+
+	user, err := s.tarelkaUserRepo.FindByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+
+	// Получаем поля инвайт-системы из tg_users (логика хранится на уровне Telegram-пользователя)
+	acctType, cnt, err := s.tgUserRepo.GetInviteFields(ctx, user.TgUserID)
+	if err != nil {
+		return "", err
+	}
+	if acctType == model.InviteAccountTypeDefault && cnt >= 5 {
+		return "", fmt.Errorf("invite_limit_reached")
+	}
+
+	return encodeSenderID(user.TgUserID, s.inviteSecret), nil
+}
+
+// PreRegister создаёт базового пользователя (stage 0) до подтверждения телефона.
+// На этом шаге:
+//   - валидируем initData и получаем telegramID и (опционально) username
+//   - проверяем уникальность username
+//   - создаём или находим tg_user
+//   - хэшируем пароль
+//   - проверяем и списываем инвайт по senderId (если включён закрытый режим) непосредственно перед созданием пользователя
+//   - создаём tarelka_user с conversation = 0 без подтипа и связей
+//
+// Токены здесь НЕ выдаются.
+func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterRequest) (*model.PreRegisterResponse, error) {
+	// 0. Валидация initData и извлечение telegramID + username
+	telegramID, telegramUsername, err := s.validateInitData(req.InitData)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Проверка уникальности username
+	// 1. Проверка уникальности username
 	exists, err := s.tarelkaUserRepo.ExistsByUsername(ctx, req.Account.Username)
 	if err != nil {
 		return nil, fmt.Errorf("check username: %w", err)
@@ -116,25 +244,92 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, ErrUserExists
 	}
 
-	// 3. Проверка телефона: формат и верификация через Telegram Gateway
+	// 2. Базовая валидация и нормализация телефона (без проверки кода)
+	var phonePtr *string
 	if req.Account.Phone != "" {
 		if !isValidPhone(req.Account.Phone) {
 			return nil, fmt.Errorf("invalid phone format")
 		}
-		ok, phoneFromGateway, err := s.verifyPhoneWithGateway(ctx, req.PhoneVerification.RequestID, req.PhoneVerification.Code)
-		if err != nil {
-			return nil, fmt.Errorf("phone verification error: %w", err)
-		}
-		if !ok {
-			return nil, fmt.Errorf("phone not verified")
-		}
-		// Сравнить номер из gateway с указанным телефоном (нормализация)
-		if normalizePhone(phoneFromGateway) != normalizePhone(req.Account.Phone) {
-			return nil, fmt.Errorf("phone mismatch")
-		}
+		norm := normalizePhone(req.Account.Phone)
+		phonePtr = &norm
 	}
 
-	// 4. Проверка существования справочников
+	// 3. Найти или создать tg_user
+	tgUser, err := s.tgUserRepo.FindOrCreate(ctx, telegramID)
+	if err != nil {
+		return nil, fmt.Errorf("find or create tg user: %w", err)
+	}
+
+	// 4. Хэширование пароля
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Account.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+
+	// 5.1. Заполняем telegram_url на основе username из initData, если он есть.
+	// Храним в нормализованном виде (например, @username), чтобы можно было искать по нику.
+	var telegramURL *string
+	if telegramUsername != nil && strings.TrimSpace(*telegramUsername) != "" {
+		norm := normalizeTelegramURL(*telegramUsername)
+		telegramURL = &norm
+	}
+
+	// 5.2. Проверка и применение инвайта (senderID) + получение ID пригласителя.
+	// Выполняем как можно позже, чтобы не расходовать инвайт на заведомо невалидные запросы.
+	inviterID, err := s.validateInviteAndIncrement(ctx, req.SenderID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 6. Создание tarelka_user с conversation = 0
+	user := &model.TarelkaUser{
+		TgUserID:        tgUser.TelegramID,
+		Type:            req.Account.Type,
+		Username:        req.Account.Username,
+		Phone:           phonePtr,
+		PasswordHash:    string(passwordHash),
+		TelegramURL:     telegramURL,
+		Conversation:    0,
+		InvitedByUserID: &inviterID,
+	}
+
+	user, err = s.tarelkaUserRepo.Create(ctx, user)
+	if err != nil {
+		return nil, fmt.Errorf("create tarelka user (pre-register): %w", err)
+	}
+
+	// Log registration stage 0 (pre-register created)
+	if s.regLogRepo != nil {
+		stage := 0
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			TarelkaUserID:     &user.ID,
+			Phone:             user.Phone,
+			Event:             model.RegistrationEventPreRegisterCreated,
+			ActionFlag:        model.RegistrationActionSuccess,
+			ConversationStage: &stage,
+			Metadata: map[string]any{
+				"username": user.Username,
+				"source":   "pre_register",
+			},
+		})
+	}
+
+	return &model.PreRegisterResponse{UserID: user.ID}, nil
+}
+
+// RegisterViaTelegram регистрация через Telegram Mini App
+
+func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
+	// 0. Инвайт уже был проверен и применён на этапе pre-register, здесь ничего не делаем.
+
+	// 1. Валидация initData
+	telegramID, _, err := s.validateInitData(req.InitData)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Проверка существования справочников
+	var exists bool
 	if len(req.SpecializationIDs) > 0 {
 		exists, err = s.referenceRepo.SpecializationsExist(ctx, req.SpecializationIDs)
 		if err != nil || !exists {
@@ -156,39 +351,30 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		}
 	}
 
-	// 5. Найти или создать tg_user
-	tgUser, err := s.tgUserRepo.FindOrCreate(ctx, telegramID)
+	// 4. Найти существующего пользователя после pre-register
+	tarelkaUser, err := s.tarelkaUserRepo.FindByUsername(ctx, req.Account.Username)
 	if err != nil {
-		return nil, fmt.Errorf("find or create tg user: %w", err)
+		return nil, fmt.Errorf("find preregistered user: %w", err)
 	}
 
-	// 6. Хэширование пароля
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Account.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+	// Дополнительная защита: убеждаемся, что пользователь привязан к тому же Telegram ID
+	if tarelkaUser.TgUserID != telegramID {
+		return nil, fmt.Errorf("invalid_initData_for_username")
 	}
 
-	// 7. Создание tarelka_user
-	tarelkaUser := &model.TarelkaUser{
-		TgUserID: tgUser.TelegramID,
-		Type:     req.Account.Type,
-		Username: req.Account.Username,
-		Phone: func(p string) *string {
-			if p == "" {
-				return nil
-			}
-			v := normalizePhone(p)
-			return &v
-		}(req.Account.Phone),
-		PasswordHash: string(passwordHash),
+	// Обновляем телефон (он к этому моменту уже прошёл проверку через шлюз)
+	if req.Account.Phone != "" {
+		normalized := normalizePhone(req.Account.Phone)
+		tarelkaUser.Phone = &normalized
 	}
 
-	tarelkaUser, err = s.tarelkaUserRepo.Create(ctx, tarelkaUser)
-	if err != nil {
-		return nil, fmt.Errorf("create tarelka user: %w", err)
+	// 5. Определяем целевой stage по профилю
+	stage := 1
+	if strings.TrimSpace(req.Account.Name) != "" && strings.TrimSpace(req.Account.Surname) != "" {
+		stage = 2
 	}
 
-	// 8. Создание subtype
+	// 6. Создание subtype на основе уже существующего tarelka_user
 	switch req.Account.Type {
 	case model.AccountTypePerson:
 		person := &model.TarelkaPerson{
@@ -211,7 +397,7 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, ErrInvalidAccountType
 	}
 
-	// 9. Создание связей
+	// 7. Создание связей
 	if err := s.tarelkaUserRepo.AddSpecializations(ctx, tarelkaUser.ID, req.SpecializationIDs); err != nil {
 		return nil, fmt.Errorf("add specializations: %w", err)
 	}
@@ -222,7 +408,31 @@ func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.Regist
 		return nil, fmt.Errorf("add cities: %w", err)
 	}
 
-	// 10. Генерация токенов
+	// 8. Обновляем стадию conversation: 1 или 2 в зависимости от профиля
+	if err := s.tarelkaUserRepo.UpdateConversation(ctx, tarelkaUser.ID, stage); err != nil {
+		return nil, fmt.Errorf("update conversation: %w", err)
+	}
+
+	// Log registration completion for stage 1 or 2
+	if s.regLogRepo != nil {
+		convStage := stage
+		event := model.RegistrationEventRegisterStage1Completed
+		if stage >= 2 {
+			event = model.RegistrationEventRegisterStage2Completed
+		}
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			TarelkaUserID:     &tarelkaUser.ID,
+			Phone:             tarelkaUser.Phone,
+			Event:             event,
+			ActionFlag:        model.RegistrationActionSuccess,
+			ConversationStage: &convStage,
+			Metadata: map[string]any{
+				"account_type": tarelkaUser.Type,
+			},
+		})
+	}
+
+	// 9. Генерация токенов
 	tokens, err := s.generateTokenPair(ctx, tarelkaUser.ID, tarelkaUser.Type)
 	if err != nil {
 		return nil, fmt.Errorf("generate tokens: %w", err)
@@ -376,6 +586,9 @@ func (s *authService) SendPhoneVerification(ctx context.Context, phone string) (
 	if s.gatewayToken != "" {
 		req.Header.Set("Authorization", "Bearer "+s.gatewayToken)
 	}
+	if s.proxySecret != "" {
+		req.Header.Set("X-Secret", s.proxySecret)
+	}
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 	resp, err := httpClient.Do(req)
@@ -401,6 +614,19 @@ func (s *authService) SendPhoneVerification(ctx context.Context, phone string) (
 		return nil, fmt.Errorf("gateway_error")
 	}
 
+	// Log successful sending of verification code
+	if s.regLogRepo != nil {
+		normalizedCopy := normalized
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			Phone:      &normalizedCopy,
+			Event:      model.RegistrationEventPhoneCodeSent,
+			ActionFlag: model.RegistrationActionSuccess,
+			Metadata: map[string]any{
+				"request_id": gr.Result.RequestID,
+			},
+		})
+	}
+
 	return &model.SendPhoneVerificationResponse{RequestID: gr.Result.RequestID}, nil
 }
 
@@ -409,12 +635,51 @@ func (s *authService) VerifyPhoneCode(ctx context.Context, requestID, code strin
 	ok, phone, err := s.verifyPhoneWithGateway(ctx, requestID, code)
 	if err != nil {
 		if errors.Is(err, ErrCodeExpired) {
+			if s.regLogRepo != nil {
+				_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+					Event:      model.RegistrationEventPhoneCodeExpired,
+					ActionFlag: model.RegistrationActionFailure,
+					Metadata: map[string]any{
+						"request_id": requestID,
+					},
+				})
+			}
 			return &model.VerifyCodeResponse{Status: "expired"}, nil
+		}
+		if s.regLogRepo != nil {
+			_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+				Event:      model.RegistrationEventPhoneCodeInvalid,
+				ActionFlag: model.RegistrationActionFailure,
+				Metadata: map[string]any{
+					"request_id": requestID,
+					"error":      err.Error(),
+				},
+			})
 		}
 		return &model.VerifyCodeResponse{Status: "error"}, nil
 	}
 	if ok {
-		return &model.VerifyCodeResponse{Status: "ok", Phone: normalizePhone(phone)}, nil
+		norm := normalizePhone(phone)
+		if s.regLogRepo != nil {
+			_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+				Phone:      &norm,
+				Event:      model.RegistrationEventPhoneCodeVerified,
+				ActionFlag: model.RegistrationActionSuccess,
+				Metadata: map[string]any{
+					"request_id": requestID,
+				},
+			})
+		}
+		return &model.VerifyCodeResponse{Status: "ok", Phone: norm}, nil
+	}
+	if s.regLogRepo != nil {
+		_ = s.regLogRepo.LogEvent(ctx, &repository.RegistrationLogEntry{
+			Event:      model.RegistrationEventPhoneCodeInvalid,
+			ActionFlag: model.RegistrationActionFailure,
+			Metadata: map[string]any{
+				"request_id": requestID,
+			},
+		})
 	}
 	return &model.VerifyCodeResponse{Status: "invalid"}, nil
 }
@@ -479,34 +744,35 @@ func (s *authService) ResetPasswordWithCode(ctx context.Context, username, reque
 	return nil
 }
 
-// validateInitData валидация initData от Telegram
-func (s *authService) validateInitData(initData string) (int64, error) {
+// validateInitData валидация initData от Telegram.
+// Возвращает telegramID и, если доступно, username пользователя.
+func (s *authService) validateInitData(initData string) (int64, *string, error) {
 	// Парсинг initData
 	values, err := url.ParseQuery(initData)
 	if err != nil {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Извлечение hash
 	hash := values.Get("hash")
 	if hash == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 	values.Del("hash")
 
 	// Проверка auth_date
 	authDateStr := values.Get("auth_date")
 	if authDateStr == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 	authDate, err := strconv.ParseInt(authDateStr, 10, 64)
 	if err != nil {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Проверка возраста initData
 	if time.Since(time.Unix(authDate, 0)) > initDataMaxAge {
-		return 0, ErrInitDataExpired
+		return 0, nil, ErrInitDataExpired
 	}
 
 	// Формирование data-check-string
@@ -537,23 +803,35 @@ func (s *authService) validateInitData(initData string) (int64, error) {
 
 	// Сравнение
 	if calculatedHash != hash {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
 	// Извлечение telegram_id из user
 	userStr := values.Get("user")
 	if userStr == "" {
-		return 0, ErrInvalidInitData
+		return 0, nil, ErrInvalidInitData
 	}
 
-	// Простой парсинг user JSON для извлечения id
-	// В продакшене используйте json.Unmarshal
-	telegramID, err := extractTelegramID(userStr)
-	if err != nil {
-		return 0, ErrInvalidInitData
+	// Аккуратно парсим JSON user, чтобы получить id и username.
+	type tgUser struct {
+		ID       int64  `json:"id"`
+		Username string `json:"username"`
+	}
+	var u tgUser
+	if err := json.Unmarshal([]byte(userStr), &u); err != nil {
+		return 0, nil, ErrInvalidInitData
+	}
+	if u.ID == 0 {
+		return 0, nil, ErrInvalidInitData
 	}
 
-	return telegramID, nil
+	var usernamePtr *string
+	if strings.TrimSpace(u.Username) != "" {
+		username := u.Username
+		usernamePtr = &username
+	}
+
+	return u.ID, usernamePtr, nil
 }
 
 // generateTokenPair генерация пары токенов
@@ -682,6 +960,9 @@ func (s *authService) verifyPhoneWithGateway(ctx context.Context, requestID, cod
 	req.Header.Set("Content-Type", "application/json")
 	if s.gatewayToken != "" {
 		req.Header.Set("Authorization", "Bearer "+s.gatewayToken)
+	}
+	if s.proxySecret != "" {
+		req.Header.Set("X-Secret", s.proxySecret)
 	}
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}
