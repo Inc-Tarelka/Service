@@ -141,7 +141,9 @@ func main() {
 	// and prevents CORS/mixed content errors.
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	if cfg.Environment == "production" {
-		docs.SwaggerInfo.Host = "tarelka-api.ru"
+		// Keep host empty in production to use the current request host
+		// (avoids hardcoded domain mismatches between environments).
+		docs.SwaggerInfo.Host = ""
 		docs.SwaggerInfo.Schemes = []string{"https"}
 	} else {
 		// For local/dev use HTTP and localhost
@@ -149,8 +151,14 @@ func main() {
 		docs.SwaggerInfo.Schemes = []string{"http"}
 	}
 
+	// Backward compatibility for Swagger UI instances trying to load
+	// /swagger/v1/swagger.json instead of /swagger/doc.json.
+	router.GET("/swagger/v1/swagger.json", func(c *gin.Context) {
+		c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(docs.SwaggerInfo.ReadDoc()))
+	})
+
 	// Swagger
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
 	// Register routes
 	handlers.RegisterRoutes(router)
