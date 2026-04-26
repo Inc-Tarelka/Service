@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/Inc-Tarelka/api/internal/model"
+	"github.com/Inc-Tarelka/api/internal/repository"
 	"github.com/Inc-Tarelka/api/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -38,7 +40,11 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 
 	user, err := h.userService.GetUser(c.Request.Context(), userID.(int64))
 	if err != nil {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		return
 	}
 
@@ -71,7 +77,11 @@ func (h *UserHandler) GetMyProfile(c *gin.Context) {
 
 	profile, err := h.userService.GetUserProfile(c.Request.Context(), userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		return
 	}
 
@@ -162,7 +172,11 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	user, err := h.userService.GetUser(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		return
 	}
 
@@ -192,7 +206,11 @@ func (h *UserHandler) GetUserProfile(c *gin.Context) {
 
 	profile, err := h.userService.GetUserProfile(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "user_not_found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
 		return
 	}
 
