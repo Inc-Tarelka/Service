@@ -2,16 +2,6 @@ name: Deploy Landing to Backend Servers
 
 on:
   workflow_dispatch:
-    inputs:
-      force_target:
-        description: "Optional override: auto | test | prod"
-        required: false
-        default: "auto"
-        type: choice
-        options:
-          - auto
-          - test
-          - prod
 
   push:
     branches:
@@ -22,8 +12,18 @@ on:
       - ".github/workflows/deploy-landing.yml"
 
 jobs:
+  validate-manual-branch:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'backend' && github.ref_name != 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unsupported branch for manual deploy
+        run: |
+          echo "Manual landing deploy is allowed only from 'backend' (test) or 'main' (prod)."
+          echo "Selected branch: '${{ github.ref_name }}'"
+          exit 1
+
   deploy-test-landing:
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.force_target == 'test' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'backend')) || github.event_name == 'push' && github.ref_name == 'backend' }}
+    if: ${{ github.ref_name == 'backend' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -58,7 +58,7 @@ jobs:
             docker compose --env-file .env.landing -f docker-compose.yml up -d --remove-orphans
 
   deploy-prod-landing:
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.force_target == 'prod' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'main')) || github.event_name == 'push' && github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
 
     steps:
