@@ -19,13 +19,14 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=tarelka-network"
       # HTTPS router
-      - "traefik.http.routers.api.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`)"
+      - "traefik.http.routers.api.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`) && (PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/health`))"
       - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.priority=100"
       - "traefik.http.routers.api.tls=true"
       - "traefik.http.routers.api.tls.certresolver=myresolver"
       - "traefik.http.services.api.loadbalancer.server.port=8080"
       # HTTP router to redirect to HTTPS
-      - "traefik.http.routers.api-web.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`)"
+      - "traefik.http.routers.api-web.rule=Host(`tarelka-api.ru`,`www.tarelka-api.ru`) && (PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/health`))"
       - "traefik.http.routers.api-web.entrypoints=web"
       - "traefik.http.routers.api-web.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
@@ -43,6 +44,7 @@ services:
       - "--log.level=DEBUG"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=tarelka-network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
@@ -83,4 +85,5 @@ volumes:
 
 networks:
   tarelka-network:
+    name: tarelka-network
     driver: bridge

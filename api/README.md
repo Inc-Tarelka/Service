@@ -299,5 +299,5 @@ Workflow: `.github/workflows/deploy.yml`
 
 - На `193.187.94.235` должен существовать файл `/root/api/.env.prod`.
 - В `.env.prod` обязательно задать рабочий `DATABASE_URL` к внешней БД.
-- Для домена используется `API_HOST=`tarelka-kino.ru`,`www.tarelka-kino.ru``.
+- Для домена используйте `API_HOST=tarelka-kino.ru` и `API_HOST_WWW=www.tarelka-kino.ru`.
 - Workflow не хранит прод-секреты в репозитории: он переиспользует уже созданный на сервере `.env.prod`.
