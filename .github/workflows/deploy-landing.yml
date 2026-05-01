@@ -1,0 +1,93 @@
+name: Deploy Landing to Backend Servers
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_target:
+        description: "Optional override: auto | test | prod"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - test
+          - prod
+
+  push:
+    branches:
+      - backend
+      - main
+    paths:
+      - "landing/**"
+      - ".github/workflows/deploy-landing.yml"
+
+jobs:
+  deploy-test-landing:
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.force_target == 'test' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'backend')) || github.event_name == 'push' && github.ref_name == 'backend' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy landing to test server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "landing/**"
+          target: "/root"
+
+      - name: Deploy landing on test server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/landing
+
+            cat > .env.landing <<'EOF'
+            LANDING_HOST=tarelka-api.ru
+            LANDING_HOST_WWW=www.tarelka-api.ru
+            EOF
+
+            docker network create tarelka-network || true
+            docker compose --env-file .env.landing -f docker-compose.yml build
+            docker compose --env-file .env.landing -f docker-compose.yml up -d --remove-orphans
+
+  deploy-prod-landing:
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.force_target == 'prod' || (github.event.inputs.force_target == 'auto' && github.ref_name == 'main')) || github.event_name == 'push' && github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy landing to production server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 193.187.94.235
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "landing/**"
+          target: "/root"
+
+      - name: Deploy landing on production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 193.187.94.235
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/landing
+
+            cat > .env.landing <<'EOF'
+            LANDING_HOST=tarelka-kino.ru
+            LANDING_HOST_WWW=www.tarelka-kino.ru
+            EOF
+
+            docker network create tarelka-network || true
+            docker compose --env-file .env.landing -f docker-compose.yml build
+            docker compose --env-file .env.landing -f docker-compose.yml up -d --remove-orphans
