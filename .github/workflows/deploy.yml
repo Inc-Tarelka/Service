@@ -62,6 +62,7 @@ jobs:
             if [ -f ./letsencrypt/acme.json ]; then
               chmod 600 ./letsencrypt/acme.json || true
             fi
+            docker network create tarelka-network || true
             docker compose pull || true
             docker compose build
             docker compose up -d --remove-orphans
@@ -117,6 +118,7 @@ jobs:
             touch ./letsencrypt/acme.json
             chmod 600 ./letsencrypt/acme.json || true
 
+            docker network create tarelka-network || true
             docker compose -f docker-compose.prod.yml --env-file .env.prod pull || true
             docker compose -f docker-compose.prod.yml --env-file .env.prod build
             docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans

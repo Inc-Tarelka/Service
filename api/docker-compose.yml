@@ -85,5 +85,5 @@ volumes:
 
 networks:
   tarelka-network:
+    external: true
     name: tarelka-network
-    driver: bridge
