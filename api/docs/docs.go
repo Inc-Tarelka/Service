@@ -4098,13 +4098,22 @@ const docTemplate = `{
         "model.NotifiedUserItem": {
             "type": "object",
             "properties": {
+                "city": {
+                    "type": "string"
+                },
                 "displayName": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
+                "lastName": {
+                    "type": "string"
+                },
                 "logoUrl": {
+                    "type": "string"
+                },
+                "specialization": {
                     "type": "string"
                 },
                 "telegramUrl": {

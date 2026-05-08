@@ -128,10 +128,27 @@ func (r *notificationRepository) ListNotifiedUsers(ctx context.Context, creatorI
 				tc.company_name,
 				u.username
 			) AS display_name,
+			COALESCE(tp.surname, '') AS last_name,
 			u.username,
 			u.type,
 			u.logo_url,
-			u.telegram_url
+			u.telegram_url,
+			(
+				SELECT s.name
+				FROM user_specializations us
+				JOIN specializations s ON s.id = us.specialization_id
+				WHERE us.tarelka_user_id = u.id
+				ORDER BY us.specialization_id
+				LIMIT 1
+			) AS specialization,
+			(
+				SELECT c.name
+				FROM user_cities uc
+				JOIN cities c ON c.id = uc.city_id
+				WHERE uc.tarelka_user_id = u.id
+				ORDER BY uc.city_id
+				LIMIT 1
+			) AS city_name
 		FROM receivers r
 		JOIN tarelka_users u ON u.id = r.receiver_id
 		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
@@ -152,10 +169,13 @@ func (r *notificationRepository) ListNotifiedUsers(ctx context.Context, creatorI
 		if err := rows.Scan(
 			&item.ID,
 			&item.DisplayName,
+			&item.LastName,
 			&item.Username,
 			&item.Type,
 			&item.LogoURL,
 			&item.TelegramURL,
+			&item.Specialization,
+			&item.City,
 		); err != nil {
 			return nil, err
 		}

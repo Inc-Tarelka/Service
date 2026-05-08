@@ -454,11 +454,17 @@ definitions:
     type: object
   model.NotifiedUserItem:
     properties:
+      city:
+        type: string
       displayName:
         type: string
       id:
         type: integer
+      lastName:
+        type: string
       logoUrl:
+        type: string
+      specialization:
         type: string
       telegramUrl:
         type: string
