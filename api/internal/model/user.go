@@ -153,3 +153,13 @@ type TeammateItem struct {
 	Specialization *string `json:"specialization,omitempty"`
 	City           *string `json:"city,omitempty"`
 }
+
+// NotifiedUserItem описывает пользователя, которому текущий пользователь отправлял уведомления.
+type NotifiedUserItem struct {
+	ID          int64       `json:"id"`
+	DisplayName string      `json:"displayName"`
+	Username    string      `json:"username"`
+	Type        AccountType `json:"type"`
+	LogoURL     *string     `json:"logoUrl,omitempty"`
+	TelegramURL *string     `json:"telegramUrl,omitempty"`
+}

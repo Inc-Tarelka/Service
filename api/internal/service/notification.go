@@ -37,6 +37,8 @@ type NotificationService interface {
 	ListIncomingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
 	// Исходящие уведомления для пользователя (где он creator)
 	ListOutgoingNotifications(ctx context.Context, userID int64, nType *model.NotificationType, limit, offset int) ([]*model.NotificationWithCreator, error)
+	// Пользователи, которым отправлялись уведомления
+	ListNotifiedUsers(ctx context.Context, userID int64, limit, offset int) ([]model.NotifiedUserItem, error)
 
 	// Удалить (скрыть) уведомление для пользователя
 	MarkNotificationAsDeleted(ctx context.Context, notificationID, userID int64) error
@@ -50,6 +52,10 @@ func (s *notificationService) MarkNotificationAsDeleted(ctx context.Context, not
 
 func (s *notificationService) ListTeamInviteNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error) {
 	return s.notifRepo.ListByReceiverAndType(ctx, userID, model.NotificationTypeTeamInvite, limit, offset)
+}
+
+func (s *notificationService) ListNotifiedUsers(ctx context.Context, userID int64, limit, offset int) ([]model.NotifiedUserItem, error) {
+	return s.notifRepo.ListNotifiedUsers(ctx, userID, limit, offset)
 }
 
 type notificationService struct {

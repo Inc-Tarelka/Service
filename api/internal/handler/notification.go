@@ -599,6 +599,38 @@ func (h *NotificationHandler) ListOutgoingNotifications(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ListNotifiedUsers godoc
+// @Summary Пользователи, которым отправлялись уведомления
+// @Description Возвращает список пользователей, которым текущий пользователь отправлял уведомления
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Лимит результатов" default(20)
+// @Param offset query int false "Смещение"
+// @Success 200 {array} model.NotifiedUserItem
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /notifications/outgoing/users [get]
+func (h *NotificationHandler) ListNotifiedUsers(c *gin.Context) {
+	userIDVal, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+	userID := userIDVal.(int64)
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	list, err := h.svc.ListNotifiedUsers(c.Request.Context(), userID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "internal_error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
+}
+
 // GetNotification godoc
 // @Summary Получить уведомление по id
 // @Description Возвращает уведомление по id для текущего пользователя (как receiver) и помечает его прочитанным

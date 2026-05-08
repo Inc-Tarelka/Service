@@ -34,6 +34,8 @@ type NotificationRepository interface {
 
 	// MarkAsDeleted помечает уведомление как удаленное (is_deleted = true)
 	MarkAsDeleted(ctx context.Context, id int64, userID int64) error
+	// ListNotifiedUsers возвращает список пользователей, которым отправлялись уведомления от creator.
+	ListNotifiedUsers(ctx context.Context, creatorID int64, limit, offset int) ([]model.NotifiedUserItem, error)
 }
 
 // MarkAsDeleted помечает уведомление как удаленное (is_deleted = true) для receiver или creator
@@ -94,6 +96,73 @@ func (r *notificationRepository) Create(ctx context.Context, n *model.Notificati
 		return nil, err
 	}
 	return n, nil
+}
+
+// ListNotifiedUsers возвращает уникальных получателей уведомлений от пользователя creatorID.
+func (r *notificationRepository) ListNotifiedUsers(ctx context.Context, creatorID int64, limit, offset int) ([]model.NotifiedUserItem, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	query := `
+		WITH receivers AS (
+			SELECT DISTINCT ON (n.receiver_id)
+				n.receiver_id,
+				n.created_at
+			FROM notifications n
+			LEFT JOIN publications p ON p.id = n.publication_id
+			WHERE n.creator_id = $1
+			  AND n.is_deleted = FALSE
+			  AND (
+				n.publication_id IS NULL OR p.is_deleted = FALSE
+			  )
+			ORDER BY n.receiver_id, n.created_at DESC
+		)
+		SELECT
+			u.id,
+			COALESCE(
+				NULLIF(TRIM(COALESCE(tp.name, '') || ' ' || COALESCE(tp.surname, '')), ''),
+				tc.company_name,
+				u.username
+			) AS display_name,
+			u.username,
+			u.type,
+			u.logo_url,
+			u.telegram_url
+		FROM receivers r
+		JOIN tarelka_users u ON u.id = r.receiver_id
+		LEFT JOIN tarelka_persons tp ON tp.tarelka_user_id = u.id
+		LEFT JOIN tarelka_companies tc ON tc.tarelka_user_id = u.id
+		ORDER BY r.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, creatorID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]model.NotifiedUserItem, 0)
+	for rows.Next() {
+		var item model.NotifiedUserItem
+		if err := rows.Scan(
+			&item.ID,
+			&item.DisplayName,
+			&item.Username,
+			&item.Type,
+			&item.LogoURL,
+			&item.TelegramURL,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, rows.Err()
 }
 
 func (r *notificationRepository) ListByReceiverAndType(

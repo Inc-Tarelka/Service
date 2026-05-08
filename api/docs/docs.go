@@ -926,6 +926,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications/outgoing/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список пользователей, которым текущий пользователь отправлял уведомления",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Пользователи, которым отправлялись уведомления",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Лимит результатов",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.NotifiedUserItem"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/notifications/team-invite": {
             "post": {
                 "security": [
@@ -4037,6 +4092,29 @@ const docTemplate = `{
                 },
                 "type": {
                     "$ref": "#/definitions/model.NotificationType"
+                }
+            }
+        },
+        "model.NotifiedUserItem": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "telegramUrl": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.AccountType"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

@@ -452,6 +452,21 @@ definitions:
       type:
         $ref: '#/definitions/model.NotificationType'
     type: object
+  model.NotifiedUserItem:
+    properties:
+      displayName:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      telegramUrl:
+        type: string
+      type:
+        $ref: '#/definitions/model.AccountType'
+      username:
+        type: string
+    type: object
   model.PasswordForgotRequest:
     properties:
       username:
@@ -1734,6 +1749,42 @@ paths:
       security:
       - BearerAuth: []
       summary: Список исходящих уведомлений
+      tags:
+      - notifications
+  /notifications/outgoing/users:
+    get:
+      description: Возвращает список пользователей, которым текущий пользователь отправлял
+        уведомления
+      parameters:
+      - default: 20
+        description: Лимит результатов
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NotifiedUserItem'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Пользователи, которым отправлялись уведомления
       tags:
       - notifications
   /notifications/team-invite:
