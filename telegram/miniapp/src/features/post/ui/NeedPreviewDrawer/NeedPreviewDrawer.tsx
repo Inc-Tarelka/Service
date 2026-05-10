@@ -39,7 +39,7 @@ export const NeedPreviewDrawer = (props: NeedPreviewDrawerProps) => {
       opened={opened}
       onClose={onClose}
       position="bottom"
-      size="md"
+      size="lg"
       withCloseButton={false}
       styles={{
         body: { padding: 0, height: '100%' },

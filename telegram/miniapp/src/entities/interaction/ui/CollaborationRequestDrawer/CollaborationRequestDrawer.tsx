@@ -10,7 +10,9 @@ import {
   Text,
 } from '@mantine/core';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Notification } from 'shared/api/service/Notification/types';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import XIcon from 'shared/assets/icons/x';
 import { ActionsDrawer } from '../ActionsDrawer/ActionsDrawer';
 import classes from './CollaborationRequestDrawer.module.scss';
@@ -35,7 +37,30 @@ export const CollaborationRequestDrawer = (
     isDeleting,
     isLoading = false,
   } = props;
+  const navigate = useNavigate();
   const [isDeleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+
+  const receiverId = notification.receiverId;
+  const canOpenReceiver = Boolean(receiverId);
+
+  const handleReceiverClick = () => {
+    if (!receiverId) return;
+    navigate(
+      RoutePath[AppRoutes.USER_PROFILE].replace(':id', String(receiverId)),
+    );
+    onClose();
+  };
+
+  const handleProjectClick = () => {
+    if (!notification.publicationId) return;
+    navigate(
+      RoutePath[AppRoutes.SERVICE_DETAIL].replace(
+        ':id',
+        String(notification.publicationId),
+      ),
+    );
+    onClose();
+  };
 
   const handleDelete = () => {
     onDelete?.(notification.id);
@@ -80,7 +105,20 @@ export const CollaborationRequestDrawer = (
               {(isLoading || notification.initiator) && (
                 <Stack gap={8}>
                   <Text className={classes.sectionTitle}>Кому</Text>
-                  <Box className={classes.card}>
+                  <Box
+                    className={classes.card}
+                    onClick={
+                      notification.initiator && canOpenReceiver
+                        ? handleReceiverClick
+                        : undefined
+                    }
+                    style={{
+                      cursor:
+                        notification.initiator && canOpenReceiver
+                          ? 'pointer'
+                          : 'default',
+                    }}
+                  >
                     {isLoading && !notification.initiator ? (
                       <Group gap={12} align="center">
                         <Skeleton circle height={40} width={40} />
@@ -132,7 +170,19 @@ export const CollaborationRequestDrawer = (
                   <Text className={classes.sectionTitle}>
                     Привязанный проект
                   </Text>
-                  <Box className={classes.card}>
+                  <Box
+                    className={classes.card}
+                    onClick={
+                      notification.projectDetails
+                        ? handleProjectClick
+                        : undefined
+                    }
+                    style={{
+                      cursor: notification.projectDetails
+                        ? 'pointer'
+                        : 'default',
+                    }}
+                  >
                     {isLoading && !notification.projectDetails ? (
                       <Stack gap={10}>
                         <Skeleton height={48} radius="sm" width={48} />

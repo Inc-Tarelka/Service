@@ -15,6 +15,7 @@ import { ResponseToNeedDrawer } from 'features/respond-to-need/ui/ResponseToNeed
 import { NeedDetailsDrawer } from 'features/view-need/ui/NeedDetailsDrawer/NeedDetailsDrawer';
 import { getNotificationById } from 'shared/api/service/Notification/api';
 import type { Notification } from 'shared/api/service/Notification/types';
+import { deletePublication } from 'shared/api/service/Publication/api';
 import type { SearchServiceItem } from 'shared/api/service/PublicationServicesSearch';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { buildServiceStartAppLink } from 'shared/lib/utils/telegram-startapp';
@@ -217,6 +218,12 @@ export const ServiceDetailPage = observer(() => {
     }
   };
 
+  const handleDeletePublication = async () => {
+    if (!id) return;
+    await deletePublication(Number(id));
+    navigate(-1);
+  };
+
   const handleTeamMemberClick = (userId: number) => {
     if (!authStore.isAuth) {
       return;
@@ -271,6 +278,7 @@ export const ServiceDetailPage = observer(() => {
         isOwner={isOwner}
         onEdit={handleEditClick}
         onShare={handleShare}
+        onDeletePublication={handleDeletePublication}
         isViewOnly={isViewOnly}
         teamInviteBanner={
           shouldShowTeamInviteBanner && teamInviteContext

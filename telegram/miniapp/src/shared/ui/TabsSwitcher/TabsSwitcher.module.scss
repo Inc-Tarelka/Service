@@ -97,10 +97,8 @@
 }
 
 .viewport {
-  overflow: clip;
+  overflow: hidden;
   padding-top: 4px;
-
-  // Allows vertical scroll to propagate to parent, while JS detects horizontal swipes
   touch-action: pan-y;
 }
 

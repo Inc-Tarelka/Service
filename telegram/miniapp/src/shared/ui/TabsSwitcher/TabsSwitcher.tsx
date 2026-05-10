@@ -28,6 +28,9 @@ interface TabsSwitcherProps<T extends string> {
   hideMask?: boolean;
   contentPaddingTop?: number | string;
   stickyTop?: string | number;
+  scrollKey?: string;
+  onSaveScroll?: (key: string, position: number) => void;
+  getScroll?: (key: string) => number;
 }
 
 const SWIPE_THRESHOLD = 50;
@@ -89,6 +92,9 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     hideMask,
     contentPaddingTop,
     stickyTop,
+    scrollKey,
+    onSaveScroll,
+    getScroll,
   } = props;
   const { isDesktop } = useViewport();
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
@@ -242,7 +248,14 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     const state = touchRef.current;
     touchRef.current = null;
 
-    if (!state || state.skipSwipe || state.direction !== 'horizontal') {
+    if (!state || state.skipSwipe) {
+      offsetRef.current = 0;
+      setOffsetX(0);
+      setIsSwiping(false);
+      return;
+    }
+
+    if (state.direction !== 'horizontal') {
       offsetRef.current = 0;
       setOffsetX(0);
       setIsSwiping(false);
@@ -269,15 +282,20 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
 
   const handleTabScroll = useCallback(
     (tabValue: T, e: React.UIEvent<HTMLDivElement>) => {
-      if (!onTabScrollEnd) return;
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+      if (onSaveScroll && scrollKey) {
+        onSaveScroll(`${scrollKey}-${tabValue}`, scrollTop);
+      }
+
       if (
+        onTabScrollEnd &&
         Math.abs(scrollHeight - scrollTop - clientHeight) < SCROLL_END_THRESHOLD
       ) {
         onTabScrollEnd(tabValue);
       }
     },
-    [onTabScrollEnd],
+    [onTabScrollEnd, onSaveScroll, scrollKey],
   );
 
   const stickyTopCss =
@@ -289,6 +307,16 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
 
   const independentScroll =
     stickyTopCss !== undefined && renderTab !== undefined;
+
+  useLayoutEffect(() => {
+    if (!independentScroll || !getScroll || !scrollKey) return;
+    const el = trackPageRefs.current.get(currentTab);
+    if (!el) return;
+    const saved = getScroll(`${scrollKey}-${currentTab}`);
+    if (saved > 0) {
+      el.scrollTop = saved;
+    }
+  }, [currentTab, independentScroll, getScroll, scrollKey]);
 
   const paddingBottomCss = isDesktop ? '0px' : 'var(--TB-padding, 0px)';
 

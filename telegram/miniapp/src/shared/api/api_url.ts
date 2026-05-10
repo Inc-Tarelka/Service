@@ -22,6 +22,7 @@ export const API_URL = {
   me_teammates: () => '/users/me/teammates',
   user: (id: string | number) => `/users/${id}`,
   user_profile: (id: string | number) => `/users/${id}/profile`,
+  user_teammates: (id: string | number) => `/users/${id}/teammates`,
 
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,
@@ -34,6 +35,7 @@ export const API_URL = {
   search_publication_services: () => '/publications/services/search',
   get_publication_details: (id: string) => `/publications/${id}`,
   update_publication: (id: string) => `/publications/${id}`,
+  delete_publication: (id: string) => `/publications/${id}`,
   publication_like: (id: string) => `/publications/${id}/likes`,
   publication_comment: (id: string) => `/publications/${id}/comments`,
   publication_comment_post: (id: string) => `/publications/${id}/comments`,

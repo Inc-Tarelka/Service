@@ -9,6 +9,7 @@ import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { deletePublication } from 'shared/api/service/Publication/api';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
 import { buildUserStartAppLink } from 'shared/lib/utils/telegram-startapp';
@@ -29,6 +30,20 @@ export const UserProfilePage = observer(() => {
 
   const handlePublicationClick = (pubId: number) => {
     navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(pubId)));
+  };
+
+  const handleTeammatesClick = () => {
+    if (!id) return;
+    navigate(
+      `${RoutePath[AppRoutes.COLLABORATORS]}?tab=collaborators&userId=${id}`,
+    );
+  };
+
+  const handleDeletePublication = async (pubId: number) => {
+    await deletePublication(pubId);
+    if (id) {
+      userProfileStore.getUserExtendedProfileAction(id);
+    }
   };
 
   const handleShareProfile = () => {
@@ -73,6 +88,7 @@ export const UserProfilePage = observer(() => {
         user={user}
         isOwnProfile={false}
         onShare={handleShareProfile}
+        onTeammatesClick={handleTeammatesClick}
       />
 
       <Box className={classes.buttonWrapper}>
@@ -97,6 +113,7 @@ export const UserProfilePage = observer(() => {
                 userProfileStore.extendedProfile?.publications || []
               }
               onItemClick={handlePublicationClick}
+              onDelete={handleDeletePublication}
             />
           )}
           {activeTab === 'info' && (

@@ -1,5 +1,6 @@
 import { Button, Select, TextInput } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 
 import { useStore } from 'app/StoreProvider';
 import type { AccountType as ApiAccountType } from 'shared/api/types';
@@ -18,8 +19,19 @@ interface ProfileFormProps {
   onSuccess: (data: any) => void;
 }
 
+const isProfileAccountType = (
+  value?: string,
+): value is 'specialist' | 'company' =>
+  value === 'specialist' || value === 'company';
+
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
   const { authStore, userStore } = useStore();
+
+  const initialAccountType = isProfileAccountType(
+    authStore.tempData.accountType,
+  )
+    ? authStore.tempData.accountType
+    : 'specialist';
 
   const {
     values,
@@ -31,11 +43,11 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     setErrors,
   } = useFormWithValidation({
     initialValues: {
-      accountType: 'specialist',
-      name: '',
-      lastName: '',
-      specialization: '',
-      city: '',
+      accountType: initialAccountType,
+      name: authStore.tempData.name ?? '',
+      lastName: authStore.tempData.lastName ?? '',
+      specialization: authStore.tempData.specialization ?? '',
+      city: authStore.tempData.city ?? '',
     },
     schema: profileSchema,
     onSubmit: async (values) => {
@@ -70,7 +82,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           return;
         }
 
-        const success = await authStore.telegramRegistrationAction({
+        const result = await authStore.telegramRegistrationAction({
           initData: WebApp.initData || '',
           account: {
             type:
@@ -89,12 +101,16 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           cityIds: [cityId],
         });
 
-        if (success) {
+        if (result === true) {
           await userStore.updateMyProfileAction({
             name: values.name,
             surname: values.lastName,
           });
           onSuccess(values);
+        } else if (result === 'conflict') {
+          setErrors({
+            name: 'Аккаунт с такими данными уже существует. Проверьте логин и пароль и попробуйте снова.',
+          });
         } else {
           setErrors({ name: 'Ошибка регистрации. Попробуйте снова.' });
         }
@@ -104,6 +120,23 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
       }
     },
   });
+
+  useEffect(() => {
+    authStore.setTempData({
+      accountType: values.accountType,
+      name: values.name,
+      lastName: values.lastName,
+      specialization: values.specialization,
+      city: values.city,
+    });
+  }, [
+    authStore,
+    values.accountType,
+    values.name,
+    values.lastName,
+    values.specialization,
+    values.city,
+  ]);
 
   const isCompany = values.accountType === 'company';
 

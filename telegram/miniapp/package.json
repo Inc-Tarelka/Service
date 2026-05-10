@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "tsc -b && vite build --mode production",
+    "build:dev": "tsc -b && vite build --mode development",
+    "deploy:dev": "npm run build:dev && firebase deploy --only hosting",
+    "deploy": "npm run deploy:dev",
     "lint": "eslint .",
     "stylelint": "stylelint \"**/*.{css,scss}\"",
     "stylelint:fix": "stylelint \"**/*.{css,scss}\" --fix",

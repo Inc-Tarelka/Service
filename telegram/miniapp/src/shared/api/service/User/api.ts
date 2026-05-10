@@ -112,3 +112,6 @@ export const getMyExtendedProfile = async () =>
 // =============================== MY TEAMMATES ===============================
 export const getMyTeammates = async () =>
   await baseInstanceV1.get<TeammatesResponse>(API_URL.me_teammates());
+
+export const getUserTeammates = async (id: string) =>
+  await baseInstanceV1.get<TeammatesResponse>(API_URL.user_teammates(id));

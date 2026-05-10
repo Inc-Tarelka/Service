@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { Activity, useCallback, useEffect } from 'react';
+import { Activity, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import s from './AuthPage.module.scss';
 
@@ -26,6 +26,10 @@ export const AuthPage = observer(() => {
   const navigate = useNavigate();
   const { setToken } = useAuth();
   const { authStore } = useStore();
+  const initialRedirectPendingRef = useRef(
+    !!authStore.currentStep && !searchParams.get('step'),
+  );
+  const autoResendDoneRef = useRef(false);
 
   useEffect(() => {
     authStore.syncRegistrationSenderId();
@@ -54,6 +58,53 @@ export const AuthPage = observer(() => {
     },
     [setSearchParams],
   );
+
+  const needsConfirmRedirect =
+    step === 'registerProfile' &&
+    !authStore.tempData.verificationCode &&
+    !!authStore.tempData.phone;
+
+  useEffect(() => {
+    if (needsConfirmRedirect) {
+      setSearchParams({ step: 'registerConfirm' }, { replace: true });
+      return;
+    }
+    if (initialRedirectPendingRef.current) {
+      initialRedirectPendingRef.current = false;
+      const restored = authStore.currentStep;
+      if (restored) {
+        setSearchParams({ step: restored }, { replace: true });
+        return;
+      }
+    }
+    authStore.setCurrentStep(step);
+  }, [step, authStore, setSearchParams, needsConfirmRedirect]);
+
+  useEffect(() => {
+    if (step !== 'registerConfirm') {
+      autoResendDoneRef.current = false;
+      return;
+    }
+    if (autoResendDoneRef.current) return;
+    if (verificationStore.requestId) return;
+    if (authStore.tempData.verificationRequestId) {
+      verificationStore.requestId = authStore.tempData.verificationRequestId;
+      autoResendDoneRef.current = true;
+      return;
+    }
+
+    const phone = authStore.tempData.phone;
+    if (!phone) return;
+
+    autoResendDoneRef.current = true;
+    void verificationStore.sendCode(phone).then((ok) => {
+      if (ok && verificationStore.requestId) {
+        authStore.setTempData({
+          verificationRequestId: verificationStore.requestId,
+        });
+      }
+    });
+  }, [step, authStore]);
 
   return (
     <div className={classNames(s.authPage, {}, [])}>

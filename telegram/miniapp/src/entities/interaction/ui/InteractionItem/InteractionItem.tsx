@@ -30,16 +30,15 @@ export const InteractionItem = (props: InteractionItemProps) => {
   } = props;
   const [isDetailOpen, setDetailOpen] = useState(false);
 
-  const handleChevronClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDetailOpen(true);
-    void onOpenDetail?.(notification);
-  };
-
-  const handleCardClick = () => {
+  const openDetail = () => {
     setDetailOpen(true);
     onClick?.();
     void onOpenDetail?.(notification);
+  };
+
+  const handleChevronClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openDetail();
   };
 
   const isOffer = notification.type === 'Response';
@@ -54,7 +53,12 @@ export const InteractionItem = (props: InteractionItemProps) => {
 
   return (
     <>
-      <div className={classes.card} onClick={handleCardClick}>
+      <div
+        className={classes.card}
+        onClick={openDetail}
+        role="button"
+        tabIndex={0}
+      >
         <div className={classes.header}>
           <span className={classes.title}>
             {isOffer ? 'Отклик на потребность' : 'Запрос на сотрудничество'}
@@ -64,6 +68,7 @@ export const InteractionItem = (props: InteractionItemProps) => {
               variant="transparent"
               color="gray"
               onClick={handleChevronClick}
+              aria-label="Открыть"
             >
               <ChevronRightIcon className={classes.chevron} />
             </ActionIcon>

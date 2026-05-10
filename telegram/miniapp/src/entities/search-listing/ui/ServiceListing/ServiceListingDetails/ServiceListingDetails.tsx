@@ -48,6 +48,7 @@ interface ServiceListingDetailsProps {
   isOwner?: boolean;
   onEdit?: () => void;
   onShare?: (id: number) => void;
+  onDeletePublication?: () => void;
   isViewOnly?: boolean;
   teamInviteBanner?: TeamInviteBanner | null;
 }
@@ -83,6 +84,7 @@ export const ServiceListingDetails = observer(
       isOwner,
       onEdit,
       onShare,
+      onDeletePublication,
       isViewOnly = false,
       teamInviteBanner,
     } = props;
@@ -350,6 +352,7 @@ export const ServiceListingDetails = observer(
           title="Вы уверены, что хотите удалить проект?"
           onDelete={() => {
             closeDelete();
+            onDeletePublication?.();
           }}
         />
       </div>

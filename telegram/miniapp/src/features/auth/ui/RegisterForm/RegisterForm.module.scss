@@ -2,12 +2,17 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .content {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 20px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 16px;
 }
 
 .title {
@@ -111,10 +116,12 @@
 }
 
 .footer {
+  background: var(--bg-color);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 16px;
-  margin-top: auto;
+  padding: 16px 0 0;
 }
 
 .loginLink {

@@ -7,6 +7,7 @@ import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { TermsDrawer } from '../TermsDrawer/TermsDrawer';
 import {
   buildTelegramStartAppLink,
   getReferralSenderIdFromInviteLink,
@@ -33,6 +34,7 @@ export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
     const { authStore } = useStore();
     const [inviteLink, setInviteLink] = useState('');
+    const [termsOpened, setTermsOpened] = useState(false);
     const parsedInviteSenderId = useMemo(
       () => getReferralSenderIdFromInviteLink(inviteLink),
       [inviteLink],
@@ -69,10 +71,10 @@ export const RegisterForm = observer(
       handleSubmit,
     } = useFormWithValidation({
       initialValues: {
-        phone: '',
-        login: '',
-        password: '',
-        confirmPassword: '',
+        phone: authStore.tempData.phone ?? '',
+        login: authStore.tempData.login ?? '',
+        password: authStore.tempData.password ?? '',
+        confirmPassword: authStore.tempData.password ?? '',
         agreeToTerms: false as unknown as true,
       },
       schema: registerSchema,
@@ -247,13 +249,27 @@ export const RegisterForm = observer(
               label={
                 <>
                   Нажимая "Продолжить", вы соглашаетесь c{' '}
-                  <span className={s.termsLink}>Правилами использования</span>
+                  <span
+                    className={s.termsLink}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTermsOpened(true);
+                    }}
+                  >
+                    Правилами использования
+                  </span>
                 </>
               }
               size="sm"
             />
           </div>
         </div>
+
+        <TermsDrawer
+          opened={termsOpened}
+          onClose={() => setTermsOpened(false)}
+        />
 
         <div className={s.footer}>
           <p className={s.loginLink}>

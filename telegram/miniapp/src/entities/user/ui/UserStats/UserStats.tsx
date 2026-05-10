@@ -5,12 +5,17 @@ import classes from './UserStats.module.scss';
 
 interface UserStatsProps {
   stats: UserStatsType;
+  onTeammatesClick?: () => void;
 }
 
-export const UserStats = ({ stats }: UserStatsProps) => {
+export const UserStats = ({ stats, onTeammatesClick }: UserStatsProps) => {
   const navigate = useNavigate();
 
   const handleCollaboratorsClick = () => {
+    if (onTeammatesClick) {
+      onTeammatesClick();
+      return;
+    }
     navigate(`${RoutePath.collaborators}?tab=collaborators`);
   };
 

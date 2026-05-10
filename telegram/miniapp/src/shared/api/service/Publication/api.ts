@@ -116,3 +116,10 @@ export const updatePublication = async (
       request,
     )
   ).data;
+
+export const deletePublication = async (id: number) => {
+  const response = await baseInstanceV1.delete(
+    API_URL.delete_publication(id.toString()),
+  );
+  return response.data;
+};

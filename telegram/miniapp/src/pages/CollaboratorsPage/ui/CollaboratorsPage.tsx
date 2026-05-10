@@ -19,7 +19,7 @@ const TABS: TabItem<CollaboratorTab>[] = [
 
 export const CollaboratorsPage = observer(() => {
   useBackButton();
-  const { userStore } = useStore();
+  const { userStore, userProfileStore } = useStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as CollaboratorTab | null;
@@ -27,11 +27,18 @@ export const CollaboratorsPage = observer(() => {
     tabFromUrl === 'outgoing' ? 'outgoing' : 'collaborators',
   );
 
-  const teammates = userStore.teammates;
-  const isLoadingTeammates = userStore.isLoadingTeammates;
+  const userId = searchParams.get('userId');
+  const teammates = userId ? userProfileStore.teammates : userStore.teammates;
+  const isLoadingTeammates = userId
+    ? userProfileStore.isLoadingTeammates
+    : userStore.isLoadingTeammates;
 
   useEffect(() => {
-    userStore.getTeammatesAction();
+    if (userId) {
+      userProfileStore.getTeammatesAction(userId);
+    } else {
+      userStore.getTeammatesAction();
+    }
   }, []);
 
   useEffect(() => {

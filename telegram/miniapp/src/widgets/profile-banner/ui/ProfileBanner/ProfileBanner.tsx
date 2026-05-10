@@ -11,10 +11,18 @@ interface ProfileBannerProps {
   coverImage?: string;
   minimal?: boolean;
   onShare?: () => void;
+  onTeammatesClick?: () => void;
 }
 
 export const ProfileBanner = (props: ProfileBannerProps) => {
-  const { user, isOwnProfile, coverImage, minimal = false, onShare } = props;
+  const {
+    user,
+    isOwnProfile,
+    coverImage,
+    minimal = false,
+    onShare,
+    onTeammatesClick,
+  } = props;
   const coverClassName = coverImage
     ? `${classes.cover} ${classes.withImage}`
     : classes.cover;
@@ -76,6 +84,7 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
                     projectsCount: 0,
                   }
                 }
+                onTeammatesClick={onTeammatesClick}
               />
             </Box>
           </>

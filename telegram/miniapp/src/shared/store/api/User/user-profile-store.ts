@@ -4,8 +4,13 @@ import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
   getUserById,
   getUserExtendedProfile,
+  getUserTeammates,
 } from 'shared/api/service/User/api';
-import { ExpandedUserProfile, User } from 'shared/api/service/User/types';
+import {
+  ExpandedUserProfile,
+  Teammate,
+  User,
+} from 'shared/api/service/User/types';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
 
 export class UserProfileStore {
@@ -17,6 +22,8 @@ export class UserProfileStore {
   userExtendedProfileData?: IPromiseBasedObservable<
     AxiosResponse<ExpandedUserProfile>
   >;
+
+  teammatesData?: IPromiseBasedObservable<AxiosResponse<Teammate[]>>;
 
   getUserProfileAction = async (id: string) => {
     try {
@@ -33,6 +40,16 @@ export class UserProfileStore {
       >(getUserExtendedProfile(id));
     } catch (error) {
       console.error('Failed to fetch user extended profile:', error);
+    }
+  };
+
+  getTeammatesAction = async (id: string) => {
+    try {
+      this.teammatesData = fromPromise<AxiosResponse<Teammate[]>>(
+        getUserTeammates(id),
+      );
+    } catch (error) {
+      console.error('Failed to fetch user teammates:', error);
     }
   };
 
@@ -121,5 +138,15 @@ export class UserProfileStore {
       };
     }
     return null;
+  }
+
+  get teammates(): Teammate[] {
+    return this.teammatesData?.state === 'fulfilled'
+      ? this.teammatesData.value.data
+      : [];
+  }
+
+  get isLoadingTeammates() {
+    return this.teammatesData?.state === 'pending';
   }
 }

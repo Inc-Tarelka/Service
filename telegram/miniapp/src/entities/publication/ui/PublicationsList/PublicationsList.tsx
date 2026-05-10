@@ -11,10 +11,11 @@ interface PublicationsListProps {
   publications: (Publication | UserProfilePublication)[];
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
+  onDelete?: (id: number) => void;
 }
 
 export const PublicationsList = observer((props: PublicationsListProps) => {
-  const { className, publications, onItemClick } = props;
+  const { className, publications, onItemClick, onDelete } = props;
 
   const renderPublication = (
     publication: Publication | UserProfilePublication,
@@ -24,6 +25,7 @@ export const PublicationsList = observer((props: PublicationsListProps) => {
         key={publication.id}
         publication={publication}
         onClick={onItemClick}
+        onDelete={onDelete}
       />
     );
   };

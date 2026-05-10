@@ -2,9 +2,10 @@ import { useStore } from 'app/StoreProvider';
 import { ResponseToNeedDrawer } from 'features/respond-to-need';
 import { SearchPublications } from 'features/search-publications';
 import { NeedDetailsDrawer } from 'features/view-need';
+import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SearchPublicationsType } from 'shared/api/types';
 import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
@@ -23,21 +24,33 @@ export const MainPage = observer(() => {
     searchServicesStore,
     searchUsersStore,
     searchAllStore,
+    scrollRecoveryStore,
   } = useStore();
-  const [searchParams] = useSearchParams();
   const { isDesktop } = useViewport();
   const { handleDataNavigation, handleUserNavigation } = useNavigationLogic();
-  const queryFromUrl = searchParams.get('query') || '';
-  const tabParam = searchParams.get('tab');
-  const tabFromUrl =
-    tabParam && TAB_VALUES.has(tabParam as SearchPublicationsType)
-      ? (tabParam as SearchPublicationsType)
+
+  const storedTab = scrollRecoveryStore.mainPageActiveTab;
+  const initialTab =
+    storedTab && TAB_VALUES.has(storedTab as SearchPublicationsType)
+      ? (storedTab as SearchPublicationsType)
       : SearchPublicationsType.ALL;
 
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] =
-    useState<SearchPublicationsType>(tabFromUrl);
-  const [searchQuery, setSearchQuery] = useState(queryFromUrl);
+  const [activeTab, setActiveTabLocal] =
+    useState<SearchPublicationsType>(initialTab);
+  const [searchQuery, setSearchQueryLocal] = useState(
+    scrollRecoveryStore.mainPageSearchQuery,
+  );
+
+  const setActiveTab = (tab: SearchPublicationsType) => {
+    setActiveTabLocal(tab);
+    scrollRecoveryStore.setMainPageActiveTab(tab);
+  };
+
+  const setSearchQuery = (query: string) => {
+    setSearchQueryLocal(query);
+    scrollRecoveryStore.setMainPageSearchQuery(query);
+  };
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
@@ -104,7 +117,7 @@ export const MainPage = observer(() => {
           services.find((s) => s.id === id) ||
           publications.find((p) => p.id === id);
         navigate(`/service/${id}?${searchState.toString()}`, {
-          state: { service: selectedService },
+          state: { service: toJS(selectedService) },
         });
         break;
       }
@@ -155,8 +168,10 @@ export const MainPage = observer(() => {
       >
         <SearchPublications
           activeTab={activeTab}
-          initialQuery={queryFromUrl}
-          onSearchQueryChange={(query) => setSearchQuery(query)}
+          initialQuery={searchQuery}
+          onSearchQueryChange={(query) => {
+            setSearchQuery(query);
+          }}
         />
       </div>
       <TabsSwitcher
@@ -164,8 +179,13 @@ export const MainPage = observer(() => {
         tabs={tabs}
         activeTab={activeTab}
         className={s.tabs}
-        onTabChange={(tab) => setActiveTab(tab)}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+        }}
         stickyTop={64}
+        scrollKey="main-tab"
+        onSaveScroll={scrollRecoveryStore.setScrollPosition}
+        getScroll={scrollRecoveryStore.getScroll}
         onTabScrollEnd={handleTabScrollEnd}
         renderTab={(tab) => {
           const store = getStoreForTab(tab);
