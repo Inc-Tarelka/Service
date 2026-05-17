@@ -92,7 +92,7 @@ export const ListingContent = observer((params: ListingContentProps) => {
       }
 
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {allItems.map((item) => {
             if (item.type === 'service') {
               const service = allServices.find((entry) => entry.id === item.id);

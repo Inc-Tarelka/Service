@@ -26,9 +26,6 @@ export const AuthPage = observer(() => {
   const navigate = useNavigate();
   const { setToken } = useAuth();
   const { authStore } = useStore();
-  const initialRedirectPendingRef = useRef(
-    !!authStore.currentStep && !searchParams.get('step'),
-  );
   const autoResendDoneRef = useRef(false);
 
   useEffect(() => {
@@ -37,11 +34,15 @@ export const AuthPage = observer(() => {
 
   const rawStep = searchParams.get('step');
   const isReferral = authStore.hasRegistrationSenderId;
+
+  // На первом рендере после ресторации (нет ?step в URL) берём шаг из стора напрямую,
+  // чтобы сразу показать верную форму без flash-перехода через 'register'/'login'.
+  const defaultStep: AuthStep =
+    authStore.currentStep ?? (isReferral ? 'register' : DEFAULT_STEP);
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
-    : isReferral
-      ? 'register'
-      : DEFAULT_STEP;
+    : defaultStep;
+
   const showBackButton = step !== DEFAULT_STEP;
 
   useBackButton({
@@ -59,26 +60,23 @@ export const AuthPage = observer(() => {
     [setSearchParams],
   );
 
-  const needsConfirmRedirect =
-    step === 'registerProfile' &&
-    !authStore.tempData.verificationCode &&
-    !!authStore.tempData.phone;
-
   useEffect(() => {
-    if (needsConfirmRedirect) {
+    // Шаг восстановлен из стора, но URL ещё пустой — синхронизируем.
+    if (!rawStep && authStore.currentStep) {
+      setSearchParams({ step: authStore.currentStep }, { replace: true });
+      return;
+    }
+    // registerProfile без verificationCode — безопасно вернуть на подтверждение кода.
+    if (
+      step === 'registerProfile' &&
+      !authStore.tempData.verificationCode &&
+      authStore.tempData.phone
+    ) {
       setSearchParams({ step: 'registerConfirm' }, { replace: true });
       return;
     }
-    if (initialRedirectPendingRef.current) {
-      initialRedirectPendingRef.current = false;
-      const restored = authStore.currentStep;
-      if (restored) {
-        setSearchParams({ step: restored }, { replace: true });
-        return;
-      }
-    }
     authStore.setCurrentStep(step);
-  }, [step, authStore, setSearchParams, needsConfirmRedirect]);
+  }, [step, rawStep, authStore, setSearchParams]);
 
   useEffect(() => {
     if (step !== 'registerConfirm') {

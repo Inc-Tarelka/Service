@@ -29,10 +29,17 @@ export default defineConfig({
     host: true,
     allowedHosts: [
       '.trycloudflare.com',
-      '.ngrok-free.app',
+      '.bilaldevqfront.ngrok.app',
       '.ngrok-free.dev',
+
       '.lhr.life',
     ],
+    proxy: {
+      '/api': {
+        target: 'https://tarelka-api.ru',
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {
