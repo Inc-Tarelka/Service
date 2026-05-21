@@ -131,8 +131,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 			// Global search across services, needs and users
 			protected.GET("/search/all", h.GlobalSearch)
 
-			// Invite links
-			protected.GET("/createInviteLink", h.CreateInviteLink)
+			// Invite links (temporarily disabled)
+			// protected.GET("/createInviteLink", h.CreateInviteLink)
 
 			// Users
 			users := protected.Group("/users")
@@ -208,7 +208,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 
 // CreateInviteLink godoc
 // @Summary Создать пригласительную ссылку
-// @Description Генерирует senderId для текущего пользователя для формирования Telegram Mini App ссылки (?startapp=senderId)
+// @Description Endpoint временно отключён (регистрация открыта), оставлено для обратной совместимости.
 // @Tags auth
 // @Produce json
 // @Security BearerAuth

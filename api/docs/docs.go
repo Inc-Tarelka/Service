@@ -472,7 +472,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Генерирует senderId для текущего пользователя для формирования Telegram Mini App ссылки (?startapp=senderId)",
+                "description": "Endpoint временно отключён (регистрация открыта), оставлено для обратной совместимости.",
                 "produces": [
                     "application/json"
                 ],
@@ -4193,8 +4193,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "account",
-                "initData",
-                "senderId"
+                "initData"
             ],
             "properties": {
                 "account": {
@@ -4204,7 +4203,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "senderId": {
-                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен в текущей конфигурации (закрытый режим регистрации).",
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nСейчас не используется (регистрация открыта), оставлено для совместимости.",
                     "type": "string"
                 }
             }
@@ -4531,7 +4530,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/model.PhoneVerification"
                 },
                 "senderId": {
-                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nОбязателен, если включён закрытый режим регистрации.",
+                    "description": "senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.\nСейчас не используется (регистрация открыта), оставлено для совместимости.",
                     "type": "string"
                 },
                 "specializationIds": {

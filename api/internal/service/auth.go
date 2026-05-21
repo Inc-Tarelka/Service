@@ -224,7 +224,6 @@ func (s *authService) GenerateInviteSenderID(ctx context.Context, userID int64) 
 //   - проверяем уникальность username
 //   - создаём или находим tg_user
 //   - хэшируем пароль
-//   - проверяем и списываем инвайт по senderId (если включён закрытый режим) непосредственно перед созданием пользователя
 //   - создаём tarelka_user с conversation = 0 без подтипа и связей
 //
 // Токены здесь НЕ выдаются.
@@ -274,12 +273,8 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		telegramURL = &norm
 	}
 
-	// 5.2. Проверка и применение инвайта (senderID) + получение ID пригласителя.
-	// Выполняем как можно позже, чтобы не расходовать инвайт на заведомо невалидные запросы.
-	inviterID, err := s.validateInviteAndIncrement(ctx, req.SenderID)
-	if err != nil {
-		return nil, err
-	}
+	// 5.2. Инвайт-логика временно отключена: регистрация доступна всем.
+	// senderID игнорируется, InvitedByUserID не заполняем.
 
 	// 6. Создание tarelka_user с conversation = 0
 	user := &model.TarelkaUser{
@@ -290,7 +285,7 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 		PasswordHash:    string(passwordHash),
 		TelegramURL:     telegramURL,
 		Conversation:    0,
-		InvitedByUserID: &inviterID,
+		InvitedByUserID: nil,
 	}
 
 	user, err = s.tarelkaUserRepo.Create(ctx, user)
@@ -317,11 +312,7 @@ func (s *authService) PreRegister(ctx context.Context, req *model.PreRegisterReq
 	return &model.PreRegisterResponse{UserID: user.ID}, nil
 }
 
-// RegisterViaTelegram регистрация через Telegram Mini App
-
 func (s *authService) RegisterViaTelegram(ctx context.Context, req *model.RegisterRequest) (*model.RegisterResponse, error) {
-	// 0. Инвайт уже был проверен и применён на этапе pre-register, здесь ничего не делаем.
-
 	// 1. Валидация initData
 	telegramID, _, err := s.validateInitData(req.InitData)
 	if err != nil {

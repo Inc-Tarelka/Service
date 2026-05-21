@@ -523,12 +523,11 @@ definitions:
       senderId:
         description: |-
           senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
-          Обязателен в текущей конфигурации (закрытый режим регистрации).
+          Сейчас не используется (регистрация открыта), оставлено для совместимости.
         type: string
     required:
     - account
     - initData
-    - senderId
     type: object
   model.PreRegisterResponse:
     properties:
@@ -742,7 +741,7 @@ definitions:
       senderId:
         description: |-
           senderID — зашифрованный идентификатор пригласителя из Telegram Mini App.
-          Обязателен, если включён закрытый режим регистрации.
+          Сейчас не используется (регистрация открыта), оставлено для совместимости.
         type: string
       specializationIds:
         items:
@@ -1421,8 +1420,8 @@ paths:
       - auth
   /createInviteLink:
     get:
-      description: Генерирует senderId для текущего пользователя для формирования
-        Telegram Mini App ссылки (?startapp=senderId)
+      description: Endpoint временно отключён (регистрация открыта), оставлено для
+        обратной совместимости.
       produces:
       - application/json
       responses:
