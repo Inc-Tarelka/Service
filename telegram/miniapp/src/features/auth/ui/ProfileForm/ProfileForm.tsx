@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 
 import { useStore } from 'app/StoreProvider';
-import type { AccountType as ApiAccountType } from 'shared/api/types';
+import { AccountType as ApiAccountType } from 'shared/api/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
@@ -23,6 +23,9 @@ const isProfileAccountType = (
   value?: string,
 ): value is 'specialist' | 'company' =>
   value === 'specialist' || value === 'company';
+
+const toApiAccountType = (value?: string): ApiAccountType =>
+  value === 'company' ? ApiAccountType.COMPANY : ApiAccountType.PERSON;
 
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
   const { authStore, userStore } = useStore();
@@ -85,9 +88,7 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
         const result = await authStore.telegramRegistrationAction({
           initData: WebApp.initData || '',
           account: {
-            type:
-              (accountType as unknown as ApiAccountType) ??
-              ('PERSON' as ApiAccountType),
+            type: toApiAccountType(accountType),
             username: login,
             phone,
             password,
