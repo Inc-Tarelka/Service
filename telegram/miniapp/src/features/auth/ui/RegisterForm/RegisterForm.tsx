@@ -1,18 +1,13 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { TermsDrawer } from '../TermsDrawer/TermsDrawer';
-import {
-  buildTelegramStartAppLink,
-  getReferralSenderIdFromInviteLink,
-  getStoredReferralInviteLink,
-} from 'shared/lib/utils/telegram-startapp';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
@@ -33,34 +28,7 @@ interface RegisterFormProps {
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
     const { authStore } = useStore();
-    const [inviteLink, setInviteLink] = useState('');
     const [termsOpened, setTermsOpened] = useState(false);
-    const parsedInviteSenderId = useMemo(
-      () => getReferralSenderIdFromInviteLink(inviteLink),
-      [inviteLink],
-    );
-    const hasStoredInvite = authStore.hasRegistrationSenderId;
-    const isInviteLocked = hasStoredInvite;
-    const canRegister = hasStoredInvite || !!parsedInviteSenderId;
-    const referralHintText = canRegister
-      ? 'Регистрация по приглашению'
-      : 'Введите ссылку для регистрации';
-    const inviteLinkError =
-      !hasStoredInvite && inviteLink.trim() && !parsedInviteSenderId
-        ? 'Введите валидную пригласительную ссылку'
-        : undefined;
-
-    useEffect(() => {
-      const senderId = authStore.syncRegistrationSenderId();
-      if (!senderId) {
-        return;
-      }
-
-      const storedInviteLink =
-        getStoredReferralInviteLink() ?? buildTelegramStartAppLink(senderId);
-
-      setInviteLink((previous) => previous || storedInviteLink);
-    }, [authStore]);
 
     const {
       values,
@@ -79,14 +47,6 @@ export const RegisterForm = observer(
       },
       schema: registerSchema,
       onSubmit: async (values) => {
-        if (parsedInviteSenderId) {
-          authStore.setRegistrationSenderId(parsedInviteSenderId);
-        }
-
-        if (!authStore.hasRegistrationSenderId) {
-          return;
-        }
-
         const success = await authStore.preRegisterAndSendCodeAction({
           initData: WebApp.initData || '',
           account: {
@@ -141,31 +101,6 @@ export const RegisterForm = observer(
       <Page className={s.registerForm} smallPaddingBottom>
         <div className={s.content}>
           <h1 className={s.title}>Регистрация</h1>
-          <div className={s.referralHint}>{referralHintText}</div>
-
-          {!isInviteLocked && (
-            <div className={s.inputGroup}>
-              <span className={s.label}>Пригласительная ссылка</span>
-              <TextInput
-                classNames={{
-                  input: `${s.input} ${inviteLinkError ? s.error : ''}`,
-                }}
-                value={inviteLink}
-                onChange={(event) => setInviteLink(event.currentTarget.value)}
-                placeholder="https://t.me/Tarelka_dev_weak_bot?startapp=..."
-                error={inviteLinkError}
-                radius="xl"
-                size="lg"
-              />
-            </div>
-          )}
-
-          {isInviteLocked && (
-            <div className={s.inputGroup}>
-              <span className={s.label}>Пригласительная ссылка</span>
-              <span className={s.hint}>Ссылка добавлена автоматически</span>
-            </div>
-          )}
 
           <div className={s.inputGroup}>
             <span className={s.label}>Телефон</span>
@@ -279,7 +214,6 @@ export const RegisterForm = observer(
             className={s.submitButton}
             onClick={handleSubmit}
             loading={isSubmitting}
-            disabled={!canRegister}
             fullWidth
             radius="xl"
             variant="filled"

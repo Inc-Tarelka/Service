@@ -1,7 +1,9 @@
 .section {
+  contain: layout;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-x: clip;
   padding-bottom: 24px;
 }
 

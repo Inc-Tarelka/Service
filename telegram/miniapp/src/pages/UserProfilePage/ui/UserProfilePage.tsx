@@ -117,11 +117,7 @@ export const UserProfilePage = observer(() => {
             />
           )}
           {activeTab === 'info' && (
-            <ProfileInfoSection
-              user={user}
-              sender={userProfileStore.extendedProfile?.sender}
-              isPublicView={true}
-            />
+            <ProfileInfoSection user={user} isPublicView={true} />
           )}
         </SimpleTabsSwitcher>
       </Box>

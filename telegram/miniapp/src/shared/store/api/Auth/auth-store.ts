@@ -65,7 +65,6 @@ export class AuthStore {
   isAuth = false;
   token: string | null = null;
   registrationSenderId: string | null = null;
-  registrationBlocked = false;
   currentStep: ResumableRegistrationStep | null = null;
 
   tempData: {
@@ -179,7 +178,6 @@ export class AuthStore {
 
     this.registrationSenderId = normalizedSenderId;
     this.tempData.senderId = normalizedSenderId;
-    this.registrationBlocked = false;
     setStoredReferralSenderId(normalizedSenderId);
   };
 
@@ -266,19 +264,6 @@ export class AuthStore {
     return null;
   };
 
-  private resolveRegistrationSenderId = (): string | null => {
-    const senderId = this.syncRegistrationSenderId();
-    if (!senderId) {
-      this.registrationBlocked = true;
-      return null;
-    }
-
-    this.registrationBlocked = false;
-    this.tempData.senderId = senderId;
-    this.registrationSenderId = senderId;
-    return senderId;
-  };
-
   // ================= ACTIONS =================
 
   loginAction = async (data: LoginRequest): Promise<boolean> => {
@@ -308,12 +293,11 @@ export class AuthStore {
     data: Omit<PreRegisterRequest, 'senderId'>,
   ): Promise<number | typeof PRE_REGISTER_RESUME | null> => {
     try {
-      const senderId = this.resolveRegistrationSenderId();
-      if (!senderId) {
-        return null;
-      }
-
-      const promise = preRegisterRequest({ ...data, senderId });
+      const senderId = this.syncRegistrationSenderId() ?? undefined;
+      const promise = preRegisterRequest({
+        ...data,
+        ...(senderId ? { senderId } : {}),
+      });
       this.preRegisterData = fromPromise(promise);
 
       const response = await promise;
@@ -360,12 +344,11 @@ export class AuthStore {
     data: TelegramRegisterRequest,
   ): Promise<TelegramRegistrationResult> => {
     try {
-      const senderId = this.resolveRegistrationSenderId();
-      if (!senderId) {
-        return false;
-      }
-
-      const payload: TelegramRegisterRequest = { ...data, senderId };
+      const senderId = this.syncRegistrationSenderId() ?? undefined;
+      const payload: TelegramRegisterRequest = {
+        ...data,
+        ...(senderId ? { senderId } : {}),
+      };
 
       const promise = telegramRegisterRequest(payload);
       this.registerData = fromPromise(promise);

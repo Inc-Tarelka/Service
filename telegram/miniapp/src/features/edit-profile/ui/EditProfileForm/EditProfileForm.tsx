@@ -250,6 +250,7 @@ export const EditProfileForm = observer(() => {
               value={values.searchStatus}
               onChange={(value) => handleChange('searchStatus', value)}
               error={errors.searchStatus}
+              comboboxProps={{ withinPortal: false }}
               rightSection={
                 <div style={{ pointerEvents: 'none', display: 'flex' }}>
                   <ChevronDownIcon />

@@ -1,6 +1,5 @@
 import WebApp from '@twa-dev/sdk';
 import { ComponentType, SVGProps } from 'react';
-import { PersonAdd } from 'shared/assets/icons/PersonAdd';
 import {
   CommentIcon,
   DeleteIcon,
@@ -33,12 +32,6 @@ export const menuItems: MenuItem[] = [
     id: 'profile',
     label: 'Аккаунт и профиль',
     icon: PersonIcon,
-    section: 'profile',
-  },
-  {
-    id: 'frends',
-    label: 'Пригласить друга',
-    icon: PersonAdd,
     section: 'profile',
   },
   {

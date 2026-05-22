@@ -1,6 +1,6 @@
 import { Box, Stack } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { Sender, User } from 'shared/api/service/User/types';
+import { User } from 'shared/api/service/User/types';
 import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { UserRole } from 'shared/consts/userRoles';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
@@ -8,7 +8,6 @@ import s from './ProfileInfoSection.module.scss';
 
 interface ProfileInfoSectionProps {
   user?: User;
-  sender?: Sender;
   isPublicView?: boolean;
 }
 
@@ -18,7 +17,6 @@ const getMembershipStatus = (role?: UserRole) => {
 
 export const ProfileInfoSection = ({
   user = MOCK_USER,
-  sender,
 }: ProfileInfoSectionProps) => {
   return (
     <Box className={s.container}>
@@ -28,11 +26,6 @@ export const ProfileInfoSection = ({
           <div className={s.grid}>
             <span className={s.label}>Статус</span>
             <span className={s.value}>{getMembershipStatus(user.role)}</span>
-
-            <span className={s.label}>Кто пригласил</span>
-            <span className={s.valueBold}>
-              {sender ? `${sender.name} ${sender.surname}` : 'Не указано'}
-            </span>
           </div>
         </Stack>
 
