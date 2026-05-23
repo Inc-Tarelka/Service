@@ -34,7 +34,7 @@
 .description {
   color: var(--text-color-secondary);
   font: var(--font-body);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .row {
@@ -60,8 +60,8 @@
   max-width: 100%;
   min-width: 0;
   overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   text-align: right;
-  word-break: break-word;
 }
 
 .footer {
@@ -69,6 +69,6 @@
   flex-shrink: 0;
   gap: 12px;
   margin-top: 24px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(var(--tg-safe-area-inset-bottom) + 16px);
   width: 100%;
 }

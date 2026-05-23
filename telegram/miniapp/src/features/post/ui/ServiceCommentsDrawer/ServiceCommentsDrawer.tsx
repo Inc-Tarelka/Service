@@ -1,10 +1,11 @@
-import { Drawer, Text, Textarea } from '@mantine/core';
+import { Drawer, Textarea } from '@mantine/core';
 import { useStore } from 'app/StoreProvider';
 import 'dayjs/locale/ru';
 import type { ActionItem } from 'entities/interaction/ui/ActionsDrawer/ActionsDrawer';
 import { ActionsDrawer } from 'entities/interaction/ui/ActionsDrawer/ActionsDrawer';
+import { AnimatePresence, motion } from 'motion/react';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PublicationComment } from 'shared/api/service/Publication/types';
 import SendIcon from 'shared/assets/icons/send';
 import ShareIcon from 'shared/assets/icons/share';
@@ -29,7 +30,8 @@ export const ServiceCommentsDrawer = observer(
       null,
     );
     const [commentText, setCommentText] = useState('');
-    const [replyToId, setReplyToId] = useState<number | null>(null);
+    const [replyTo, setReplyTo] = useState<PublicationComment | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
       if (opened) {
@@ -52,7 +54,11 @@ export const ServiceCommentsDrawer = observer(
       setAvatarDrawerOpened(false);
       setSelectedCommentId(null);
       if (action === 'reply' && commentId) {
-        setReplyToId(commentId);
+        const comment = rawComments.find((c) => c.id === commentId);
+        if (comment) {
+          setReplyTo(comment);
+          setTimeout(() => textareaRef.current?.focus(), 100);
+        }
       }
     };
 
@@ -61,10 +67,10 @@ export const ServiceCommentsDrawer = observer(
       publicationCommentsStore.createCommentAction(
         publicationId,
         commentText.trim(),
-        replyToId || undefined,
+        replyTo?.id || undefined,
       );
       setCommentText('');
-      setReplyToId(null);
+      setReplyTo(null);
     };
 
     const DotsAction: ActionItem[] = [
@@ -81,10 +87,6 @@ export const ServiceCommentsDrawer = observer(
       },
     ];
 
-    const replyToComment = rawComments.find(
-      (c: PublicationComment) => c.id === replyToId,
-    );
-
     return (
       <Drawer
         opened={opened}
@@ -99,7 +101,7 @@ export const ServiceCommentsDrawer = observer(
       >
         <div className={s.drawer}>
           <div className={s.header}>
-            <Text className={s.title}>Комментарии ({totalComments})</Text>
+            <span className={s.title}>Комментарии ({totalComments})</span>
             <button type="button" className={s.closeButton} onClick={onClose}>
               <XIcon />
             </button>
@@ -109,66 +111,81 @@ export const ServiceCommentsDrawer = observer(
             {isLoading && rawComments.length === 0 ? (
               <div className={s.emptyState}>Загрузка...</div>
             ) : rootComments.length > 0 ? (
-              rootComments.map((rootComment) => (
-                <CommentThreadItem
-                  key={rootComment.id}
-                  rootComment={rootComment}
-                  allComments={rawComments}
-                  onMoreClick={(id) => {
-                    setSelectedCommentId(id);
-                    setAvatarDrawerOpened(true);
-                  }}
-                />
-              ))
+              <>
+                {rootComments.map((rootComment) => (
+                  <CommentThreadItem
+                    key={rootComment.id}
+                    rootComment={rootComment}
+                    allComments={rawComments}
+                    onMoreClick={(id) => {
+                      setSelectedCommentId(id);
+                      setAvatarDrawerOpened(true);
+                    }}
+                  />
+                ))}
+                <div className={s.listBottomSpacer} />
+              </>
             ) : (
               <div className={s.emptyState}>Нет комментариев</div>
             )}
           </div>
 
           <div className={s.footerContainer}>
-            {replyToId && replyToComment && (
-              <div className={s.replyingTo}>
-                <div className={s.replyingToContent}>
-                  <span className={s.replyingToLabel}>
-                    В ответ {replyToComment.authorFirstName}{' '}
-                    {replyToComment.authorLastName}
-                  </span>
-                  <p className={s.replyingToText}>{replyToComment.content}</p>
-                </div>
+            <div className={s.inputBox}>
+              <AnimatePresence>
+                {replyTo && (
+                  <motion.div
+                    className={s.replyPreview}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div className={s.replyPreviewInner}>
+                      <div className={s.replyAccentBar} />
+                      <div className={s.replyPreviewContent}>
+                        <span className={s.replyPreviewName}>
+                          {replyTo.authorFirstName} {replyTo.authorLastName}
+                        </span>
+                        <p className={s.replyPreviewText}>{replyTo.content}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={s.cancelReplyButton}
+                        onClick={() => setReplyTo(null)}
+                      >
+                        <XIcon />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className={s.footer}>
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="Комментарий..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  autosize
+                  minRows={1}
+                  maxRows={6}
+                  classNames={{
+                    root: s.textareaRoot,
+                    wrapper: s.textareaWrapper,
+                    input: s.textareaInput,
+                  }}
+                />
                 <button
                   type="button"
-                  className={s.cancelReplyButton}
-                  onClick={() => setReplyToId(null)}
+                  className={`${s.sendButton} ${commentText.trim() ? s.sendButtonActive : ''}`}
+                  onClick={handleSend}
+                  disabled={!commentText.trim()}
                 >
-                  <XIcon />
+                  <SendIcon />
                 </button>
               </div>
-            )}
-            <div className={s.footer}>
-              <Textarea
-                className={s.input}
-                placeholder="Комментарий"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                autosize
-                minRows={1}
-                maxRows={6}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                classNames={{ input: s.textareaInput }}
-              />
-              <button
-                type="button"
-                className={s.sendIcon}
-                onClick={handleSend}
-                disabled={!commentText.trim()}
-              >
-                <SendIcon />
-              </button>
             </div>
           </div>
         </div>

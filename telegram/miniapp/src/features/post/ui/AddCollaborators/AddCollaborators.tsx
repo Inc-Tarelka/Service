@@ -42,7 +42,8 @@ export const AddCollaborators = (props: AddCollaboratorsProps) => {
       <div className={classes.header}>
         <span className={classes.title}>Сокомандники</span>
         <span className={classes.subtitle}>
-          Они будут отображаться в публикации после подтверждения с их стороны.
+          Приглашения отправятся после публикации. Участники появятся в
+          публикации после подтверждения.
         </span>
       </div>
 

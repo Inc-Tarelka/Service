@@ -1,7 +1,14 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
+  padding: 0 12px;
+}
+
+.tabs {
+  padding: 0 !important;
+
+  button {
+    font-size: 14px !important;
+    padding: 0 12px !important;
+  }
 }
 
 .groupTitle {
@@ -12,4 +19,17 @@
 .groupTitleHighlighted {
   color: var(--green);
   font: var(--font-body);
+}
+
+.emptyState {
+  min-height: 300px;
+}
+
+.emptyText {
+  color: var(--text-color-secondary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.2em;
+  text-align: center;
+  white-space: pre-line;
 }

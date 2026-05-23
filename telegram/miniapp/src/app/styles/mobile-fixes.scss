@@ -70,9 +70,13 @@ a img {
 //     user-select: none !important;
 // }
 
-// Убираем 300ms задержку клика на мобильных
-* {
-    touch-action: manipulation !important;
+// Убираем 300ms задержку только для интерактивных элементов (не для scroll-контейнеров)
+button,
+a,
+[role="button"],
+[onclick],
+label {
+    touch-action: manipulation;
 }
 
 // Разрешаем выделение текста только там, где нужно
@@ -142,6 +146,3 @@ a {
         -webkit-tap-highlight-color: transparent !important;
     }
 }
-
-
-

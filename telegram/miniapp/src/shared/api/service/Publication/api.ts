@@ -1,10 +1,16 @@
 import { API_URL } from 'shared/api/api_url';
-import { baseInstanceV1 } from 'shared/api/base';
+import {
+  baseInstanceV1,
+  getAccessToken,
+  publicInstance,
+} from 'shared/api/base';
 import type {
   CreatePublicationCommentRequest,
   CreatePublicationRequest,
   GetPublicationCommentsParams,
   GetPublicationCommentsResponse,
+  MyProject,
+  MyService,
   PresignRequest,
   PresignResponse,
   Publication,
@@ -13,7 +19,13 @@ import type {
   SearchPublicationsParams,
   SearchPublicationsResponse,
   ToggleLikeResponse,
+  UpdatePublicationResponse,
+  UpdatePublicationRequest,
 } from './types';
+
+const getReadInstance = () => {
+  return getAccessToken() ? baseInstanceV1 : publicInstance;
+};
 
 // =========== S3 PRESIGN IMAGE ===========
 export const presignImages = async (request: PresignRequest) =>
@@ -42,7 +54,7 @@ export const searchPublications = async (
 
 // =========== GET PUBLICATION DETAILS ===========
 export const getPublicationDetails = async (id: number) => {
-  const response = await baseInstanceV1.get<PublicationDetailsResponse>(
+  const response = await getReadInstance().get<PublicationDetailsResponse>(
     API_URL.get_publication_details(id.toString()),
   );
   return response.data;
@@ -63,7 +75,7 @@ export const getPublicationComments = async (
   publicationId: string | number,
   params?: GetPublicationCommentsParams,
 ): Promise<GetPublicationCommentsResponse> => {
-  const response = await baseInstanceV1.get<GetPublicationCommentsResponse>(
+  const response = await getReadInstance().get<GetPublicationCommentsResponse>(
     API_URL.publication_comment(publicationId.toString()),
     { params },
   );
@@ -77,6 +89,37 @@ export const createPublicationComment = async (
   const response = await baseInstanceV1.post<PublicationComment>(
     API_URL.publication_comment_post(publicationId.toString()),
     request,
+  );
+  return response.data;
+};
+
+// =========== MY PROJECTS ===========
+export const getMyProjects = async (): Promise<MyProject[]> => {
+  const response = await baseInstanceV1.get<MyProject[]>(API_URL.my_projects());
+  return response.data;
+};
+
+// =========== MY SERVICES ===========
+export const getMyServices = async (): Promise<MyService[]> => {
+  const response = await baseInstanceV1.get<MyService[]>(API_URL.my_services());
+  return response.data;
+};
+
+// =========== UPDATE PUBLICATION ===========
+export const updatePublication = async (
+  id: number,
+  request: UpdatePublicationRequest,
+): Promise<UpdatePublicationResponse> =>
+  (
+    await baseInstanceV1.put<UpdatePublicationResponse>(
+      API_URL.update_publication(id.toString()),
+      request,
+    )
+  ).data;
+
+export const deletePublication = async (id: number) => {
+  const response = await baseInstanceV1.delete(
+    API_URL.delete_publication(id.toString()),
   );
   return response.data;
 };

@@ -20,6 +20,7 @@ export interface PresignResponse {
 }
 
 export interface PublicationNeed {
+  id?: number;
   name: string;
   description?: string;
   budget?: number;
@@ -38,6 +39,23 @@ export interface CreatePublicationRequest {
   tagIds?: number[];
   coAuthorIds?: number[];
   needs?: PublicationNeed[];
+}
+
+export interface UpdatePublicationRequest {
+  name?: string;
+  type?: 'PROJECT' | 'SERVICE';
+  description?: string;
+  imageUrls?: string[];
+  cityId?: number;
+  tagIds?: number[];
+  coAuthorIds?: number[];
+  needs?: PublicationNeed[];
+  isHidden?: boolean;
+}
+
+export interface UpdatePublicationResponse {
+  data: string;
+  success: boolean;
 }
 
 export interface Publication {
@@ -196,4 +214,24 @@ export interface CreatePublicationCommentRequest {
 export interface GetPublicationCommentsParams {
   limit?: number;
   offset?: number;
+}
+
+export interface MyProject {
+  description: string;
+  id: number;
+  image: string | null;
+  isAuthor: boolean;
+  likesCount: number;
+  name: string;
+  type: 'PROJECT';
+}
+
+export interface MyService {
+  description: string;
+  id: number;
+  image: string | null;
+  isAuthor: boolean;
+  likesCount: number;
+  name: string;
+  type: 'SERVICE';
 }

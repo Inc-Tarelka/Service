@@ -9,6 +9,7 @@ import {
   osName,
   osVersion,
 } from 'react-device-detect';
+import { ensureTelegramFullscreen } from 'shared/lib/utils/telegram-fullscreen';
 export class ViewportStore {
   isExpanded: boolean = false;
   viewportHeight: number = 0;
@@ -28,6 +29,7 @@ export class ViewportStore {
   }
 
   init() {
+    ensureTelegramFullscreen();
     this.updateViewportState();
 
     WebApp.onEvent('viewportChanged', this.handleViewportChange);
@@ -39,11 +41,13 @@ export class ViewportStore {
   }
 
   private handleViewportChange = () => {
+    ensureTelegramFullscreen();
     this.updateViewportState();
   };
 
   private handleFullscreenChange = () => {
-    this.isFullscreen = WebApp.isFullscreen;
+    ensureTelegramFullscreen();
+    this.updateViewportState();
   };
 
   private handleFullscreenFailed = (params: { error: string }) => {

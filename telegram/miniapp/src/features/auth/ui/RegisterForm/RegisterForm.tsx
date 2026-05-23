@@ -1,24 +1,34 @@
 import { Button, Checkbox, PasswordInput, TextInput } from '@mantine/core';
 import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
+import { useState } from 'react';
 
 import { useStore } from 'app/StoreProvider';
 import { AccountType } from 'shared/api/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
+import { TermsDrawer } from '../TermsDrawer/TermsDrawer';
 import { Page } from 'widgets/Page';
 import { registerSchema } from '../../model/validation';
 
 import s from './RegisterForm.module.scss';
 
+interface RegisterSuccessPayload {
+  phone: string;
+  login: string;
+  password: string;
+  verificationRequestId?: string;
+}
+
 interface RegisterFormProps {
-  onSuccess: (data: any) => void;
+  onSuccess: (data: RegisterSuccessPayload) => void;
   onNavigateToLogin: () => void;
 }
 
 export const RegisterForm = observer(
   ({ onSuccess, onNavigateToLogin }: RegisterFormProps) => {
     const { authStore } = useStore();
+    const [termsOpened, setTermsOpened] = useState(false);
 
     const {
       values,
@@ -29,11 +39,11 @@ export const RegisterForm = observer(
       handleSubmit,
     } = useFormWithValidation({
       initialValues: {
-        phone: '',
-        login: '',
-        password: '',
-        confirmPassword: '',
-        agreeToTerms: false as any as true,
+        phone: authStore.tempData.phone ?? '',
+        login: authStore.tempData.login ?? '',
+        password: authStore.tempData.password ?? '',
+        confirmPassword: authStore.tempData.password ?? '',
+        agreeToTerms: false as unknown as true,
       },
       schema: registerSchema,
       onSubmit: async (values) => {
@@ -66,17 +76,25 @@ export const RegisterForm = observer(
     });
 
     const handleRequestPhone = () => {
-      WebApp.requestContact((success: boolean, response: any) => {
-        if (success && response?.responseUnsafe?.contact?.phone_number) {
-          let phoneNumber = response.responseUnsafe.contact.phone_number;
-          if (!phoneNumber.startsWith('+')) {
-            phoneNumber = '+' + phoneNumber;
-          }
-          handleChange('phone', phoneNumber);
+      const requestContactCallback: Parameters<
+        typeof WebApp.requestContact
+      >[0] = (success, response) => {
+        const phoneNumberFromTelegram =
+          response?.status === 'sent'
+            ? response.responseUnsafe.contact.phone_number
+            : undefined;
+
+        if (success && phoneNumberFromTelegram) {
+          const normalizedPhone = phoneNumberFromTelegram.startsWith('+')
+            ? phoneNumberFromTelegram
+            : `+${phoneNumberFromTelegram}`;
+          handleChange('phone', normalizedPhone);
         } else {
           console.log('Phone request failed or cancelled');
         }
-      });
+      };
+
+      WebApp.requestContact(requestContactCallback);
     };
 
     return (
@@ -166,13 +184,27 @@ export const RegisterForm = observer(
               label={
                 <>
                   Нажимая "Продолжить", вы соглашаетесь c{' '}
-                  <span className={s.termsLink}>Правилами использования</span>
+                  <span
+                    className={s.termsLink}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTermsOpened(true);
+                    }}
+                  >
+                    Правилами использования
+                  </span>
                 </>
               }
               size="sm"
             />
           </div>
         </div>
+
+        <TermsDrawer
+          opened={termsOpened}
+          onClose={() => setTermsOpened(false)}
+        />
 
         <div className={s.footer}>
           <p className={s.loginLink}>

@@ -25,7 +25,7 @@ body {
   font: var(--font-m);
   font-family: var(--font-family-main);
   font-size: var(--font-size-m);
-  height: 100%;
+  height: var(--tg-viewport-stable-height, 100%);
   line-height: var(--font-line-m);
   overflow: hidden;
 }

@@ -7,15 +7,11 @@ import s from './EditProfileButton.module.scss';
 export const EditProfileButton = () => {
   const navigate = useNavigate();
 
-  const handleNavigateToSettings = () => {
-    navigate(RoutePath.settings);
-  };
-
   return (
     <ActionIcon
       variant="transparent"
       color="gray"
-      onClick={handleNavigateToSettings}
+      onClick={() => navigate(RoutePath.settings)}
       className={s.button}
     >
       <SettingsIcon />

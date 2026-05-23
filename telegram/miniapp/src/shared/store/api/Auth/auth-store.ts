@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
@@ -8,6 +9,18 @@ import {
   setAccessToken,
   setRefreshToken,
 } from 'shared/api/base';
+import {
+  clearStoredRegistrationState,
+  getStoredRegistrationState,
+  isResumableRegistrationStep,
+  saveRegistrationState,
+  type ResumableRegistrationStep,
+} from 'shared/lib/utils/registration-state';
+import {
+  getStoredReferralSenderId,
+  persistReferralSenderIdFromStartParam,
+  setStoredReferralSenderId,
+} from 'shared/lib/utils/telegram-startapp';
 import {
   forgotPasswordRequest,
   loginRequest,
@@ -37,6 +50,9 @@ import type {
   VerifyCodeResponse,
 } from 'shared/api/service/Auth/types';
 
+export const PRE_REGISTER_RESUME = Symbol('pre-register-resume');
+export type TelegramRegistrationResult = true | false | 'conflict';
+
 export class AuthStore {
   loginData?: IPromiseBasedObservable<LoginResponse>;
   preRegisterData?: IPromiseBasedObservable<PreRegisterResponse>;
@@ -48,6 +64,8 @@ export class AuthStore {
 
   isAuth = false;
   token: string | null = null;
+  registrationSenderId: string | null = null;
+  currentStep: ResumableRegistrationStep | null = null;
 
   tempData: {
     phone?: string;
@@ -59,6 +77,11 @@ export class AuthStore {
     verificationCode?: string;
     verificationToken?: string;
     resetToken?: string;
+    senderId?: string;
+    name?: string;
+    lastName?: string;
+    specialization?: string;
+    city?: string;
   } = {};
 
   username = '';
@@ -68,6 +91,8 @@ export class AuthStore {
 
   constructor() {
     makeAutoObservable(this);
+    this.syncRegistrationSenderId();
+    this.hydrateRegistrationState();
     this.init();
   }
 
@@ -80,7 +105,10 @@ export class AuthStore {
     }
   };
 
-  setTempData(data: Partial<typeof this.tempData>) {
+  setTempData(
+    data: Partial<typeof this.tempData>,
+    options?: { persist?: boolean },
+  ) {
     this.tempData = { ...this.tempData, ...data };
 
     if (data.login !== undefined) this.username = data.login;
@@ -89,7 +117,69 @@ export class AuthStore {
     if (data.verificationRequestId !== undefined)
       this.verificationRequestId = data.verificationRequestId;
     if (data.phone !== undefined) this.phone = data.phone;
+    if (data.senderId !== undefined) {
+      const normalizedSenderId = data.senderId.trim();
+      if (normalizedSenderId) {
+        this.setRegistrationSenderId(normalizedSenderId);
+      }
+    }
+
+    if (options?.persist !== false) {
+      this.persistRegistrationState();
+    }
   }
+
+  setCurrentStep = (step: string) => {
+    if (isResumableRegistrationStep(step)) {
+      this.currentStep = step;
+      this.persistRegistrationState();
+    } else {
+      this.currentStep = null;
+      clearStoredRegistrationState();
+    }
+  };
+
+  private persistRegistrationState = () => {
+    if (!this.currentStep) return;
+
+    saveRegistrationState({
+      step: this.currentStep,
+      tempData: {
+        phone: this.tempData.phone,
+        login: this.tempData.login,
+        password: this.tempData.password,
+        accountType: this.tempData.accountType,
+        userId: this.tempData.userId,
+        verificationRequestId: this.tempData.verificationRequestId,
+        verificationCode: this.tempData.verificationCode,
+        senderId: this.tempData.senderId,
+        name: this.tempData.name,
+        lastName: this.tempData.lastName,
+        specialization: this.tempData.specialization,
+        city: this.tempData.city,
+      },
+    });
+  };
+
+  hydrateRegistrationState = (): ResumableRegistrationStep | null => {
+    const stored = getStoredRegistrationState();
+    if (!stored) return null;
+
+    this.setTempData(stored.tempData, { persist: false });
+    this.currentStep = stored.step;
+    return stored.step;
+  };
+
+  setRegistrationSenderId = (senderId: string) => {
+    const normalizedSenderId = senderId.trim();
+    if (!normalizedSenderId) {
+      return;
+    }
+
+    this.registrationSenderId = normalizedSenderId;
+    this.tempData.senderId = normalizedSenderId;
+    setStoredReferralSenderId(normalizedSenderId);
+  };
 
   clearTempData() {
     this.tempData = {};
@@ -97,6 +187,8 @@ export class AuthStore {
     this.verificationCode = '';
     this.verificationRequestId = '';
     this.phone = '';
+    this.currentStep = null;
+    clearStoredRegistrationState();
   }
 
   setAuthData(
@@ -138,6 +230,40 @@ export class AuthStore {
     return phone;
   }
 
+  get hasRegistrationSenderId() {
+    return !!(
+      this.tempData.senderId?.trim() ||
+      this.registrationSenderId?.trim() ||
+      getStoredReferralSenderId()
+    );
+  }
+
+  syncRegistrationSenderId = (startParam?: string | null): string | null => {
+    const senderIdFromStart = persistReferralSenderIdFromStartParam(startParam);
+    if (senderIdFromStart) {
+      this.setRegistrationSenderId(senderIdFromStart);
+      return senderIdFromStart;
+    }
+
+    const senderIdFromTemp = this.tempData.senderId?.trim();
+    if (senderIdFromTemp) {
+      this.setRegistrationSenderId(senderIdFromTemp);
+      return senderIdFromTemp;
+    }
+
+    if (this.registrationSenderId) {
+      return this.registrationSenderId;
+    }
+
+    const senderIdFromStorage = getStoredReferralSenderId();
+    if (senderIdFromStorage) {
+      this.setRegistrationSenderId(senderIdFromStorage);
+      return senderIdFromStorage;
+    }
+
+    return null;
+  };
+
   // ================= ACTIONS =================
 
   loginAction = async (data: LoginRequest): Promise<boolean> => {
@@ -154,6 +280,7 @@ export class AuthStore {
 
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
+      this.clearTempData();
 
       return true;
     } catch (error) {
@@ -163,33 +290,41 @@ export class AuthStore {
   };
 
   preRegisterAction = async (
-    data: PreRegisterRequest,
-  ): Promise<number | null> => {
+    data: Omit<PreRegisterRequest, 'senderId'>,
+  ): Promise<number | typeof PRE_REGISTER_RESUME | null> => {
     try {
-      const promise = preRegisterRequest(data);
+      const senderId = this.syncRegistrationSenderId() ?? undefined;
+      const promise = preRegisterRequest({
+        ...data,
+        ...(senderId ? { senderId } : {}),
+      });
       this.preRegisterData = fromPromise(promise);
 
       const response = await promise;
       return response.userId;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        return PRE_REGISTER_RESUME;
+      }
       console.error('Pre-register error:', error);
       return null;
     }
   };
 
-  // Composite action: pre-register + send SMS in one step
   preRegisterAndSendCodeAction = async (params: {
     initData: string;
     account: PreRegisterRequest['account'];
   }): Promise<boolean> => {
     try {
-      const userId = await this.preRegisterAction({
+      const result = await this.preRegisterAction({
         initData: params.initData,
         account: params.account,
       });
-      if (userId === null) return false;
+      if (result === null) return false;
 
-      this.setTempData({ userId });
+      if (typeof result === 'number') {
+        this.setTempData({ userId: result });
+      }
 
       const sendPromise = sendPhoneVerificationRequest({
         PhoneNumber: params.account.phone,
@@ -207,9 +342,15 @@ export class AuthStore {
 
   telegramRegistrationAction = async (
     data: TelegramRegisterRequest,
-  ): Promise<boolean> => {
+  ): Promise<TelegramRegistrationResult> => {
     try {
-      const promise = telegramRegisterRequest(data);
+      const senderId = this.syncRegistrationSenderId() ?? undefined;
+      const payload: TelegramRegisterRequest = {
+        ...data,
+        ...(senderId ? { senderId } : {}),
+      };
+
+      const promise = telegramRegisterRequest(payload);
       this.registerData = fromPromise(promise);
 
       const response = await promise;
@@ -220,8 +361,18 @@ export class AuthStore {
       });
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
+      this.clearTempData();
       return true;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        const login = this.tempData.login;
+        const password = this.tempData.password;
+        if (login && password) {
+          const ok = await this.loginAction({ username: login, password });
+          if (ok) return true;
+        }
+        return 'conflict';
+      }
       console.error('Telegram register error:', error);
       return false;
     }

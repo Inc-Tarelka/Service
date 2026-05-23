@@ -1,7 +1,9 @@
 import { Box, Stack } from '@mantine/core';
+import { Link } from 'react-router-dom';
 import { User } from 'shared/api/service/User/types';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
+import { UserRole } from 'shared/consts/userRoles';
 import { MOCK_USER } from 'shared/mocks/profileMocks';
-import { Badge } from 'shared/ui/Badge';
 import s from './ProfileInfoSection.module.scss';
 
 interface ProfileInfoSectionProps {
@@ -9,40 +11,35 @@ interface ProfileInfoSectionProps {
   isPublicView?: boolean;
 }
 
+const getMembershipStatus = (role?: UserRole) => {
+  return role === UserRole.ADMIN ? 'Член Клуба' : 'Претендент в члены клуба';
+};
+
 export const ProfileInfoSection = ({
   user = MOCK_USER,
 }: ProfileInfoSectionProps) => {
-  const renderTag = (tagStr: string, index: number) => {
-    const parts = tagStr.split(' ');
-    const lastPart = parts[parts.length - 1];
-
-    const hasCount = /^[0-9+]+$/.test(lastPart);
-
-    if (hasCount) {
-      const label = parts.slice(0, -1).join(' ');
-      return (
-        <Badge key={index} count={lastPart}>
-          {label}
-        </Badge>
-      );
-    }
-
-    return <Badge key={index}>{tagStr}</Badge>;
-  };
-
   return (
     <Box className={s.container}>
       <Stack gap={24}>
+        <Stack gap={8}>
+          <h4 className={s.title}>Членство</h4>
+          <div className={s.grid}>
+            <span className={s.label}>Статус</span>
+            <span className={s.value}>{getMembershipStatus(user.role)}</span>
+          </div>
+        </Stack>
+
         <Stack gap={8}>
           <h4 className={s.title}>О себе</h4>
           <p className={s.about}>{user.about}</p>
         </Stack>
 
-        <Stack gap={12}>{user.tags?.map(renderTag)}</Stack>
-
-        <div className={s.grid}>
+        <div className={s.grid} style={{ marginBottom: '18px' }}>
           <span className={s.label}>Город</span>
           <span className={s.value}>{user.city}</span>
+
+          <span className={s.label}>Специализация</span>
+          <span className={s.value}>{user.specialization}</span>
 
           <span className={s.label}>Статус</span>
           <span className={s.value}>{user.status}</span>
@@ -50,8 +47,21 @@ export const ProfileInfoSection = ({
           <span className={s.label}>Образование</span>
           <span className={s.value}>{user.education}</span>
 
-          <span className={s.label}>Специализация</span>
-          <span className={s.value}>{user.specialization}</span>
+          <span className={s.label}>Мастер</span>
+          {user.master?.isTarelkaUser ? (
+            <Link
+              to={RoutePath[AppRoutes.USER_PROFILE].replace(
+                ':id',
+                String(user.master.id),
+              )}
+              className={s.valueBold}
+              style={{ textDecoration: 'none' }}
+            >
+              {user.master.name}
+            </Link>
+          ) : (
+            <span className={s.value}>{user.master?.name || 'Не указано'}</span>
+          )}
         </div>
       </Stack>
     </Box>

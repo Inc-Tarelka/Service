@@ -18,6 +18,7 @@ obj/
 CLAUDE.md
 .claude/
 .mcp.json
+.claudeignore
 
 # Agents
 .agent

@@ -7,12 +7,13 @@ interface ProfileListingListProps {
   users: SearchUser[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export const ProfileListingList = (props: ProfileListingListProps) => {
-  const { users, onItemClick, isLoading } = props;
+  const { users, onItemClick, isLoading, isLoadingMore } = props;
 
-  if (isLoading) {
+  if (isLoading && users.length === 0) {
     return (
       <div className={classes.list}>
         {Array.from({ length: 5 }).map((_, index) => (
@@ -35,6 +36,13 @@ export const ProfileListingList = (props: ProfileListingListProps) => {
       {users.map((user) => (
         <ProfileListingItem key={user.id} user={user} onClick={onItemClick} />
       ))}
+      {isLoadingMore && (
+        <div className={classes.loadMore}>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <ProfileListingSkeleton key={`more-${index}`} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

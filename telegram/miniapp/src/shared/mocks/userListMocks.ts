@@ -11,7 +11,7 @@ export const MOCK_USERS: User[] = [
     city: 'Москва',
     role: UserRole.USER,
     type: 'PERSON',
-    stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
+    stats: { teammatesCount: 0, outgoingRequestsCount: 0, projectsCount: 0 },
   },
   {
     id: '2',
@@ -22,7 +22,7 @@ export const MOCK_USERS: User[] = [
     city: 'Москва',
     role: UserRole.USER,
     type: 'PERSON',
-    stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
+    stats: { teammatesCount: 0, outgoingRequestsCount: 0, projectsCount: 0 },
   },
   {
     id: '3',
@@ -33,6 +33,6 @@ export const MOCK_USERS: User[] = [
     city: 'Москва',
     role: UserRole.USER,
     type: 'PERSON',
-    stats: { collaborations: 0, wantsToWork: 0, projects: 0 },
+    stats: { teammatesCount: 0, outgoingRequestsCount: 0, projectsCount: 0 },
   },
 ];

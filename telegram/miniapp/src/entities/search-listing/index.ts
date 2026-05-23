@@ -1,3 +1,4 @@
+export { AllListingList } from './ui/AllListing/AllListingList/AllListingList';
 export { NeedListingList } from './ui/NeedListing/NeedListingList/NeedListingList';
 export { ProfileListingList } from './ui/ProfileListing/ProfileListingList/ProfileListingList';
 export { ServiceListingDetails } from './ui/ServiceListing/ServiceListingDetails/ServiceListingDetails';

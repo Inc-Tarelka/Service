@@ -1,24 +1,35 @@
 import React, { Suspense, type ErrorInfo, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ErrorPage } from 'widgets/ErrorPage/ui/ErrorPage';
 interface ErrorBoundaryProps {
   children: ReactNode;
+}
+
+interface ErrorBoundaryInnerProps extends ErrorBoundaryProps {
+  resetKey: string;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
+class ErrorBoundaryInner extends React.Component<
+  ErrorBoundaryInnerProps,
   ErrorBoundaryState
 > {
-  constructor(props: ErrorBoundaryProps) {
+  constructor(props: ErrorBoundaryInnerProps) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryInnerProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -42,5 +53,14 @@ class ErrorBoundary extends React.Component<
     return children;
   }
 }
+
+const ErrorBoundary = ({ children }: ErrorBoundaryProps) => {
+  const location = useLocation();
+  const resetKey = `${location.pathname}${location.search}${location.hash}`;
+
+  return (
+    <ErrorBoundaryInner resetKey={resetKey}>{children}</ErrorBoundaryInner>
+  );
+};
 
 export default ErrorBoundary;

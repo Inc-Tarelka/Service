@@ -1,43 +1,75 @@
-.PageError {
-    align-items: center;
-    background: var(--gradient-primary);
-    color: var(--white);
+.page {
+    background: var(--bg-color);
     display: flex;
     flex-direction: column;
-    height: 100%;
-    inset: var(--navbar-height) 0 0 0;
-    justify-content: center;
-    padding: 1rem;
+    height: var(--tg-viewport-stable-height, 100dvh);
+    inset: 0;
     position: fixed;
-    text-align: center;
     width: 100%;
+    z-index: 30;
+}
+
+.center {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    padding: calc(24px + var(--tg-safe-area-inset-top)) 24px 24px;
 }
 
 .content {
-    align-items: center;
-    backdrop-filter: blur(50px);
-    background-color: rgb(255, 255, 255, 0.1);
-    border: 1px solid rgb(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgb(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    max-width: 400px;
-    padding: 2rem;
-    transition: all 0.3s ease;
-    width: 90%;
-}
-
-.title {
-    color: var(--white);
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    margin: 0 auto;
+    max-width: 360px;
+    width: 100%;
 }
 
 .text {
-    color: var(--white);
-    font-size: 1rem;
-    margin-bottom: 1rem;
+    color: var(--text-color-secondary);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.35;
+    text-align: center;
+    white-space: pre-line;
+}
+
+.bottom {
+    padding: 0 24px calc(20px + var(--tg-safe-area-inset-bottom));
+}
+
+.button {
+    background: var(--green);
+    border: none;
+    border-radius: 22px;
+    color: var(--tertiary-text-color);
+    font-size: 18px;
+    font-weight: 500;
+    height: 60px;
+
+    &:hover {
+        background: var(--green);
+        opacity: 0.9;
+    }
+
+    &:global(.mantine-Button-root) {
+        color: var(--tertiary-text-color);
+    }
+
+    :global(.mantine-Button-label) {
+        color: var(--tertiary-text-color);
+    }
+}
+
+.arrowIcon path {
+    stroke: var(--bg-color);
+}
+
+@media (width <= 360px) {
+    .text {
+        font-size: 16px;
+    }
+
+    .button {
+        font-size: 16px;
+        height: 56px;
+    }
 }

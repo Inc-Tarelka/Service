@@ -1,0 +1,103 @@
+@import 'app/styles/variables/global';
+
+.item {
+  align-items: flex-start;
+  background: var(--card-bg);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  transition: opacity $transition-fast;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.avatar {
+  align-items: center;
+  background: var(--tertiary-bg-color);
+  border-radius: 50%;
+  display: flex;
+  flex-shrink: 0;
+  height: 44px;
+  justify-content: center;
+  overflow: hidden;
+  width: 44px;
+}
+
+.avatarImg {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.avatarFallback {
+  color: var(--text-color-secondary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.header {
+  align-items: center;
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.title {
+  color: var(--text-color);
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  border-radius: 6px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px $spacing-xs;
+
+  &.service {
+    background: rgb(228, 160, 206, 0.15);
+    color: var(--accent-color);
+  }
+
+  &.need {
+    background: rgb(255, 200, 100, 0.15);
+    color: #f5a623;
+  }
+
+  &.profile {
+    background: rgb(171, 219, 159, 0.15);
+    color: var(--green);
+  }
+}
+
+.description {
+  -webkit-box-orient: vertical;
+  color: var(--text-color-secondary);
+  display: -webkit-box;
+  font-size: 12px;
+  -webkit-line-clamp: 2;
+  margin: 0 0 $spacing-xs;
+  overflow: hidden;
+}
+
+.meta {
+  color: var(--tertiary-text-color, #8f8f8f);
+  display: flex;
+  font-size: 11px;
+  gap: $spacing-sm;
+  margin: 0;
+}

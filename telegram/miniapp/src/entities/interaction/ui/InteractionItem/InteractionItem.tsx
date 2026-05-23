@@ -1,39 +1,64 @@
 import { ActionIcon } from '@mantine/core';
 import { useState } from 'react';
-import { Interaction } from 'shared/api/service/Interaction/types';
+import { Notification } from 'shared/api/service/Notification/types';
 import ChevronRightIcon from 'shared/assets/icons/chevronRight';
 import { CollaborationRequestDrawer } from '../CollaborationRequestDrawer/CollaborationRequestDrawer';
 import { OfferDetailsDrawer } from '../OfferDetailsDrawer/OfferDetailsDrawer';
 import classes from './InteractionItem.module.scss';
 
 interface InteractionItemProps {
-  interaction: Interaction;
+  notification: Notification;
   canEdit?: boolean;
   onClick?: () => void;
+  onOpenDetail?: (notification: Notification) => void | Promise<void>;
+  onDelete?: (id: number) => void;
+  isDeleting?: boolean;
+  selectedNotification?: Notification | null;
+  isLoadingDetail?: boolean;
 }
 
-export const InteractionItem = ({
-  interaction,
-  canEdit,
-  onClick,
-}: InteractionItemProps) => {
+export const InteractionItem = (props: InteractionItemProps) => {
+  const {
+    notification,
+    canEdit,
+    onClick,
+    onOpenDetail,
+    onDelete,
+    isDeleting,
+    selectedNotification,
+    isLoadingDetail,
+  } = props;
   const [isDetailOpen, setDetailOpen] = useState(false);
+
+  const openDetail = () => {
+    setDetailOpen(true);
+    onClick?.();
+    void onOpenDetail?.(notification);
+  };
 
   const handleChevronClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setDetailOpen(true);
+    openDetail();
   };
 
-  const handleCardClick = () => {
-    setDetailOpen(true);
-    onClick?.();
-  };
-
-  const isOffer = interaction.type === 'offer';
+  const isOffer = notification.type === 'Response';
+  const detailNotification =
+    selectedNotification?.id === notification.id
+      ? selectedNotification
+      : notification;
+  const isDetailLoading =
+    Boolean(isDetailOpen) &&
+    selectedNotification?.id === notification.id &&
+    Boolean(isLoadingDetail);
 
   return (
     <>
-      <div className={classes.card} onClick={handleCardClick}>
+      <div
+        className={classes.card}
+        onClick={openDetail}
+        role="button"
+        tabIndex={0}
+      >
         <div className={classes.header}>
           <span className={classes.title}>
             {isOffer ? 'Отклик на потребность' : 'Запрос на сотрудничество'}
@@ -43,26 +68,33 @@ export const InteractionItem = ({
               variant="transparent"
               color="gray"
               onClick={handleChevronClick}
+              aria-label="Открыть"
             >
               <ChevronRightIcon className={classes.chevron} />
             </ActionIcon>
           )}
         </div>
 
-        <p className={classes.description}>{interaction.description}</p>
+        <p className={classes.description}>{notification.message}</p>
       </div>
 
       {isOffer ? (
         <OfferDetailsDrawer
           opened={isDetailOpen}
           onClose={() => setDetailOpen(false)}
-          interaction={interaction}
+          notification={detailNotification}
+          onDelete={onDelete}
+          isDeleting={isDeleting}
+          isLoading={isDetailLoading}
         />
       ) : (
         <CollaborationRequestDrawer
           opened={isDetailOpen}
           onClose={() => setDetailOpen(false)}
-          interaction={interaction}
+          notification={detailNotification}
+          onDelete={onDelete}
+          isDeleting={isDeleting}
+          isLoading={isDetailLoading}
         />
       )}
     </>

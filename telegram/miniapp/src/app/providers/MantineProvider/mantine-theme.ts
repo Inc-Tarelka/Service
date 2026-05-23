@@ -202,7 +202,7 @@ export const mantineTheme = createTheme({
         },
         body: {
           padding: '24px 20px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+          paddingBottom: 'calc(var(--tg-safe-area-inset-bottom) + 24px)',
         },
       }),
     },

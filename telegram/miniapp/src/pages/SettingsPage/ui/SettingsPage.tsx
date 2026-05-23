@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Activity, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import { useStore } from 'app/StoreProvider';
 import { SettingSection } from 'shared/consts/settingsMenuItems';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import { Page } from 'widgets/Page';
@@ -11,8 +11,10 @@ import { SecuritySection } from './SecuritySection/SecuritySection';
 import { SettingsMenu } from './SettingsMenu/SettingsMenu';
 import s from './SettingsPage.module.scss';
 import { TermsSection } from './TermsSection/TermsSection';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const SettingsPage = observer(() => {
+  const { profileEditorStore } = useStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawSection = searchParams.get('section');
@@ -33,12 +35,17 @@ export const SettingsPage = observer(() => {
   }, [setSearchParams]);
 
   const handleBack = useCallback(() => {
+    if (profileEditorStore.masterSearchOpened) {
+      profileEditorStore.closeMasterSearch();
+      return;
+    }
+
     if (section !== 'menu') {
       goToMenu();
     } else {
       navigate(RoutePath.profile);
     }
-  }, [section, goToMenu, navigate]);
+  }, [profileEditorStore, section, goToMenu, navigate]);
 
   useBackButton({
     show: true,

@@ -55,6 +55,7 @@
   justify-content: space-between;
   padding: 0;
   text-align: left;
+  text-decoration: none;
   width: 100%;
 }
 
@@ -65,7 +66,7 @@
 }
 
 .chevron {
-  color: var(--text-secondary);
+  color: var(--text-color-secondary);
   height: 24px;
   width: 24px;
 }

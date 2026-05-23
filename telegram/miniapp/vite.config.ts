@@ -27,7 +27,19 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.lhr.life'],
+    allowedHosts: [
+      '.trycloudflare.com',
+      '.bilaldevqfront.ngrok.app',
+      '.ngrok-free.dev',
+
+      '.lhr.life',
+    ],
+    proxy: {
+      '/api': {
+        target: 'https://tarelka-api.ru',
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {

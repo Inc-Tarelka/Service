@@ -20,6 +20,7 @@ export const getProfileDisplayData = (user: SearchUser) => {
     specializations,
     cities,
     logoUrl: user.logo_url,
-    username: user.username,
+    telegramLabel:
+      user.telegram_url || (user.username ? `@${user.username}` : ''),
   };
 };

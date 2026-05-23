@@ -21,9 +21,6 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
     referenceStore.cities.find((city) => city.id === service.cityId)?.name ||
     '';
 
-  const firstName = 'Иван';
-  const lastName = 'Иванов';
-  const username = 'nick_name';
   return (
     <div className={s.container} onClick={() => onClick?.(service.id)}>
       <div className={s.imageSection}>
@@ -34,12 +31,7 @@ export const ServiceListingItem = observer((props: ServiceListingItemProps) => {
 
       <div className={s.infoSection}>
         <div className={s.authorRow}>
-          <div className={s.authorData}>
-            <span className={s.authorName}>
-              {firstName} {lastName}
-            </span>
-            <span className={s.authorUsername}>@{username}</span>
-          </div>
+          <div className={s.authorData}></div>
           <div className={s.locationAndTags}>
             <span className={s.city}>{cityName}</span>
             {service.tags && service.tags.length > 0 && (

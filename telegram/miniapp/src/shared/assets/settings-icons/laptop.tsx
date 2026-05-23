@@ -11,17 +11,17 @@ const LaptopIcon = (props: SVGProps<SVGSVGElement>) => (
   >
     <path
       d="M15.8333 3.3335H4.16667C3.24619 3.3335 2.5 4.07969 2.5 5.00016V12.5002C2.5 13.4206 3.24619 14.1668 4.16667 14.1668H15.8333C16.7538 14.1668 17.5 13.4206 17.5 12.5002V5.00016C17.5 4.07969 16.7538 3.3335 15.8333 3.3335Z"
-      stroke="white"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <path
       d="M0.833374 16.667H19.1667"
-      stroke="white"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );

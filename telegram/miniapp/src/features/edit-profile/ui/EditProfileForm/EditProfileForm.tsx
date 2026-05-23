@@ -1,11 +1,12 @@
 import { Button, Select, Textarea, TextInput } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { useStore } from 'app/StoreProvider';
-import { SearchUserDrawer } from 'features/post/ui/SearchUserDrawer/SearchUserDrawer';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { FindWorkStatus } from 'shared/api/service/User/types';
-import type { CoauthorSearchUser } from 'shared/api/service/UserSearch/types';
+import {
+  FindWorkStatus,
+  UpdateMyProfileRequest,
+  User,
+} from 'shared/api/service/User/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import XIcon from 'shared/assets/icons/x';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
@@ -13,6 +14,10 @@ import { referenceStore } from 'shared/store/api/Reference/reference-store';
 import { editProfileSchema } from '../../model/validation';
 import { CitySelect } from './CitySelect';
 import s from './EditProfileForm.module.scss';
+import {
+  MasterSearchDrawer,
+  MasterSelection,
+} from '../MasterSearchDrawer/MasterSearchDrawer';
 import { SpecializationSelect } from './SpecializationSelect';
 
 const FIND_WORK_OPTIONS = [
@@ -22,24 +27,41 @@ const FIND_WORK_OPTIONS = [
 ] as const;
 
 const mapFindWork = (val?: string): string | undefined => {
-  const found = FIND_WORK_OPTIONS.find((o) => o.value === val);
+  const found = FIND_WORK_OPTIONS.find((option) => option.value === val);
   return found ? found.label : undefined;
 };
 
 const mapToApiStatus = (label?: string): FindWorkStatus | undefined => {
-  const found = FIND_WORK_OPTIONS.find((o) => o.label === label);
+  const found = FIND_WORK_OPTIONS.find((option) => option.label === label);
   return found?.value as FindWorkStatus | undefined;
 };
 
+const mapProfileMaster = (profile: User): MasterSelection | null => {
+  if (!profile.master?.name) {
+    return null;
+  }
+
+  if (profile.master.isTarelkaUser) {
+    return {
+      type: 'tarelka',
+      id: profile.master.id,
+      name: profile.master.name,
+    };
+  }
+
+  return {
+    type: 'custom',
+    name: profile.master.name,
+  };
+};
+
 export const EditProfileForm = observer(() => {
-  const { userStore } = useStore();
+  const { userStore, profileEditorStore } = useStore();
   const profile = userStore.profile;
-  const [
-    masterSearchOpened,
-    { open: openMasterSearch, close: closeMasterSearch },
-  ] = useDisclosure(false);
-  const [selectedMaster, setSelectedMaster] =
-    useState<CoauthorSearchUser | null>(null);
+  const masterSearchOpened = profileEditorStore.masterSearchOpened;
+  const [selectedMaster, setSelectedMaster] = useState<MasterSelection | null>(
+    null,
+  );
 
   const {
     values,
@@ -62,18 +84,44 @@ export const EditProfileForm = observer(() => {
     },
     schema: editProfileSchema,
     onSubmit: async (vals) => {
-      if (!profile) return;
-      const payload: Record<string, unknown> = {
-        username: vals.username,
-        bio: vals.about,
-        education: vals.education,
+      const payload: UpdateMyProfileRequest = {
+        name: vals.firstName.trim(),
+        surname: vals.lastName?.trim() ?? '',
+        username: vals.username.trim(),
+        bio: vals.about?.trim() ?? '',
+        education: vals.education?.trim() ?? '',
       };
+
+      const cityId = Number.parseInt(vals.city, 10);
+      if (!Number.isNaN(cityId)) {
+        payload.cityIds = [cityId];
+      }
+
+      const specializationId = Number.parseInt(vals.specialization ?? '', 10);
+      if (!Number.isNaN(specializationId)) {
+        payload.specializationIds = [specializationId];
+      }
+
       const apiStatus = mapToApiStatus(vals.searchStatus);
-      if (apiStatus) payload.find_work = apiStatus;
-      await userStore.updateProfileAction(
-        payload as Parameters<typeof userStore.updateProfileAction>[0],
-        profile.id as number,
-      );
+      if (apiStatus) {
+        payload.find_work = apiStatus;
+      }
+
+      if (selectedMaster?.type === 'tarelka') {
+        payload.isMasterFromTable = false;
+        payload.masterId = selectedMaster.id;
+      }
+
+      if (selectedMaster?.type === 'custom' && selectedMaster.name.trim()) {
+        payload.isMasterFromTable = true;
+        payload.masterName = selectedMaster.name.trim();
+      }
+
+      const success = await userStore.updateMyProfileAction(payload);
+      if (success) {
+        await userStore.getProfileAction();
+        await userStore.getMyExtendedProfileAction();
+      }
     },
   });
 
@@ -83,18 +131,29 @@ export const EditProfileForm = observer(() => {
   }, []);
 
   useEffect(() => {
-    if (profile) {
-      setValues({
-        firstName: profile.firstName ?? profile.person?.name ?? '',
-        lastName: profile.lastName ?? profile.person?.surname ?? '',
-        username: profile.username ?? '',
-        city: String(profile.cities?.[0]?.id ?? ''),
-        about: profile.about ?? profile.bio ?? '',
-        education: profile.education ?? '',
-        specialization: String(profile.specializations?.[0]?.id ?? ''),
-        searchStatus: mapFindWork(profile.find_work) ?? '',
-      });
+    return () => {
+      profileEditorStore.closeMasterSearch();
+    };
+  }, [profileEditorStore]);
+
+  useEffect(() => {
+    if (!profile) {
+      setSelectedMaster(null);
+      return;
     }
+
+    setValues({
+      firstName: profile.firstName ?? profile.person?.name ?? '',
+      lastName: profile.lastName ?? profile.person?.surname ?? '',
+      username: profile.username ?? '',
+      city: String(profile.cities?.[0]?.id ?? ''),
+      about: profile.about ?? profile.bio ?? '',
+      education: profile.education ?? '',
+      specialization: String(profile.specializations?.[0]?.id ?? ''),
+      searchStatus: mapFindWork(profile.find_work) ?? '',
+    });
+
+    setSelectedMaster(mapProfileMaster(profile));
   }, [profile, setValues]);
 
   return (
@@ -163,7 +222,9 @@ export const EditProfileForm = observer(() => {
               maxRows={10}
               maxLength={250}
               value={values.about || ''}
-              onChange={(e) => handleChange('about', e.currentTarget.value)}
+              onChange={(event) =>
+                handleChange('about', event.currentTarget.value)
+              }
               error={errors.about}
             />
           </div>
@@ -183,12 +244,13 @@ export const EditProfileForm = observer(() => {
             <span className={s.label}>Статус по поиску работы</span>
             <Select
               placeholder="Выберите статус"
-              data={FIND_WORK_OPTIONS.map((o) => o.label)}
+              data={FIND_WORK_OPTIONS.map((option) => option.label)}
               radius="xl"
               size="lg"
               value={values.searchStatus}
-              onChange={(val) => handleChange('searchStatus', val)}
+              onChange={(value) => handleChange('searchStatus', value)}
               error={errors.searchStatus}
+              comboboxProps={{ withinPortal: false }}
               rightSection={
                 <div style={{ pointerEvents: 'none', display: 'flex' }}>
                   <ChevronDownIcon />
@@ -212,54 +274,51 @@ export const EditProfileForm = observer(() => {
 
         <div className={s.section}>
           <div className={s.inputGroup}>
-            <span className={s.label}>мастер</span>
-            {selectedMaster ? (
-              <TextInput
-                readOnly
-                radius="xl"
-                size="lg"
-                value={`${selectedMaster.name} ${selectedMaster.surname}`.trim()}
-                rightSection={
+            <span className={s.label}>Мастер</span>
+            <TextInput
+              readOnly
+              radius="xl"
+              size="lg"
+              placeholder="Выберите в Тарелке или введите имя"
+              value={selectedMaster?.name ?? ''}
+              onFocus={(event) => event.currentTarget.blur()}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={profileEditorStore.openMasterSearch}
+              styles={{ input: { cursor: 'pointer' } }}
+              rightSection={
+                selectedMaster ? (
                   <button
                     type="button"
                     style={{
+                      alignItems: 'center',
                       background: 'none',
                       border: 'none',
-                      cursor: 'pointer',
                       color: 'var(--text-color-secondary)',
-                      fontSize: 18,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'center',
                       lineHeight: 1,
                       padding: 0,
                     }}
-                    onClick={() => setSelectedMaster(null)}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedMaster(null);
+                    }}
                   >
                     <XIcon />
                   </button>
-                }
-                onClick={openMasterSearch}
-              />
-            ) : (
-              <Button
-                variant="outline"
-                radius="xl"
-                size="lg"
-                fullWidth
-                onClick={openMasterSearch}
-                styles={{
-                  root: {
-                    borderColor: 'var(--card-bg)',
-                    color: 'var(--text-color-secondary)',
-                    backgroundColor: 'var(--tertiary-bg-color)',
-                  },
-                }}
-              >
-                Выбрать мастера
-              </Button>
-            )}
+                ) : (
+                  <div style={{ pointerEvents: 'none', display: 'flex' }}>
+                    <ChevronDownIcon />
+                  </div>
+                )
+              }
+            />
           </div>
         </div>
 
-        <div className={s.footer}>
+        <div className={s.buttonContainer}>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || userStore.isUpdatingProfile}
@@ -277,13 +336,11 @@ export const EditProfileForm = observer(() => {
         </div>
       </div>
 
-      <SearchUserDrawer
+      <MasterSearchDrawer
         opened={masterSearchOpened}
-        onClose={closeMasterSearch}
-        onUserSelect={(user) => {
-          setSelectedMaster(user);
-          closeMasterSearch();
-        }}
+        value={selectedMaster}
+        onClose={profileEditorStore.closeMasterSearch}
+        onChange={setSelectedMaster}
       />
     </>
   );

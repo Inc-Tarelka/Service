@@ -9,6 +9,7 @@ import {
   menuItems,
   SettingSection,
 } from 'shared/consts/settingsMenuItems';
+import { InviteFriendDrawer } from 'features/invite-friend';
 import s from './SettingsMenu.module.scss';
 
 interface SettingsMenuProps {
@@ -39,6 +40,8 @@ export const SettingsMenu = observer(
     const { userStore, authStore } = useStore();
     const [isDeleteDrawerOpen, setIsDeleteDrawerOpen] = useState(false);
     const [isLogoutDrawerOpen, setIsLogoutDrawerOpen] = useState(false);
+    const [isInviteFriendDrawerOpen, setIsInviteFriendDrawerOpen] =
+      useState(false);
 
     const handleItemClick = (item: MenuItem) => {
       if (item.id === 'delete') {
@@ -48,6 +51,11 @@ export const SettingsMenu = observer(
 
       if (item.id === 'logout' || item.id === 'logout-all') {
         setIsLogoutDrawerOpen(true);
+        return;
+      }
+
+      if (item.id === 'frends') {
+        setIsInviteFriendDrawerOpen(true);
         return;
       }
 
@@ -106,6 +114,12 @@ export const SettingsMenu = observer(
           onDelete={handleLogout}
           fullWidth
           title="Вы уверены, что хотите выйти?"
+          confirmLabel="Выйти"
+        />
+
+        <InviteFriendDrawer
+          opened={isInviteFriendDrawerOpen}
+          onClose={() => setIsInviteFriendDrawerOpen(false)}
         />
       </div>
     );

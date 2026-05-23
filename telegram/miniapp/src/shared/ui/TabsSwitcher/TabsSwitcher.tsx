@@ -1,7 +1,13 @@
 import { Box } from '@mantine/core';
 import clsx from 'clsx';
-import { AnimatePresence, motion } from 'motion/react';
-import { ReactNode, useCallback, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useViewport } from 'shared/hooks/useViewport';
 import classes from './TabsSwitcher.module.scss';
 
 export interface TabItem<T extends string> {
@@ -14,35 +20,63 @@ interface TabsSwitcherProps<T extends string> {
   tabs: TabItem<T>[];
   activeTab?: T;
   onTabChange?: (tab: T) => void;
+  onTabScrollEnd?: (tab: T) => void;
   children?: ReactNode;
+  renderTab?: (tab: T) => ReactNode;
   className?: string;
   fullWidth?: boolean;
   hideMask?: boolean;
   contentPaddingTop?: number | string;
+  stickyTop?: string | number;
+  scrollKey?: string;
+  onSaveScroll?: (key: string, position: number) => void;
+  getScroll?: (key: string) => number;
 }
 
 const SWIPE_THRESHOLD = 50;
 const DIRECTION_LOCK_THRESHOLD = 10;
+const SCROLLABLE_DELTA = 1;
+const SCROLL_END_THRESHOLD = 50;
 
 interface TouchState {
   startX: number;
   startY: number;
   direction: 'horizontal' | 'vertical' | null;
+  skipSwipe: boolean;
 }
 
-const contentVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? '30%' : '-30%',
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? '-30%' : '30%',
-    opacity: 0,
-  }),
+const isScrollableX = (element: HTMLElement) => {
+  const style = window.getComputedStyle(element);
+  const overflowX = style.overflowX;
+  const canScrollByStyle = overflowX === 'auto' || overflowX === 'scroll';
+  const canScrollBySize =
+    element.scrollWidth > element.clientWidth + SCROLLABLE_DELTA;
+
+  return canScrollByStyle && canScrollBySize;
+};
+
+const shouldSkipSwipeGesture = (
+  target: HTMLElement | null,
+  boundary: HTMLElement | null,
+) => {
+  if (!target || !boundary) {
+    return false;
+  }
+
+  let element: HTMLElement | null = target;
+  while (element) {
+    if (element.dataset.tabSwipeLock === 'true' || isScrollableX(element)) {
+      return true;
+    }
+
+    if (element === boundary) {
+      break;
+    }
+
+    element = element.parentElement;
+  }
+
+  return false;
 };
 
 export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
@@ -50,15 +84,23 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     tabs,
     activeTab,
     onTabChange,
+    onTabScrollEnd,
     children,
+    renderTab,
     className,
     fullWidth,
     hideMask,
     contentPaddingTop,
+    stickyTop,
+    scrollKey,
+    onSaveScroll,
+    getScroll,
   } = props;
+  const { isDesktop } = useViewport();
   const [internalTab, setInternalTab] = useState<T>(tabs[0]?.value);
   const currentTab = activeTab !== undefined ? activeTab : internalTab;
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
+  const [tabsBarHeight, setTabsBarHeight] = useState(40);
 
   const currentIndex = tabs.findIndex((t) => t.value === currentTab);
 
@@ -66,11 +108,36 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
   const offsetRef = useRef(0);
   const [offsetX, setOffsetX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [slideDirection, setSlideDirection] = useState(0);
+
+  const trackPageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [activePageHeight, setActivePageHeight] = useState<
+    number | undefined
+  >();
+
+  useLayoutEffect(() => {
+    if (stickyTop === undefined) return;
+    const el = tabsWrapperRef.current;
+    if (!el) return;
+    const update = () => setTabsBarHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [stickyTop]);
+
+  useLayoutEffect(() => {
+    if (stickyTop !== undefined) return;
+    const el = trackPageRefs.current.get(currentTab);
+    if (!el) return;
+    const update = () => setActivePageHeight(el.scrollHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [currentTab, stickyTop]);
 
   const changeTab = useCallback(
-    (newTab: T, direction: number) => {
-      setSlideDirection(direction);
+    (newTab: T) => {
       if (activeTab === undefined) {
         setInternalTab(newTab);
       }
@@ -83,8 +150,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     newTab: T,
     event: React.MouseEvent<HTMLButtonElement>,
   ) => {
-    const newIndex = tabs.findIndex((t) => t.value === newTab);
-    changeTab(newTab, newIndex > currentIndex ? 1 : -1);
+    changeTab(newTab);
 
     if (!fullWidth) {
       const buttonElement = event.currentTarget;
@@ -115,17 +181,29 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
+    const target = e.target instanceof HTMLElement ? e.target : null;
+    const boundary =
+      e.currentTarget instanceof HTMLElement ? e.currentTarget : null;
+    const skipSwipe = shouldSkipSwipeGesture(target, boundary);
+
     touchRef.current = {
       startX: touch.clientX,
       startY: touch.clientY,
       direction: null,
+      skipSwipe,
     };
+
+    if (skipSwipe) {
+      offsetRef.current = 0;
+      setOffsetX(0);
+      setIsSwiping(false);
+    }
   }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
       const state = touchRef.current;
-      if (!state) return;
+      if (!state || state.skipSwipe) return;
 
       const touch = e.touches[0];
       const dx = touch.clientX - state.startX;
@@ -170,7 +248,14 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     const state = touchRef.current;
     touchRef.current = null;
 
-    if (!state || state.direction !== 'horizontal') {
+    if (!state || state.skipSwipe) {
+      offsetRef.current = 0;
+      setOffsetX(0);
+      setIsSwiping(false);
+      return;
+    }
+
+    if (state.direction !== 'horizontal') {
       offsetRef.current = 0;
       setOffsetX(0);
       setIsSwiping(false);
@@ -186,7 +271,7 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
           : Math.max(currentIndex - 1, 0);
 
       if (newIndex !== currentIndex) {
-        changeTab(tabs[newIndex].value, current < 0 ? 1 : -1);
+        changeTab(tabs[newIndex].value);
       }
     }
 
@@ -194,6 +279,53 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
     setOffsetX(0);
     setIsSwiping(false);
   }, [currentIndex, tabs, changeTab]);
+
+  const handleTabScroll = useCallback(
+    (tabValue: T, e: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+      if (onSaveScroll && scrollKey) {
+        onSaveScroll(`${scrollKey}-${tabValue}`, scrollTop);
+      }
+
+      if (
+        onTabScrollEnd &&
+        Math.abs(scrollHeight - scrollTop - clientHeight) < SCROLL_END_THRESHOLD
+      ) {
+        onTabScrollEnd(tabValue);
+      }
+    },
+    [onTabScrollEnd, onSaveScroll, scrollKey],
+  );
+
+  const stickyTopCss =
+    stickyTop !== undefined
+      ? typeof stickyTop === 'number'
+        ? `${stickyTop}px`
+        : String(stickyTop)
+      : undefined;
+
+  const independentScroll =
+    stickyTopCss !== undefined && renderTab !== undefined;
+
+  useLayoutEffect(() => {
+    if (!independentScroll || !getScroll || !scrollKey) return;
+    const el = trackPageRefs.current.get(currentTab);
+    if (!el) return;
+    const saved = getScroll(`${scrollKey}-${currentTab}`);
+    if (saved > 0) {
+      el.scrollTop = saved;
+    }
+  }, [currentTab, independentScroll, getScroll, scrollKey]);
+
+  const paddingBottomCss = isDesktop ? '0px' : 'var(--TB-padding, 0px)';
+
+  const viewportStyle: React.CSSProperties | undefined = independentScroll
+    ? {
+        height: `calc(100dvh - ${stickyTopCss} - ${tabsBarHeight}px - ${paddingBottomCss} - var(--total-navbar-height, 0px))`,
+        overflow: 'hidden',
+      }
+    : undefined;
 
   return (
     <Box
@@ -205,6 +337,16 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
       <div
         className={clsx(classes.tabsWrapper, { [classes.noMask]: hideMask })}
         ref={tabsWrapperRef}
+        style={
+          stickyTop !== undefined
+            ? {
+                position: 'sticky',
+                top: stickyTop,
+                backgroundColor: 'var(--bg-color)',
+                zIndex: 50,
+              }
+            : undefined
+        }
       >
         <div className={classes.tabsList}>
           {tabs.map((tabItem) => (
@@ -224,35 +366,64 @@ export const TabsSwitcher = <T extends string>(props: TabsSwitcherProps<T>) => {
           ))}
         </div>
       </div>
-      <Box
-        className={classes.content}
-        pt={contentPaddingTop}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          transform: isSwiping ? `translateX(${offsetX}px)` : undefined,
-          transition: isSwiping ? 'none' : 'transform 0.2s ease-out',
-        }}
-      >
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          custom={slideDirection}
+      {renderTab ? (
+        <Box
+          className={classes.viewport}
+          pt={independentScroll ? undefined : contentPaddingTop}
+          style={
+            viewportStyle ??
+            (activePageHeight !== undefined
+              ? { maxHeight: activePageHeight }
+              : undefined)
+          }
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <motion.div
-            key={currentTab}
-            custom={slideDirection}
-            variants={contentVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+          <div
+            className={classes.track}
+            style={{
+              width: `${tabs.length * 100}%`,
+              height: independentScroll ? '100%' : undefined,
+              transform: `translateX(calc(-${currentIndex * (100 / tabs.length)}% + ${offsetX}px))`,
+              transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
+            }}
           >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </Box>
+            {tabs.map((tab) => (
+              <div
+                key={tab.value}
+                ref={(el) => {
+                  if (el) trackPageRefs.current.set(tab.value, el);
+                  else trackPageRefs.current.delete(tab.value);
+                }}
+                className={classes.trackPage}
+                style={{
+                  width: `${100 / tabs.length}%`,
+                  ...(independentScroll
+                    ? {
+                        overflowY: 'auto',
+                        height: '100%',
+                        paddingTop: contentPaddingTop,
+                        overscrollBehavior: 'contain',
+                      }
+                    : {}),
+                }}
+                onScroll={
+                  independentScroll
+                    ? (e) => handleTabScroll(tab.value, e)
+                    : undefined
+                }
+              >
+                {renderTab(tab.value)}
+              </div>
+            ))}
+          </div>
+        </Box>
+      ) : (
+        <Box className={classes.content} pt={contentPaddingTop}>
+          {children}
+        </Box>
+      )}
     </Box>
   );
 };

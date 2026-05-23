@@ -4,6 +4,7 @@ export interface PostNeed {
   id?: string;
   title: string;
   description: string;
+  cityId?: string;
   tagIds?: string[];
   startDate?: Date;
   endDate?: Date;

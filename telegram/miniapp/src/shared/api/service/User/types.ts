@@ -1,9 +1,9 @@
 import { UserRole } from 'shared/consts/userRoles';
 
 export interface UserStats {
-  collaborations: number;
-  wantsToWork: number;
-  projects: number;
+  teammatesCount: number;
+  outgoingRequestsCount: number;
+  projectsCount: number;
 }
 
 export interface PersonData {
@@ -27,13 +27,26 @@ export interface Direction {
   name: string;
 }
 
+export interface Sender {
+  id: number;
+  name: string;
+  surname: string;
+}
+
 export type FindWorkStatus = 'LOOKING' | 'NOT_LOOKING' | 'OPEN_TO_OFFERS';
+
+export interface UserMaster {
+  id: number;
+  name: string;
+  isTarelkaUser: boolean;
+}
 
 export interface User {
   id: string | number;
   tg_user_id?: number;
   type: 'PERSON' | 'COMPANY';
   username: string;
+  telegram_url?: string;
   phone?: string;
   created_at?: string;
 
@@ -61,6 +74,9 @@ export interface User {
   status?: string;
   specialization?: string;
   conversation?: number;
+  invite_account_type?: string;
+  sender?: Sender;
+  master?: UserMaster;
 }
 
 export interface DeleteAccountResponse {
@@ -102,4 +118,55 @@ export interface UserMediaUrlRequest {
 export interface UserMediaUrlResponse {
   data: string;
   success: boolean;
+}
+
+// ===== My profile patch =====
+
+interface UpdateMyProfileBaseRequest {
+  name?: string;
+  surname?: string;
+  username?: string;
+  bio?: string;
+  education?: string;
+  find_work?: FindWorkStatus;
+  cityIds?: number[];
+  specializationIds?: number[];
+  isMasterFromTable?: boolean;
+  masterId?: number;
+  masterName?: string;
+}
+
+export type UpdateMyProfileRequest = UpdateMyProfileBaseRequest;
+
+// ===== Teammate =====
+
+export interface Teammate {
+  id: number;
+  firstName: string;
+  lastName: string;
+  city: string;
+  specialization: string;
+  telegramUrl: string;
+}
+
+export type TeammatesResponse = Teammate[];
+
+// ===== Expanded User Profile =====
+
+export interface UserProfilePublication {
+  id: number;
+  likesCount: number;
+  type: 'PROJECT' | 'SERVICE';
+  imageUrl?: string;
+  isAuthor: boolean;
+}
+
+export interface ExpandedUserProfile {
+  user: User;
+  publications: UserProfilePublication[];
+  sender?: Sender;
+  master?: UserMaster;
+  teammatesCount: number;
+  outgoingRequestsCount: number;
+  projectsCount: number;
 }

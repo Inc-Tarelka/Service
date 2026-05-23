@@ -10,10 +10,19 @@ interface ProfileBannerProps {
   isOwnProfile: boolean;
   coverImage?: string;
   minimal?: boolean;
+  onShare?: () => void;
+  onTeammatesClick?: () => void;
 }
 
 export const ProfileBanner = (props: ProfileBannerProps) => {
-  const { user, isOwnProfile, coverImage, minimal = false } = props;
+  const {
+    user,
+    isOwnProfile,
+    coverImage,
+    minimal = false,
+    onShare,
+    onTeammatesClick,
+  } = props;
   const coverClassName = coverImage
     ? `${classes.cover} ${classes.withImage}`
     : classes.cover;
@@ -33,7 +42,7 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
               {isOwnProfile ? (
                 <EditProfileButton />
               ) : (
-                <ActionIcon variant="transparent" c="white">
+                <ActionIcon variant="transparent" c="white" onClick={onShare}>
                   <ShareIcon />
                 </ActionIcon>
               )}
@@ -44,7 +53,7 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
 
       <Stack align="center" mt={-50} gap="xs" className={classes.content}>
         <UserAvatar
-          src={user.avatarUrl}
+          src={user.logo_url || user.avatarUrl}
           size={100}
           className={classes.avatar}
         />
@@ -58,17 +67,24 @@ export const ProfileBanner = (props: ProfileBannerProps) => {
               <span className={classes.profession}>
                 {user.profession}, {user.city}
               </span>
+              {user.invite_account_type &&
+                user.invite_account_type !== 'DEFAULT' && (
+                  <span className={classes.memberBadge}>
+                    Президент члена клуба
+                  </span>
+                )}
             </Stack>
 
             <Box mt="md" w="100%">
               <UserStats
                 stats={
                   user.stats ?? {
-                    collaborations: 0,
-                    wantsToWork: 0,
-                    projects: 0,
+                    teammatesCount: 0,
+                    outgoingRequestsCount: 0,
+                    projectsCount: 0,
                   }
                 }
+                onTeammatesClick={onTeammatesClick}
               />
             </Box>
           </>

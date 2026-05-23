@@ -4,6 +4,7 @@ export {
   presignImages,
   searchPublications,
   togglePublicationLike,
+  updatePublication,
 } from './api';
 export type {
   CoAuthor,
@@ -24,5 +25,7 @@ export type {
   SearchPublicationsParams,
   SearchPublicationsResponse,
   ToggleLikeResponse,
+  UpdatePublicationResponse,
+  UpdatePublicationRequest,
   WorkingStatus,
 } from './types';

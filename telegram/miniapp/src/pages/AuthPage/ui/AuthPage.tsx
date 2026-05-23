@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import { Activity, useCallback } from 'react';
+import { Activity, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import s from './AuthPage.module.scss';
 
@@ -15,22 +15,33 @@ import {
   RegisterForm,
   VALID_STEPS,
 } from 'features/auth';
-import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useBackButton } from 'shared/hooks/useBackButton';
 import classNames from 'shared/library/ClassNames/classNames';
 import { verificationStore } from 'shared/store/api/Verification/verification-store';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
 
 export const AuthPage = observer(() => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setToken } = useAuth();
   const { authStore } = useStore();
+  const autoResendDoneRef = useRef(false);
+
+  useEffect(() => {
+    authStore.syncRegistrationSenderId();
+  }, [authStore]);
 
   const rawStep = searchParams.get('step');
+  const isReferral = authStore.hasRegistrationSenderId;
+
+  // На первом рендере после ресторации (нет ?step в URL) берём шаг из стора напрямую,
+  // чтобы сразу показать верную форму без flash-перехода через 'register'/'login'.
+  const defaultStep: AuthStep =
+    authStore.currentStep ?? (isReferral ? 'register' : DEFAULT_STEP);
   const step: AuthStep = VALID_STEPS.includes(rawStep as AuthStep)
     ? (rawStep as AuthStep)
-    : DEFAULT_STEP;
+    : defaultStep;
 
   const showBackButton = step !== DEFAULT_STEP;
 
@@ -48,6 +59,50 @@ export const AuthPage = observer(() => {
     },
     [setSearchParams],
   );
+
+  useEffect(() => {
+    // Шаг восстановлен из стора, но URL ещё пустой — синхронизируем.
+    if (!rawStep && authStore.currentStep) {
+      setSearchParams({ step: authStore.currentStep }, { replace: true });
+      return;
+    }
+    // registerProfile без verificationCode — безопасно вернуть на подтверждение кода.
+    if (
+      step === 'registerProfile' &&
+      !authStore.tempData.verificationCode &&
+      authStore.tempData.phone
+    ) {
+      setSearchParams({ step: 'registerConfirm' }, { replace: true });
+      return;
+    }
+    authStore.setCurrentStep(step);
+  }, [step, rawStep, authStore, setSearchParams]);
+
+  useEffect(() => {
+    if (step !== 'registerConfirm') {
+      autoResendDoneRef.current = false;
+      return;
+    }
+    if (autoResendDoneRef.current) return;
+    if (verificationStore.requestId) return;
+    if (authStore.tempData.verificationRequestId) {
+      verificationStore.requestId = authStore.tempData.verificationRequestId;
+      autoResendDoneRef.current = true;
+      return;
+    }
+
+    const phone = authStore.tempData.phone;
+    if (!phone) return;
+
+    autoResendDoneRef.current = true;
+    void verificationStore.sendCode(phone).then((ok) => {
+      if (ok && verificationStore.requestId) {
+        authStore.setTempData({
+          verificationRequestId: verificationStore.requestId,
+        });
+      }
+    });
+  }, [step, authStore]);
 
   return (
     <div className={classNames(s.authPage, {}, [])}>

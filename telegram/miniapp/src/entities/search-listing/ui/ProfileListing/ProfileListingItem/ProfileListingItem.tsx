@@ -8,17 +8,19 @@ interface ProfileListingItemProps {
   onClick?: (id: number) => void;
 }
 
-// Mocked project images
-const MOCKED_IMAGES = [
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2864&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?q=80&w=2864&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2864&auto=format&fit=crop',
-];
-
 export const ProfileListingItem = (props: ProfileListingItemProps) => {
   const { user, onClick } = props;
-  const { name, userId, specializations, cities, logoUrl, username } =
+  const { name, userId, specializations, cities, logoUrl, telegramLabel } =
     getProfileDisplayData(user);
+
+  const projectImages = (user.projectTopImages ?? [])
+    .filter((url) => url.startsWith('http'))
+    .slice(0, 3);
+
+  const handleProjectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick?.(userId);
+  };
 
   return (
     <div
@@ -33,23 +35,28 @@ export const ProfileListingItem = (props: ProfileListingItemProps) => {
           <div className={s.nameRow}>
             <h3 className={s.name}>{name}</h3>
           </div>
-          {username && <p className={s.username}>@{username}</p>}
+          {telegramLabel && <p className={s.username}>{telegramLabel}</p>}
           <p className={s.details}>
             {specializations}, {cities}
           </p>
         </div>
       </div>
 
-      <div className={s.projects}>
-        {MOCKED_IMAGES.map((imgUrl, index) => (
-          <img
-            key={index}
-            src={imgUrl}
-            className={s.projectImage}
-            alt={`Project ${index + 1}`}
-          />
-        ))}
-      </div>
+      {projectImages.length > 0 && (
+        <div className={s.projects} data-tab-swipe-lock="true">
+          {projectImages.map((imgUrl, index) => (
+            <img
+              key={index}
+              src={imgUrl}
+              className={s.projectImage}
+              alt={`Project ${index + 1}`}
+              onClick={handleProjectClick}
+              role="button"
+              tabIndex={0}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

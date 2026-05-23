@@ -18,7 +18,11 @@ export const API_URL = {
   needs_tags: () => 'references/need-tags',
 
   profile: () => '/users/me',
+  me_profile: () => '/users/me/profile',
+  me_teammates: () => '/users/me/teammates',
   user: (id: string | number) => `/users/${id}`,
+  user_profile: (id: string | number) => `/users/${id}/profile`,
+  user_teammates: (id: string | number) => `/users/${id}/teammates`,
 
   interactions: () => '/interactions',
   interaction: (id: string) => `/interactions/${id}`,
@@ -30,6 +34,8 @@ export const API_URL = {
   search_publication_needs: () => '/publications/needs/search',
   search_publication_services: () => '/publications/services/search',
   get_publication_details: (id: string) => `/publications/${id}`,
+  update_publication: (id: string) => `/publications/${id}`,
+  delete_publication: (id: string) => `/publications/${id}`,
   publication_like: (id: string) => `/publications/${id}/likes`,
   publication_comment: (id: string) => `/publications/${id}/comments`,
   publication_comment_post: (id: string) => `/publications/${id}/comments`,
@@ -56,4 +62,22 @@ export const API_URL = {
 
   // Search
   search_coauthors: () => '/users/search/name',
+  search_all: () => '/search/all',
+
+  // Referral
+  create_invite_link: () => '/createInviteLink',
+
+  // Notifications
+  notifications_incoming: () => '/notifications/incoming',
+  notifications_outgoing: () => '/notifications/outgoing',
+  notification_by_id: (id: number) => `/notifications/${id}`,
+  notifications_team_invite: () => '/notifications/team-invite',
+  notifications_team_invite_response: () =>
+    '/notifications/team-invite/response',
+  notifications_read: () => '/notifications/read',
+  notification_delete: (id: number) => `/notifications/${id}`,
+
+  // My projects
+  my_projects: () => '/publications/my/projects',
+  my_services: () => '/publications/my/services',
 };

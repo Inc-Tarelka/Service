@@ -7,12 +7,13 @@ interface ServiceListingListProps {
   services: SearchServiceItem[];
   onItemClick?: (id: number) => void;
   isLoading?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export const ServiceListingList = (props: ServiceListingListProps) => {
-  const { services, onItemClick, isLoading } = props;
+  const { services, onItemClick, isLoading, isLoadingMore } = props;
 
-  if (isLoading) {
+  if (isLoading && services.length === 0) {
     return (
       <div className={classes.grid}>
         {Array.from({ length: 6 }).map((_, index) => (
@@ -39,6 +40,13 @@ export const ServiceListingList = (props: ServiceListingListProps) => {
           onClick={onItemClick}
         />
       ))}
+      {isLoadingMore && (
+        <div className={classes.loadMore}>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <ServiceListingSkeleton key={`more-${index}`} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

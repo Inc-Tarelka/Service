@@ -7,6 +7,233 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="google" content="notranslate" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <script>
+      (function () {
+        var NAVBAR_BASE_HEIGHT_PX = 48;
+        var REQUEST_COOLDOWN_MS = 500;
+        var RETRY_DELAYS = [0, 120, 280, 550, 900, 1400];
+        var lastFullscreenRequestAt = 0;
+        var eventsBound = false;
+        var retriesScheduled = false;
+        var readySent = false;
+        var readyFallbackTimerId = null;
+        var root = document.documentElement;
+
+        function toPx(value) {
+          if (typeof value !== 'number' || !Number.isFinite(value)) {
+            return '0px';
+          }
+
+          return Math.max(0, value) + 'px';
+        }
+
+        function getWebApp() {
+          return window.Telegram && window.Telegram.WebApp
+            ? window.Telegram.WebApp
+            : null;
+        }
+
+        function canRequestFullscreen(webApp) {
+          if (!webApp) {
+            return false;
+          }
+
+          if (typeof webApp.isVersionAtLeast !== 'function') {
+            return false;
+          }
+
+          if (!webApp.isVersionAtLeast('8.0')) {
+            return false;
+          }
+
+          if (typeof webApp.requestFullscreen !== 'function') {
+            return false;
+          }
+
+          return !webApp.isFullscreen;
+        }
+
+        function applyCssVars(webApp) {
+          if (!webApp) {
+            return;
+          }
+
+          var safeAreaInset = webApp.safeAreaInset || {};
+          var contentSafeAreaInset = webApp.contentSafeAreaInset || {};
+          var safeTop = Math.max(
+            0,
+            typeof safeAreaInset.top === 'number' ? safeAreaInset.top : 0,
+          );
+          var shouldReserveNavbarHeight = webApp.isFullscreen || !webApp.isExpanded;
+          var pageTopOffset = shouldReserveNavbarHeight
+            ? NAVBAR_BASE_HEIGHT_PX + safeTop
+            : safeTop;
+
+          root.style.setProperty('--tg-viewport-height', toPx(webApp.viewportHeight));
+          root.style.setProperty(
+            '--tg-viewport-stable-height',
+            toPx(webApp.viewportStableHeight),
+          );
+          root.style.setProperty(
+            '--tg-safe-area-inset-top',
+            toPx(safeAreaInset.top),
+          );
+          root.style.setProperty(
+            '--tg-safe-area-inset-right',
+            toPx(safeAreaInset.right),
+          );
+          root.style.setProperty(
+            '--tg-safe-area-inset-bottom',
+            toPx(safeAreaInset.bottom),
+          );
+          root.style.setProperty(
+            '--tg-safe-area-inset-left',
+            toPx(safeAreaInset.left),
+          );
+          root.style.setProperty(
+            '--tg-content-safe-area-inset-top',
+            toPx(contentSafeAreaInset.top),
+          );
+          root.style.setProperty(
+            '--tg-content-safe-area-inset-right',
+            toPx(contentSafeAreaInset.right),
+          );
+          root.style.setProperty(
+            '--tg-content-safe-area-inset-bottom',
+            toPx(contentSafeAreaInset.bottom),
+          );
+          root.style.setProperty(
+            '--tg-content-safe-area-inset-left',
+            toPx(contentSafeAreaInset.left),
+          );
+          root.style.setProperty('--tg-page-top-offset', pageTopOffset + 'px');
+          root.style.setProperty(
+            '--tg-navbar-base-height',
+            NAVBAR_BASE_HEIGHT_PX + 'px',
+          );
+        }
+
+        function ensureRuntime(webApp) {
+          if (!webApp) {
+            return;
+          }
+
+          applyCssVars(webApp);
+
+          try {
+            if (typeof webApp.expand === 'function') {
+              webApp.expand();
+            }
+          } catch (error) {}
+
+          try {
+            if (typeof webApp.disableVerticalSwipes === 'function') {
+              webApp.disableVerticalSwipes();
+            }
+          } catch (error) {}
+
+          var now = Date.now();
+          if (
+            canRequestFullscreen(webApp) &&
+            now - lastFullscreenRequestAt >= REQUEST_COOLDOWN_MS
+          ) {
+            lastFullscreenRequestAt = now;
+            try {
+              webApp.requestFullscreen();
+            } catch (error) {}
+          }
+
+          applyCssVars(webApp);
+        }
+
+        function sendReadyOnce(webApp) {
+          if (readySent || !webApp || typeof webApp.ready !== 'function') {
+            return;
+          }
+
+          readySent = true;
+
+          try {
+            webApp.ready();
+          } catch (error) {}
+        }
+
+        function scheduleReady(webApp) {
+          if (readySent) {
+            return;
+          }
+
+          if (!canRequestFullscreen(webApp) || webApp.isFullscreen) {
+            sendReadyOnce(webApp);
+            return;
+          }
+
+          if (readyFallbackTimerId !== null) {
+            return;
+          }
+
+          readyFallbackTimerId = window.setTimeout(function () {
+            sendReadyOnce(webApp);
+          }, 420);
+        }
+
+        function bindEvents(webApp) {
+          if (eventsBound || typeof webApp.onEvent !== 'function') {
+            return;
+          }
+
+          webApp.onEvent('viewportChanged', function () {
+            ensureRuntime(webApp);
+            scheduleReady(webApp);
+          });
+          webApp.onEvent('fullscreenChanged', function () {
+            ensureRuntime(webApp);
+            sendReadyOnce(webApp);
+          });
+          webApp.onEvent('fullscreenFailed', function () {
+            ensureRuntime(webApp);
+            sendReadyOnce(webApp);
+          });
+          eventsBound = true;
+        }
+
+        function scheduleWarmupRetries(webApp) {
+          if (retriesScheduled) {
+            return;
+          }
+
+          retriesScheduled = true;
+          for (var i = 0; i < RETRY_DELAYS.length; i += 1) {
+            (function (delay) {
+              window.setTimeout(function () {
+                ensureRuntime(webApp);
+                scheduleReady(webApp);
+              }, delay);
+            })(RETRY_DELAYS[i]);
+          }
+        }
+
+        function bootstrap() {
+          var webApp = getWebApp();
+          if (!webApp) {
+            return;
+          }
+
+          ensureRuntime(webApp);
+          bindEvents(webApp);
+          scheduleWarmupRetries(webApp);
+          scheduleReady(webApp);
+        }
+
+        bootstrap();
+        window.addEventListener('focus', bootstrap, { passive: true });
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState !== 'hidden') {
+            bootstrap();
+          }
+        });
+      })();
+    </script>
     <title>Тарелка</title>
   </head>
   <body>

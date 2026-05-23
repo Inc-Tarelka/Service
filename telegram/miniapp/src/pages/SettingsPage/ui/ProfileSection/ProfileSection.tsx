@@ -7,7 +7,7 @@ import {
   EditProfileForm,
 } from 'features/edit-profile';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import EditIcon from 'shared/assets/icons/edit';
 import GalleryIcon from 'shared/assets/icons/gallery';
 import TrashIcon from 'shared/assets/icons/trash';
@@ -15,18 +15,14 @@ import { ProfileBanner } from 'widgets/profile-banner';
 import s from './ProfileSection.module.scss';
 
 export const ProfileSection = observer(() => {
-  const { userStore } = useStore();
-
-  const [avatarActionsOpened, setAvatarActionsOpened] = useState(false);
-  const [coverActionsOpened, setCoverActionsOpened] = useState(false);
-  const [avatarEditorOpened, setAvatarEditorOpened] = useState(false);
-  const [coverEditorOpened, setCoverEditorOpened] = useState(false);
-  const [avatarAutoOpen, setAvatarAutoOpen] = useState(false);
-  const [coverAutoOpen, setCoverAutoOpen] = useState(false);
+  const { userStore, profileEditorStore } = useStore();
 
   useEffect(() => {
     if (!userStore.profile && !userStore.isLoadingProfile) {
       userStore.getProfileAction();
+    }
+    if (!userStore.myExtendedProfileData && !userStore.isLoadingProfile) {
+      userStore.getMyExtendedProfileAction();
     }
   }, [userStore]);
 
@@ -35,7 +31,7 @@ export const ProfileSection = observer(() => {
   const handleDeleteAvatar = async () => {
     if (!user) return;
     await userStore.updateProfileAction({ logo_url: '' }, user.id as number);
-    await userStore.getProfileAction();
+    userStore.setLocalOverride({ avatarUrl: '', logo_url: '' });
   };
 
   const handleDeleteCover = async () => {
@@ -51,10 +47,7 @@ export const ProfileSection = observer(() => {
     {
       label: 'Выбрать из галереи',
       icon: <GalleryIcon />,
-      onClick: () => {
-        setAvatarAutoOpen(true);
-        setAvatarEditorOpened(true);
-      },
+      onClick: () => profileEditorStore.openAvatarEditor(true),
     },
     {
       label: 'Удалить текущее фото',
@@ -68,10 +61,7 @@ export const ProfileSection = observer(() => {
     {
       label: 'Выбрать из галереи',
       icon: <GalleryIcon />,
-      onClick: () => {
-        setCoverAutoOpen(true);
-        setCoverEditorOpened(true);
-      },
+      onClick: () => profileEditorStore.openCoverEditor(true),
     },
     {
       label: 'Удалить текущее фото',
@@ -103,7 +93,7 @@ export const ProfileSection = observer(() => {
             radius="xl"
             size="md"
             leftSection={<EditIcon className={s.icon} />}
-            onClick={() => setAvatarActionsOpened(true)}
+            onClick={profileEditorStore.openAvatarActions}
             color="var(--text-color)"
           >
             Аватарка
@@ -113,7 +103,7 @@ export const ProfileSection = observer(() => {
             radius="xl"
             size="md"
             leftSection={<EditIcon className={s.icon} />}
-            onClick={() => setCoverActionsOpened(true)}
+            onClick={profileEditorStore.openCoverActions}
             color="var(--text-color)"
           >
             Обложка
@@ -124,42 +114,36 @@ export const ProfileSection = observer(() => {
       </div>
 
       <ActionsDrawer
-        opened={avatarActionsOpened}
-        onClose={() => setAvatarActionsOpened(false)}
+        opened={profileEditorStore.avatarActionsOpened}
+        onClose={profileEditorStore.closeAvatarActions}
         title="Аватарка"
         actions={avatarActions}
       />
 
       <ActionsDrawer
-        opened={coverActionsOpened}
-        onClose={() => setCoverActionsOpened(false)}
+        opened={profileEditorStore.coverActionsOpened}
+        onClose={profileEditorStore.closeCoverActions}
         title="Обложка"
         actions={coverActions}
       />
 
       {user && (
         <AvatarUploadDrawer
-          opened={avatarEditorOpened}
-          onClose={() => {
-            setAvatarEditorOpened(false);
-            setAvatarAutoOpen(false);
-          }}
+          opened={profileEditorStore.avatarEditorOpened}
+          onClose={profileEditorStore.closeAvatarEditor}
           userId={user.id as number}
           currentAvatarUrl={user.logo_url}
-          autoOpenPicker={avatarAutoOpen}
+          autoOpenPicker={profileEditorStore.avatarAutoOpen}
         />
       )}
 
       {user && (
         <CoverUploadDrawer
-          opened={coverEditorOpened}
-          onClose={() => {
-            setCoverEditorOpened(false);
-            setCoverAutoOpen(false);
-          }}
+          opened={profileEditorStore.coverEditorOpened}
+          onClose={profileEditorStore.closeCoverEditor}
           userId={user.id as number}
           currentCoverUrl={user.wallpaper_url}
-          autoOpenPicker={coverAutoOpen}
+          autoOpenPicker={profileEditorStore.coverAutoOpen}
         />
       )}
     </div>

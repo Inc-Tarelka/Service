@@ -6,6 +6,7 @@ import { loadAccessTokenOnce } from 'shared/api/base';
 import { routeConfig } from 'shared/config/routeConfig/routeConfig';
 import { useAuth } from 'shared/hooks/useAuth';
 import { useViewport } from 'shared/hooks/useViewport';
+import { ensureTelegramFullscreen } from 'shared/lib/utils/telegram-fullscreen';
 import classNames from 'shared/library/ClassNames/classNames';
 import { RootStore } from 'shared/store/root-store';
 import { Navbar } from 'widgets/Navbar';
@@ -63,6 +64,7 @@ const AppContent = observer(() => {
       WebApp.SettingsButton.show();
 
       viewportStore.init();
+      ensureTelegramFullscreen();
     } catch (error) {
       console.error('Ошибка инициализации WebApp:', error);
     }
@@ -73,6 +75,42 @@ const AppContent = observer(() => {
       }
     };
   }, [viewportStore]);
+
+  useEffect(() => {
+    if (!isInTelegram) {
+      return;
+    }
+
+    ensureTelegramFullscreen();
+
+    const retryId = window.setTimeout(() => {
+      ensureTelegramFullscreen();
+    }, 250);
+
+    return () => {
+      window.clearTimeout(retryId);
+    };
+  }, [isInTelegram, location.pathname]);
+
+  useEffect(() => {
+    if (!isInTelegram) {
+      return;
+    }
+
+    const handleFocus = () => {
+      if (document.visibilityState !== 'hidden') {
+        ensureTelegramFullscreen();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleFocus);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleFocus);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isInTelegram]);
 
   if (isInTelegram === null) {
     return null;

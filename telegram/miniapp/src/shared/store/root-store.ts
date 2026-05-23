@@ -1,4 +1,6 @@
 import { authStore } from './api/Auth/auth-store';
+import { NotificationsStore } from './api/Notification/notifications-store';
+import { NotificationTeamInviteStore } from './api/Notification/notification-team-invite-store';
 import { SearchInteractionsStore } from './api/Interaction/search-interactions-store';
 import { NeedsStore } from './api/Needs/needs-store';
 import { PostStore } from './api/Post/post-store';
@@ -14,9 +16,12 @@ import { UserProfileStore } from './api/User/user-profile-store';
 import { UserStore } from './api/User/user-store';
 import { SearchUsersStore } from './api/UserSearch/search-users-store';
 import { GalleryStore } from './gallery-store';
+import { ProfileEditorStore } from './interactions/profile-editor-store';
 import { ScrollRecoveryStore } from './interactions/scroll-recovery-store';
 import { ViewportStore } from './viewport-store';
 import { WebAppStore } from './web-app-store';
+import { ReferralStore } from './api/Referral/referral-store';
+import { SearchAllStore } from './api/SearchAll/search-all-store';
 
 export class RootStore {
   webAppStore = new WebAppStore();
@@ -36,6 +41,11 @@ export class RootStore {
   searchUsersStore = new SearchUsersStore();
   searchInteractionsStore = new SearchInteractionsStore(this);
   scrollRecoveryStore = new ScrollRecoveryStore();
+  profileEditorStore = new ProfileEditorStore();
   needsStore = new NeedsStore();
   publicationCommentsStore = new PublicationCommentsStore(this);
+  referralStore = new ReferralStore();
+  searchAllStore = new SearchAllStore();
+  notificationsStore = new NotificationsStore();
+  notificationTeamInviteStore = new NotificationTeamInviteStore();
 }

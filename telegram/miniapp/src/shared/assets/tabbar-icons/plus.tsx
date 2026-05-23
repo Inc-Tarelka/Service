@@ -1,15 +1,18 @@
 export default function PlusIcon() {
   return (
     <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M14 6C14.8284 6 15.5 6.67157 15.5 7.5V12.5H20.5C21.3284 12.5 22 13.1716 22 14C22 14.8284 21.3284 15.5 20.5 15.5H15.5V20.5C15.5 21.3284 14.8284 22 14 22C13.1716 22 12.5 21.3284 12.5 20.5V15.5H7.5C6.67157 15.5 6 14.8284 6 14C6 13.1716 6.67157 12.5 7.5 12.5H12.5V7.5C12.5 6.67157 13.1716 6 14 6Z"
-        fill="currentColor"
+        d="M4 12.5H12M12 12.5H20M12 12.5V4.5M12 12.5V20.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

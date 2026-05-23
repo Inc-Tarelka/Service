@@ -3,15 +3,34 @@ import { makeAutoObservable } from 'mobx';
 import { fromPromise, IPromiseBasedObservable } from 'mobx-utils';
 import {
   deleteAccount,
+  getMyExtendedProfile,
+  getMyTeammates,
   getProfile,
+  updateMyProfile,
   updateProfile,
 } from 'shared/api/service/User/api';
-import { DeleteAccountResponse, User } from 'shared/api/service/User/types';
 import {
-  MOCK_INTERACTIONS,
-  MOCK_PUBLICATIONS,
-  MOCK_USER,
-} from 'shared/mocks/profileMocks';
+  DeleteAccountResponse,
+  ExpandedUserProfile,
+  Teammate,
+  UpdateMyProfileRequest,
+  User,
+} from 'shared/api/service/User/types';
+import { MOCK_INTERACTIONS, MOCK_USER } from 'shared/mocks/profileMocks';
+
+const hasSignedUrlParams = (url: string): boolean =>
+  /(X-Amz-|AWSAccessKeyId=|Signature=|Expires=)/i.test(url);
+
+const withCacheBuster = (url: string): string => {
+  if (!url || hasSignedUrlParams(url)) {
+    return url;
+  }
+
+  const [base, hash] = url.split('#');
+  const separator = base.includes('?') ? '&' : '?';
+  const normalized = `${base}${separator}v=${Date.now()}`;
+  return hash ? `${normalized}#${hash}` : normalized;
+};
 
 export class UserStore {
   constructor() {
@@ -19,19 +38,44 @@ export class UserStore {
   }
 
   profileData?: IPromiseBasedObservable<AxiosResponse<User>>;
+  myExtendedProfileData?: IPromiseBasedObservable<
+    AxiosResponse<ExpandedUserProfile>
+  >;
   _localOverrides: Partial<User> = {};
+
+  teammatesData?: IPromiseBasedObservable<AxiosResponse<Teammate[]>>;
 
   deleteAccountData?: IPromiseBasedObservable<
     AxiosResponse<DeleteAccountResponse>
   >;
 
   updateProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
+  updateMyProfileData?: IPromiseBasedObservable<AxiosResponse<User>>;
 
   getProfileAction = async () => {
     try {
       this.profileData = fromPromise<AxiosResponse<User>>(getProfile());
     } catch (error) {
       console.error('Failed to fetch profile:', error);
+    }
+  };
+
+  getMyExtendedProfileAction = async () => {
+    try {
+      this.myExtendedProfileData = fromPromise<
+        AxiosResponse<ExpandedUserProfile>
+      >(getMyExtendedProfile());
+    } catch (error) {
+      console.error('Failed to fetch my extended profile:', error);
+    }
+  };
+
+  getTeammatesAction = async () => {
+    try {
+      this.teammatesData =
+        fromPromise<AxiosResponse<Teammate[]>>(getMyTeammates());
+    } catch (error) {
+      console.error('Failed to fetch teammates:', error);
     }
   };
 
@@ -46,7 +90,14 @@ export class UserStore {
   };
 
   setLocalOverride = (overrides: Partial<User>) => {
-    this._localOverrides = { ...this._localOverrides, ...overrides };
+    const normalized = { ...overrides };
+    if (normalized.avatarUrl) {
+      normalized.avatarUrl = withCacheBuster(normalized.avatarUrl);
+    }
+    if (normalized.logo_url) {
+      normalized.logo_url = withCacheBuster(normalized.logo_url);
+    }
+    this._localOverrides = { ...this._localOverrides, ...normalized };
   };
 
   clearLocalOverrides = () => {
@@ -62,7 +113,6 @@ export class UserStore {
         updateProfile(data, userId),
       );
       await this.updateProfileData;
-      await this.getProfileAction();
       return true;
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -70,12 +120,33 @@ export class UserStore {
     }
   };
 
+  updateMyProfileAction = async (
+    data: UpdateMyProfileRequest,
+  ): Promise<boolean> => {
+    try {
+      this.updateMyProfileData = fromPromise<AxiosResponse<User>>(
+        updateMyProfile(data),
+      );
+      await this.updateMyProfileData;
+      return true;
+    } catch (error) {
+      console.error('Failed to update my profile:', error);
+      return false;
+    }
+  };
+
   get isLoadingProfile() {
-    return this.profileData?.state === 'pending';
+    return (
+      this.profileData?.state === 'pending' ||
+      this.myExtendedProfileData?.state === 'pending'
+    );
   }
 
   get isUpdatingProfile() {
-    return this.updateProfileData?.state === 'pending';
+    return (
+      this.updateProfileData?.state === 'pending' ||
+      this.updateMyProfileData?.state === 'pending'
+    );
   }
 
   get profileError() {
@@ -85,24 +156,55 @@ export class UserStore {
   }
 
   get profile(): User | null {
-    if (this.profileData?.state === 'fulfilled') {
-      const apiData = this.profileData.value.data;
+    const extendedData =
+      this.myExtendedProfileData?.state === 'fulfilled'
+        ? this.myExtendedProfileData.value.data
+        : null;
+    const extendedUser = extendedData?.user;
+
+    const apiData: User | null =
+      this.profileData?.state === 'fulfilled'
+        ? this.profileData.value.data
+        : extendedData
+          ? extendedData.user
+          : null;
+
+    if (apiData) {
+      const sourceCities =
+        apiData.cities && apiData.cities.length > 0
+          ? apiData.cities
+          : extendedUser?.cities;
+      const sourceSpecializations =
+        apiData.specializations && apiData.specializations.length > 0
+          ? apiData.specializations
+          : extendedUser?.specializations;
 
       const computed: User = {
         ...apiData,
-        firstName: apiData.person?.name || MOCK_USER.firstName,
-        lastName: apiData.person?.surname || MOCK_USER.lastName,
+        firstName:
+          apiData.person?.name ||
+          extendedUser?.person?.name ||
+          MOCK_USER.firstName,
+        lastName:
+          apiData.person?.surname ||
+          extendedUser?.person?.surname ||
+          MOCK_USER.lastName,
 
-        avatarUrl: apiData.logo_url,
+        avatarUrl:
+          apiData.logo_url ||
+          apiData.avatarUrl ||
+          extendedUser?.logo_url ||
+          extendedUser?.avatarUrl,
 
         about: apiData.bio || MOCK_USER.about,
 
-        city: apiData.cities?.[0]?.name || MOCK_USER.city,
+        city: sourceCities?.[0]?.name || MOCK_USER.city,
 
         specialization:
-          apiData.specializations?.map((s) => s.name).join(', ') ||
-          MOCK_USER.specialization,
-        profession: apiData.specializations?.[0]?.name || MOCK_USER.profession,
+          sourceSpecializations
+            ?.map((specialization) => specialization.name)
+            .join(', ') || MOCK_USER.specialization,
+        profession: sourceSpecializations?.[0]?.name || MOCK_USER.profession,
 
         status:
           apiData.find_work === 'LOOKING'
@@ -113,9 +215,17 @@ export class UserStore {
                 ? 'Не ищу работу'
                 : MOCK_USER.status,
 
-        stats: apiData.stats || MOCK_USER.stats,
+        stats: extendedData
+          ? {
+              teammatesCount: extendedData.teammatesCount ?? 0,
+              outgoingRequestsCount: extendedData.outgoingRequestsCount ?? 0,
+              projectsCount: extendedData.projectsCount ?? 0,
+            }
+          : apiData.stats || MOCK_USER.stats,
+
         tags: apiData.tags || MOCK_USER.tags,
         role: apiData.role || MOCK_USER.role,
+        master: apiData.master || extendedUser?.master || extendedData?.master,
       };
 
       return { ...computed, ...this._localOverrides };
@@ -123,8 +233,21 @@ export class UserStore {
     return null;
   }
 
+  get teammates(): Teammate[] {
+    return this.teammatesData?.state === 'fulfilled'
+      ? this.teammatesData.value.data
+      : [];
+  }
+
+  get isLoadingTeammates() {
+    return this.teammatesData?.state === 'pending';
+  }
+
   get publications() {
-    return MOCK_PUBLICATIONS;
+    if (this.myExtendedProfileData?.state === 'fulfilled') {
+      return this.myExtendedProfileData.value.data.publications;
+    }
+    return [];
   }
   get interactions() {
     return MOCK_INTERACTIONS;

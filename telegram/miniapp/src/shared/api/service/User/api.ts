@@ -2,6 +2,9 @@ import { API_URL } from 'shared/api/api_url';
 import { baseInstanceV1 } from 'shared/api/base';
 import type {
   DeleteAccountResponse,
+  ExpandedUserProfile,
+  TeammatesResponse,
+  UpdateMyProfileRequest,
   User,
   UserLogoConfirmResponse,
   UserMediaConfirmRequest,
@@ -25,6 +28,9 @@ export const updateProfile = async (data: Partial<User>, userId?: number) =>
     userId ? API_URL.user(userId) : API_URL.profile(),
     data,
   );
+
+export const updateMyProfile = async (data: UpdateMyProfileRequest) =>
+  await baseInstanceV1.patch<User>(API_URL.me_profile(), data);
 
 // =============================== DELETE ACCOUNT ===============================
 export const deleteAccount = async () =>
@@ -94,3 +100,18 @@ export const setUserWallpaperUrl = async (id: number, wallpaperUrl: string) =>
       { wallpaperUrl },
     )
   ).data;
+
+// =============================== EXTENDED PROFILE ===============================
+export const getUserExtendedProfile = async (id: string) =>
+  await baseInstanceV1.get<ExpandedUserProfile>(API_URL.user_profile(id));
+
+// =============================== MY EXTENDED PROFILE ===============================
+export const getMyExtendedProfile = async () =>
+  await baseInstanceV1.get<ExpandedUserProfile>(API_URL.me_profile());
+
+// =============================== MY TEAMMATES ===============================
+export const getMyTeammates = async () =>
+  await baseInstanceV1.get<TeammatesResponse>(API_URL.me_teammates());
+
+export const getUserTeammates = async (id: string) =>
+  await baseInstanceV1.get<TeammatesResponse>(API_URL.user_teammates(id));

@@ -1,0 +1,17 @@
+@import 'app/styles/variables/global';
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+}
+
+.empty {
+  align-items: center;
+  color: var(--text-color-secondary);
+  display: flex;
+  font-size: 14px;
+  justify-content: center;
+  padding: 48px $spacing-md;
+}

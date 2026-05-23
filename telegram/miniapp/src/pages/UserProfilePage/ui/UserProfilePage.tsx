@@ -8,9 +8,13 @@ import {
 import { PROFILE_TABS, ProfileTab } from 'features/profile-tabs';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { deletePublication } from 'shared/api/service/Publication/api';
+import { AppRoutes, RoutePath } from 'shared/config/routeConfig/routeConfig';
 import { useBackToSearch } from 'shared/hooks/useBackToSearch';
-import { TabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { buildUserStartAppLink } from 'shared/lib/utils/telegram-startapp';
+import { SimpleTabsSwitcher } from 'shared/ui/TabsSwitcher';
+import { ErrorPage } from 'widgets/ErrorPage/ui/ErrorPage';
 import { Page } from 'widgets/Page';
 import { ProfileBanner } from 'widgets/profile-banner';
 import { ProfileInfoSection } from 'widgets/profile-info';
@@ -21,40 +25,78 @@ export const UserProfilePage = observer(() => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { userProfileStore, userStore } = useStore();
+  const { userProfileStore } = useStore();
+  const navigate = useNavigate();
+
+  const handlePublicationClick = (pubId: number) => {
+    navigate(RoutePath[AppRoutes.SERVICE_DETAIL].replace(':id', String(pubId)));
+  };
+
+  const handleTeammatesClick = () => {
+    if (!id) return;
+    navigate(
+      `${RoutePath[AppRoutes.COLLABORATORS]}?tab=collaborators&userId=${id}`,
+    );
+  };
+
+  const handleDeletePublication = async (pubId: number) => {
+    await deletePublication(pubId);
+    if (id) {
+      userProfileStore.getUserExtendedProfileAction(id);
+    }
+  };
+
+  const handleShareProfile = () => {
+    if (!id) return;
+
+    const shareLink = buildUserStartAppLink(id);
+    const shareText = 'Смотри профиль в Tarelka';
+
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      shareLink,
+    )}&text=${encodeURIComponent(shareText)}`;
+
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+      return;
+    }
+
+    window.open(telegramShareUrl, '_blank');
+  };
 
   useBackToSearch();
 
   useEffect(() => {
     if (id) {
-      userProfileStore.getUserProfileAction(id);
+      userProfileStore.getUserExtendedProfileAction(id);
     }
   }, [id, userProfileStore]);
 
-  if (userProfileStore.isLoading) {
+  if (userProfileStore.isExtendedLoading || userProfileStore.isLoading) {
     return <UserProfilePageSkeleton />;
   }
 
   const user = userProfileStore.profile;
 
   if (!user) {
-    return (
-      <Page className={classes.profilePage}>
-        <div>Ошибка загрузки профиля пользователя</div>
-      </Page>
-    );
+    return <ErrorPage />;
   }
 
   return (
     <Page className={classes.profilePage}>
-      <ProfileBanner user={user} isOwnProfile={false} />
+      <ProfileBanner
+        user={user}
+        isOwnProfile={false}
+        onShare={handleShareProfile}
+        onTeammatesClick={handleTeammatesClick}
+      />
 
       <Box className={classes.buttonWrapper}>
         <OfferCollaborationButton onClick={() => setIsDrawerOpen(true)} />
       </Box>
 
       <Box className={classes.tabsSection}>
-        <TabsSwitcher
+        <SimpleTabsSwitcher
           contentPaddingTop={16}
           fullWidth={true}
           hideMask={true}
@@ -66,12 +108,18 @@ export const UserProfilePage = observer(() => {
           )}
         >
           {activeTab === 'publications' && (
-            <PublicationsList publications={userStore.publications} />
+            <PublicationsList
+              publications={
+                userProfileStore.extendedProfile?.publications || []
+              }
+              onItemClick={handlePublicationClick}
+              onDelete={handleDeletePublication}
+            />
           )}
           {activeTab === 'info' && (
             <ProfileInfoSection user={user} isPublicView={true} />
           )}
-        </TabsSwitcher>
+        </SimpleTabsSwitcher>
       </Box>
 
       <OfferCollaborationDrawer

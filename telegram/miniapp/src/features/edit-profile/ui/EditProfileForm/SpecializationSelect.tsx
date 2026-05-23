@@ -1,4 +1,5 @@
 import { Select } from '@mantine/core';
+import { SpecializationsListSkeleton } from 'features/auth/ui/ProfileForm/SpecializationsList.skeleton';
 import { transformSpecializationsForSelect } from 'features/search-publications/lib/transformers';
 import { observer } from 'mobx-react-lite';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
@@ -16,6 +17,7 @@ export const SpecializationSelect = observer(
     const specializationsData = transformSpecializationsForSelect(
       referenceStore.specializations,
     );
+    const isLoading = referenceStore.specializationsData?.state === 'pending';
 
     return (
       <div className={s.inputGroup}>
@@ -32,12 +34,25 @@ export const SpecializationSelect = observer(
           }
           placeholder="Выберите специализацию"
           data={specializationsData}
+          nothingFoundMessage={
+            isLoading ? <SpecializationsListSkeleton /> : 'Ничего не найдено'
+          }
           radius="xl"
           size="lg"
           searchable
           clearable
           error={error}
           comboboxProps={{ withinPortal: false }}
+          filter={({ options, search }) => {
+            if (isLoading) return options;
+            return options.filter((option) =>
+              'label' in option
+                ? option.label
+                    ?.toLowerCase()
+                    .includes(search.toLowerCase().trim())
+                : false,
+            );
+          }}
         />
       </div>
     );

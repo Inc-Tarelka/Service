@@ -1,11 +1,12 @@
+import { useStore } from 'app/StoreProvider';
 import { CollaboratorsList } from 'entities/collaborator';
+import { CollaboratorsListSkeleton } from 'entities/collaborator/ui/CollaboratorsList/CollaboratorsList.skeleton';
+import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useBackButton } from 'shared/hooks/useBackButton';
-import {
-  MOCK_COLLABORATORS,
-  MOCK_OUTGOING_REQUESTS,
-} from 'shared/mocks/collaboratorMocks';
+import { RoutePath } from 'shared/config/routeConfig/routeConfig';
+import { MOCK_OUTGOING_REQUESTS } from 'shared/mocks/collaboratorMocks';
 import { TabItem, TabsSwitcher } from 'shared/ui/TabsSwitcher/TabsSwitcher';
 import { Page } from 'widgets/Page';
 
@@ -16,13 +17,29 @@ const TABS: TabItem<CollaboratorTab>[] = [
   { label: 'Исходящие запросы', value: 'outgoing' },
 ];
 
-export const CollaboratorsPage = () => {
+export const CollaboratorsPage = observer(() => {
   useBackButton();
+  const { userStore, userProfileStore } = useStore();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as CollaboratorTab | null;
   const [activeTab, setActiveTab] = useState<CollaboratorTab>(
     tabFromUrl === 'outgoing' ? 'outgoing' : 'collaborators',
   );
+
+  const userId = searchParams.get('userId');
+  const teammates = userId ? userProfileStore.teammates : userStore.teammates;
+  const isLoadingTeammates = userId
+    ? userProfileStore.isLoadingTeammates
+    : userStore.isLoadingTeammates;
+
+  useEffect(() => {
+    if (userId) {
+      userProfileStore.getTeammatesAction(userId);
+    } else {
+      userStore.getTeammatesAction();
+    }
+  }, []);
 
   useEffect(() => {
     if (
@@ -39,7 +56,7 @@ export const CollaboratorsPage = () => {
   };
 
   const handleItemClick = (id: string) => {
-    console.log('Clicked collaborator:', id);
+    navigate(RoutePath.user_profile.replace(':id', id));
   };
 
   return (
@@ -49,21 +66,30 @@ export const CollaboratorsPage = () => {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         hideMask
-      >
-        {activeTab === 'collaborators' && (
-          <CollaboratorsList
-            collaborators={MOCK_COLLABORATORS}
-            onItemClick={handleItemClick}
-          />
-        )}
-        {activeTab === 'outgoing' && (
-          <CollaboratorsList
-            collaborators={MOCK_OUTGOING_REQUESTS}
-            onItemClick={handleItemClick}
-          />
-        )}
-      </TabsSwitcher>
+        renderTab={(tab) => {
+          switch (tab) {
+            case 'collaborators':
+              return isLoadingTeammates ? (
+                <CollaboratorsListSkeleton />
+              ) : (
+                <CollaboratorsList
+                  collaborators={teammates}
+                  onItemClick={handleItemClick}
+                />
+              );
+            case 'outgoing':
+              return (
+                <CollaboratorsList
+                  collaborators={MOCK_OUTGOING_REQUESTS}
+                  onItemClick={handleItemClick}
+                />
+              );
+            default:
+              return null;
+          }
+        }}
+      />
     </Page>
   );
-};
+});
 export default CollaboratorsPage;

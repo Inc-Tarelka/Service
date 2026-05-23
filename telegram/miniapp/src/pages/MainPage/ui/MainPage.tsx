@@ -2,9 +2,10 @@ import { useStore } from 'app/StoreProvider';
 import { ResponseToNeedDrawer } from 'features/respond-to-need';
 import { SearchPublications } from 'features/search-publications';
 import { NeedDetailsDrawer } from 'features/view-need';
+import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchPublicationsType } from 'shared/api/types';
 import { useViewport } from 'shared/hooks/useViewport';
 import classNames from 'shared/library/ClassNames/classNames';
@@ -14,58 +15,96 @@ import { ListingContent } from '../lib/ListingContent';
 import { useNavigationLogic } from '../lib/useNavigationLogic';
 import s from './MainPage.module.scss';
 
+const TAB_VALUES = new Set(Object.values(SearchPublicationsType));
+
 export const MainPage = observer(() => {
   const {
     searchPublicationStore,
     searchNeedsStore,
     searchServicesStore,
     searchUsersStore,
+    searchAllStore,
+    scrollRecoveryStore,
   } = useStore();
-  const [searchParams] = useSearchParams();
   const { isDesktop } = useViewport();
   const { handleDataNavigation, handleUserNavigation } = useNavigationLogic();
-  const queryFromUrl = searchParams.get('query') || '';
-  const tabFromUrl =
-    (searchParams.get('tab') as SearchPublicationsType) ||
-    SearchPublicationsType.PROFILE;
+
+  const storedTab = scrollRecoveryStore.mainPageActiveTab;
+  const initialTab =
+    storedTab && TAB_VALUES.has(storedTab as SearchPublicationsType)
+      ? (storedTab as SearchPublicationsType)
+      : SearchPublicationsType.ALL;
 
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] =
-    useState<SearchPublicationsType>(tabFromUrl);
-  const [searchQuery, setSearchQuery] = useState(queryFromUrl);
+  const [activeTab, setActiveTabLocal] =
+    useState<SearchPublicationsType>(initialTab);
+  const [searchQuery, setSearchQueryLocal] = useState(
+    scrollRecoveryStore.mainPageSearchQuery,
+  );
+
+  const setActiveTab = (tab: SearchPublicationsType) => {
+    setActiveTabLocal(tab);
+    scrollRecoveryStore.setMainPageActiveTab(tab);
+  };
+
+  const setSearchQuery = (query: string) => {
+    setSearchQueryLocal(query);
+    scrollRecoveryStore.setMainPageSearchQuery(query);
+  };
   const [isNeedDetailsOpen, setIsNeedDetailsOpen] = useState(false);
   const [selectedNeedId, setSelectedNeedId] = useState<number | null>(null);
   const [isResponseDrawerOpen, setIsResponseDrawerOpen] = useState(false);
+  const [responseReceiverId, setResponseReceiverId] = useState<number | null>(
+    null,
+  );
+
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [, setHeaderHeight] = useState(0);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
+    ro.observe(el);
+    setHeaderHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
 
   const tabs = [
+    { label: 'Все', value: SearchPublicationsType.ALL },
     { label: 'Профили', value: SearchPublicationsType.PROFILE },
     { label: 'Услуги', value: SearchPublicationsType.SERVICE },
     { label: 'Потребности', value: SearchPublicationsType.NEED },
-    { label: 'Все', value: SearchPublicationsType.ALL },
   ];
-  const getActiveStore = () => {
-    switch (activeTab) {
+  const getStoreForTab = (tab: SearchPublicationsType) => {
+    switch (tab) {
       case SearchPublicationsType.NEED:
         return searchNeedsStore;
       case SearchPublicationsType.SERVICE:
         return searchServicesStore;
       case SearchPublicationsType.PROFILE:
         return searchUsersStore;
+      case SearchPublicationsType.ALL:
+        return searchAllStore;
       default:
         return searchPublicationStore;
     }
   };
 
-  const activeStore = getActiveStore();
-  const { isLoading, isLoaded } = activeStore;
-
   const publications = searchPublicationStore.publications;
   const needs = searchNeedsStore.needs;
   const services = searchServicesStore.services;
   const users = searchUsersStore.users;
+  const allItems = searchAllStore.items;
+  const allServices = searchAllStore.services;
+  const allNeeds = searchAllStore.needs;
+  const allUsers = searchAllStore.users;
+  const isUsersLoadingMore = searchUsersStore.isLoadingMore;
+  const isServicesLoadingMore = searchServicesStore.isLoadingMore;
+  const isNeedsLoadingMore = searchNeedsStore.isLoadingMore;
 
-  const onItemClick = (id: number) => {
-    switch (activeTab) {
+  const handleItemClickForTab = (id: number, tab: SearchPublicationsType) => {
+    switch (tab) {
       case SearchPublicationsType.NEED:
         setSelectedNeedId(id);
         setIsNeedDetailsOpen(true);
@@ -78,7 +117,7 @@ export const MainPage = observer(() => {
           services.find((s) => s.id === id) ||
           publications.find((p) => p.id === id);
         navigate(`/service/${id}?${searchState.toString()}`, {
-          state: { service: selectedService },
+          state: { service: toJS(selectedService) },
         });
         break;
       }
@@ -86,11 +125,12 @@ export const MainPage = observer(() => {
         handleUserNavigation(id, searchQuery);
         break;
       default:
-        handleDataNavigation(id, activeTab, publications, searchQuery);
+        handleDataNavigation(id, tab, publications, searchQuery);
     }
   };
 
-  const handleRespond = () => {
+  const handleRespond = (receiverId: number | null) => {
+    setResponseReceiverId(receiverId);
     setIsNeedDetailsOpen(false);
     setIsResponseDrawerOpen(true);
   };
@@ -100,37 +140,94 @@ export const MainPage = observer(() => {
     setIsNeedDetailsOpen(true);
   };
 
+  const handleTabScrollEnd = (tab: SearchPublicationsType) => {
+    switch (tab) {
+      case SearchPublicationsType.PROFILE:
+        searchUsersStore.loadMoreUsersAction();
+        break;
+      case SearchPublicationsType.SERVICE:
+        searchServicesStore.loadMoreServicesAction();
+        break;
+      case SearchPublicationsType.NEED:
+        searchNeedsStore.loadMoreNeedsAction();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Page
-      key={activeTab}
+      smallPaddingBottom
+      scrollKey={`main-${activeTab}`}
       className={classNames(s.mainPage, {}, [])}
-      scrollKey={`main-page-${activeTab}`}
     >
-      <div className={classNames(s.header, { [s.desktop]: isDesktop }, [])}>
+      <div
+        ref={headerRef}
+        className={classNames(s.header, { [s.desktop]: isDesktop }, [])}
+      >
         <SearchPublications
           activeTab={activeTab}
-          initialQuery={queryFromUrl}
-          onSearchQueryChange={(query) => setSearchQuery(query)}
-        />
-        <TabsSwitcher
-          hideMask={true}
-          tabs={tabs}
-          activeTab={activeTab}
-          className={s.tabs}
-          onTabChange={(tab) => setActiveTab(tab as any)}
+          initialQuery={searchQuery}
+          onSearchQueryChange={(query) => {
+            setSearchQuery(query);
+          }}
         />
       </div>
-      <div className={s.content}>
-        <ListingContent
-          activeTab={activeTab}
-          needs={needs}
-          services={services}
-          users={users}
-          isLoading={isLoading}
-          isLoaded={isLoaded}
-          onItemClick={onItemClick}
-        />
-      </div>
+      <TabsSwitcher
+        hideMask={true}
+        tabs={tabs}
+        activeTab={activeTab}
+        className={s.tabs}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+        }}
+        stickyTop={64}
+        scrollKey="main-tab"
+        onSaveScroll={scrollRecoveryStore.setScrollPosition}
+        getScroll={scrollRecoveryStore.getScroll}
+        onTabScrollEnd={handleTabScrollEnd}
+        renderTab={(tab) => {
+          const store = getStoreForTab(tab);
+          return (
+            <ListingContent
+              activeTab={tab}
+              needs={needs}
+              services={services}
+              users={users}
+              allItems={allItems}
+              allServices={allServices}
+              allNeeds={allNeeds}
+              allUsers={allUsers}
+              isLoading={store.isLoading}
+              isLoadingMoreProfiles={
+                tab === SearchPublicationsType.PROFILE
+                  ? isUsersLoadingMore
+                  : false
+              }
+              isLoadingMoreServices={
+                tab === SearchPublicationsType.SERVICE
+                  ? isServicesLoadingMore
+                  : false
+              }
+              isLoadingMoreNeeds={
+                tab === SearchPublicationsType.NEED ? isNeedsLoadingMore : false
+              }
+              isLoaded={store.isLoaded}
+              onAllProfileClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.PROFILE)
+              }
+              onAllServiceClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.SERVICE)
+              }
+              onAllNeedClick={(id) =>
+                handleItemClickForTab(id, SearchPublicationsType.NEED)
+              }
+              onItemClick={(id) => handleItemClickForTab(id, tab)}
+            />
+          );
+        }}
+      />
 
       <NeedDetailsDrawer
         opened={isNeedDetailsOpen}
@@ -144,8 +241,13 @@ export const MainPage = observer(() => {
 
       <ResponseToNeedDrawer
         opened={isResponseDrawerOpen}
-        onClose={() => setIsResponseDrawerOpen(false)}
+        onClose={() => {
+          setIsResponseDrawerOpen(false);
+          setResponseReceiverId(null);
+        }}
         onBack={handleBackToNeedDetails}
+        needId={selectedNeedId}
+        receiverId={responseReceiverId}
       />
     </Page>
   );

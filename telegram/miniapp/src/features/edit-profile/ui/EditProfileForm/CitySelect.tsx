@@ -1,4 +1,5 @@
 import { Select } from '@mantine/core';
+import { CitiesListSkeleton } from 'features/auth/ui/ProfileForm/CitiesLIst.skeleton';
 import { transformCitiesForSelect } from 'features/search-publications/lib/transformers';
 import { observer } from 'mobx-react-lite';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
@@ -14,6 +15,7 @@ interface CitySelectProps {
 export const CitySelect = observer(
   ({ value, onChange, error }: CitySelectProps) => {
     const citiesData = transformCitiesForSelect(referenceStore.cities);
+    const isLoading = referenceStore.citiesData?.state === 'pending';
 
     return (
       <div className={s.inputGroup}>
@@ -30,12 +32,25 @@ export const CitySelect = observer(
           }
           placeholder="Выберите город"
           data={citiesData}
+          nothingFoundMessage={
+            isLoading ? <CitiesListSkeleton /> : 'Ничего не найдено'
+          }
           radius="xl"
           size="lg"
           searchable
           clearable
           error={error}
           comboboxProps={{ withinPortal: false }}
+          filter={({ options, search }) => {
+            if (isLoading) return options;
+            return options.filter((option) =>
+              'label' in option
+                ? option.label
+                    ?.toLowerCase()
+                    .includes(search.toLowerCase().trim())
+                : false,
+            );
+          }}
         />
       </div>
     );

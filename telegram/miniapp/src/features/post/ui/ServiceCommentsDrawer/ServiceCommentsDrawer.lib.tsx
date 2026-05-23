@@ -1,5 +1,6 @@
-import { Divider } from '@mantine/core';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
+import { AnimatePresence, motion } from 'motion/react';
 import { observer } from 'mobx-react-lite';
 import { useMemo, useState } from 'react';
 import type { PublicationComment } from 'shared/api/service/Publication/types';
@@ -7,6 +8,8 @@ import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import ChevronUpIcon from 'shared/assets/icons/chevronUp';
 import MoreHorizontalIcon from 'shared/assets/icons/MoreHorizontalIcon';
 import s from './ServiceCommentsDrawer.module.scss';
+
+dayjs.locale('ru');
 
 interface CommentItemProps {
   comment: PublicationComment;
@@ -23,21 +26,17 @@ export const CommentItem = (props: CommentItemProps) => {
   return (
     <div className={`${s.commentItem} ${isReply ? s.isReply : ''}`}>
       <div className={s.commentContent}>
-        <div className={s.commentHeader}>
-          <div className={s.authorInfo}>
-            <div className={s.nameRow}>
-              <span className={s.authorName}>
-                {comment.authorFirstName} {comment.authorLastName}
-              </span>
-              <span className={s.time}>
-                {dayjs(comment.createdAt).format('DD MMM, HH:mm')}
-              </span>
-            </div>
-            {replyingToName && (
-              <span className={s.replyingToName}>в ответ {replyingToName}</span>
-            )}
-          </div>
+        <div className={s.nameRow}>
+          <span className={s.authorName}>
+            {comment.authorFirstName} {comment.authorLastName}
+          </span>
+          <span className={s.time}>
+            {dayjs(comment.createdAt).format('DD MMM, HH:mm')}
+          </span>
         </div>
+        {replyingToName && (
+          <span className={s.replyingToName}>в ответ {replyingToName}</span>
+        )}
         <div className={s.text}>
           {isLong && !expanded
             ? `${comment.content.slice(0, 150)}... `
@@ -58,9 +57,7 @@ export const CommentItem = (props: CommentItemProps) => {
         className={s.moreButton}
         onClick={() => onMoreClick(comment.id)}
       >
-        <span className={s.moreDots}>
-          <MoreHorizontalIcon />
-        </span>
+        <MoreHorizontalIcon />
       </button>
     </div>
   );
@@ -105,7 +102,7 @@ export const CommentThreadItem = observer((props: CommentThreadItemProps) => {
   const remainingCount = descendants.length - visibleCount;
 
   return (
-    <div key={rootComment.id} className={s.commentGroup}>
+    <div className={s.commentGroup}>
       <CommentItem
         comment={rootComment}
         isReply={false}
@@ -114,55 +111,68 @@ export const CommentThreadItem = observer((props: CommentThreadItemProps) => {
 
       {descendants.length > 0 && (
         <div className={s.repliesList}>
-          {visibleReplies.map((reply) => {
-            const parentComment = allComments.find(
-              (c) => c.id === reply.parentCommentId,
-            );
-            const isReplyToReply =
-              parentComment && parentComment.id !== rootComment.id;
-            const replyingToName = isReplyToReply
-              ? `${parentComment.authorFirstName} ${parentComment.authorLastName}`
-              : undefined;
+          <AnimatePresence initial={false}>
+            {visibleReplies.map((reply) => {
+              const parentComment = allComments.find(
+                (c) => c.id === reply.parentCommentId,
+              );
+              const isReplyToReply =
+                parentComment && parentComment.id !== rootComment.id;
+              const replyingToName = isReplyToReply
+                ? `${parentComment.authorFirstName} ${parentComment.authorLastName}`
+                : undefined;
 
-            return (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                isReply={true}
-                replyingToName={replyingToName}
-                onMoreClick={onMoreClick}
-              />
-            );
-          })}
-
-          {(remainingCount > 0 || visibleCount > 0) && (
-            <div className={s.paginationRow}>
-              {remainingCount > 0 ? (
-                <button
-                  type="button"
-                  className={s.showRepliesBtn}
-                  onClick={handleShowMore}
+              return (
+                <motion.div
+                  key={reply.id}
+                  initial={{ opacity: 0, y: -6, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -6, height: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  style={{ overflow: 'hidden' }}
                 >
-                  <Divider className={s.replyLine} />
-                  <span>Посмотреть еще {remainingCount}</span>
-                  <ChevronDownIcon />
-                </button>
-              ) : (
-                <span className={s.placeholder} />
-              )}
+                  <div className={s.replyItemWrapper}>
+                    <CommentItem
+                      comment={reply}
+                      isReply
+                      replyingToName={replyingToName}
+                      onMoreClick={onMoreClick}
+                    />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
-              {visibleCount > 0 && descendants.length > 0 && (
-                <button
-                  type="button"
-                  className={s.hideRepliesBtn}
-                  onClick={handleCollapse}
-                >
-                  <span>Скрыть</span>
-                  <ChevronUpIcon />
-                </button>
-              )}
-            </div>
-          )}
+          <div className={s.paginationRow}>
+            {remainingCount > 0 ? (
+              <button
+                type="button"
+                className={s.showRepliesBtn}
+                onClick={handleShowMore}
+              >
+                <span className={s.replyDivider} />
+                <span>Посмотреть ещё {remainingCount}</span>
+                <ChevronDownIcon />
+              </button>
+            ) : (
+              <span />
+            )}
+
+            {visibleCount > 0 && (
+              <button
+                type="button"
+                className={s.hideRepliesBtn}
+                onClick={handleCollapse}
+              >
+                <span>Скрыть</span>
+                <ChevronUpIcon />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

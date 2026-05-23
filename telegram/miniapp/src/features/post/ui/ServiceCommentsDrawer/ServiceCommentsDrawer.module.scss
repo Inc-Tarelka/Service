@@ -1,7 +1,5 @@
 
 .drawer {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -12,21 +10,25 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
-  padding: 16px;
+  overflow: hidden;
+  padding: 20px 20px 0;
 }
+
 
 .header {
   align-items: center;
-  border-bottom: 1px solid var(--block-bg);
+  border-bottom: 1px solid rgb(255, 255, 255, 0.06);
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
+  margin-bottom: 0;
+  padding-bottom: 8px;
 
   .title {
     color: var(--text-color);
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 12px;
+    line-height: 1.2;
   }
 
   .closeButton {
@@ -38,82 +40,59 @@
     display: flex;
     height: 28px;
     justify-content: center;
-    margin-bottom: 12px;
     padding: 0;
     width: 28px;
   }
 }
 
+// ─── Comment list ──────────────────────────────────────────
+
 .commentList {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   overflow-y: auto;
+  padding-top: 16px;
 
   &::-webkit-scrollbar {
-    width: 0;
+    display: none;
   }
 }
+
+.listBottomSpacer {
+  flex-shrink: 0;
+  height: 16px;
+}
+
+// ─── Comment group ─────────────────────────────────────────
 
 .commentGroup {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
+
+// ─── Reply indent ──────────────────────────────────────────
 
 .repliesList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-left: 36px;
-  position: relative;
-
-  &::before {
-    background: var(--block-bg);
-    bottom: 24px;
-    content: '';
-    left: -20px;
-    position: absolute;
-    top: 0;
-    width: 1px;
-  }
+  gap: 4px;
+  padding-left: 32px;
 }
+
+.replyItemWrapper {
+  padding-top: 12px;
+}
+
+// ─── Comment item ──────────────────────────────────────────
 
 .commentItem {
   align-items: flex-start;
   display: flex;
   gap: 8px;
   justify-content: space-between;
-  position: relative;
-
-  &.isReply {
-    &::before {
-      background: var(--block-bg);
-      content: '';
-      height: 1px;
-      left: -20px;
-      position: absolute;
-      top: 16px;
-      width: 16px;
-    }
-  }
-}
-
-.moreButton {
-  align-items: center;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-  padding: 0;
-}
-
-.moreDots {
-  font-size: 20px;
 }
 
 .commentContent {
@@ -124,110 +103,73 @@
   min-width: 0;
 }
 
-.commentHeader {
+.nameRow {
   align-items: center;
   display: flex;
   gap: 8px;
-
-  .authorInfo {
-    align-items: flex-start;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    overflow: hidden;
-    width: 100%;
-  }
-
-  .nameRow {
-    align-items: center;
-    display: flex;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .authorName {
-    color: var(--text-color);
-    flex: 0 1 auto;
-    font-size: 14px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .replyingToName {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 500;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .time {
-    color: var(--text-color-light);
-    flex-shrink: 0;
-    font-size: 12px;
-  }
-}
-
-.paginationRow {
-  align-items: center;
-  display: flex;
   justify-content: space-between;
-  margin-top: 4px;
+  width: 100%;
 }
 
-.showRepliesBtn, .hideRepliesBtn {
-  align-items: center;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  font-size: 13px;
+.authorName {
+  color: var(--text-color);
+  flex-shrink: 0;
+  font-size: 12px;
   font-weight: 600;
-  gap: 4px;
-  padding: 4px 0;
-
-  &:hover {
-    color: var(--text-color);
-  }
-
-  svg {
-    height: 16px;
-    stroke: var(--text-secondary);
-    stroke-width: 2px;
-    width: 16px;
-  }
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.replyLine {
-  border-color: var(--text-secondary);
-  margin-right: 8px;
-  opacity: 0.5;
-  width: 24px;
+.time {
+  color: var(--text-color-secondary);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  margin-left: auto;
 }
 
-.placeholder {
-  width: 1px;
+.replyingToName {
+  color: var(--text-color-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
 
 .text {
   color: var(--text-color);
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
-  margin: 0;
   overflow-wrap: break-word;
+}
+
+.moreButton {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 0;
+
+  svg {
+    height: 20px;
+    width: 20px;
+  }
 }
 
 .readMoreBtn {
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-color-secondary);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -239,110 +181,116 @@
   }
 }
 
-.replyButton {
-  align-self: flex-start;
+// ─── Pagination / show-hide replies ───────────────────────
+
+.paginationRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.showRepliesBtn,
+.hideRepliesBtn {
+  align-items: center;
   background: transparent;
   border: none;
-  color: var(--text-color-light);
+  color: var(--text-color-secondary);
   cursor: pointer;
-  font-size: 12px;
-  margin-top: 4px;
-  padding: 0;
-
-  &:hover {
-    color: var(--text-color);
-  }
-}
-
-.footer {
-  align-items: flex-end;
-  background: transparent;
-  border: 1px solid var(--card-bg);
-  border-radius: 16px;
   display: flex;
-  flex-shrink: 0;
-  justify-content: space-between;
-  min-height: 48px;
-  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 4px 0;
+  transition: color 0.15s ease;
 
-  .input {
-    flex: 1;
-    margin-right: 8px;
-  }
-
-  .textareaInput {
-    background: transparent;
-    border: none;
+  &:active {
     color: var(--text-color);
-    font-size: 14px;
-    font-weight: 400;
-    outline: none;
-    padding: 0;
-    resize: none;
-
-    &::placeholder {
-      color: var(--text-secondary);
-    }
   }
 
-  .sendIcon {
-    align-items: center;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 2px;
-    padding: 0;
-    
-    svg {
-      height: 20px;
-      width: 20px;
-    }
+  svg {
+    height: 14px;
+    stroke: currentcolor;
+    stroke-width: 2.5px;
+    width: 14px;
   }
 }
+
+.replyDivider {
+  background: var(--text-color-secondary);
+  border-radius: 1px;
+  display: inline-block;
+  height: 1px;
+  opacity: 0.5;
+  width: 20px;
+}
+
+// ─── Empty state ───────────────────────────────────────────
 
 .emptyState {
-  color: var(--text-color-light);
+  color: var(--text-color-secondary);
   padding: 40px 0;
   text-align: center;
 }
 
+// ─── Footer container ──────────────────────────────────────
+
 .footerContainer {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 10px 0 20px;
 }
 
-.replyingTo {
+// ─── Input box (border wraps reply + textarea) ────────────
+
+.inputBox {
+  border: 1px solid var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+// ─── Reply preview (В ответ) ───────────────────────────────
+
+.replyPreview {
+  border-bottom: 1px solid rgb(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.replyPreviewInner {
   align-items: center;
-  background: var(--block-bg);
-  border-bottom: 1px solid var(--card-bg);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
   display: flex;
-  justify-content: space-between;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 8px 4px 10px;
 }
 
-.replyingToContent {
+.replyAccentBar {
+  background: var(--green);
+  border-radius: 2px;
+  flex-shrink: 0;
+  height: 36px;
+  width: 2px;
+}
+
+.replyPreviewContent {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 4px;
-  overflow: hidden;
-  padding-right: 12px;
+  gap: 2px;
+  min-width: 0;
 }
 
-.replyingToLabel {
-  color: var(--text-primary);
+.replyPreviewName {
+  color: var(--green);
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.replyPreviewText {
+  color: var(--text-color-secondary);
   font-size: 13px;
-  font-weight: 500;
-}
-
-.replyingToText {
-  color: var(--text-secondary);
-  font-size: 14px;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -353,9 +301,86 @@
   align-items: center;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-color-secondary);
   cursor: pointer;
   display: flex;
+  flex-shrink: 0;
   justify-content: center;
   padding: 4px;
+
+  svg {
+    height: 16px;
+    width: 16px;
+  }
+}
+
+// ─── Footer input ──────────────────────────────────────────
+
+.footer {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 14px;
+}
+
+// Mantine Textarea root — flex: 1 чтобы занять всю ширину
+.textareaRoot {
+  flex: 1;
+  min-width: 0;
+}
+
+// Mantine Textarea wrapper — убираем свои стили, растягиваем
+.textareaWrapper {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.textareaInput {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  min-height: unset !important;
+  outline: none !important;
+  padding: 0 !important;
+  resize: none;
+
+  &::placeholder {
+    color: var(--text-color-secondary);
+  }
+}
+
+.sendButton {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+
+  svg {
+    height: 22px;
+    width: 22px;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.sendButtonActive {
+  color: var(--green);
+
+  &:active {
+    transform: scale(0.88);
+  }
 }

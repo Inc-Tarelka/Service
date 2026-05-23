@@ -15,9 +15,9 @@ export const MOCK_USER: User = {
   city: 'Москва',
   role: UserRole.USER,
   stats: {
-    collaborations: 30,
-    wantsToWork: 10,
-    projects: 15,
+    teammatesCount: 30,
+    outgoingRequestsCount: 10,
+    projectsCount: 15,
   },
   about:
     'Я оператор, крутой классный человечек, живу и работаю в Москве, и еще у меня есть котёнок.',

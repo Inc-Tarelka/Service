@@ -1,9 +1,9 @@
 import { Button, Select, TextInput } from '@mantine/core';
-import WebApp from '@twa-dev/sdk';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 
 import { useStore } from 'app/StoreProvider';
-import type { AccountType as ApiAccountType } from 'shared/api/types';
+import { AccountType as ApiAccountType } from 'shared/api/types';
 import ChevronDownIcon from 'shared/assets/icons/chevronDown';
 import { useFormWithValidation } from 'shared/hooks/useFormWithValidation';
 import { referenceStore } from 'shared/store/api/Reference/reference-store';
@@ -13,13 +13,28 @@ import { profileSchema } from '../../model/validation';
 import { CitiesListSkeleton } from './CitiesLIst.skeleton';
 import s from './ProfileForm.module.scss';
 import { SpecializationsListSkeleton } from './SpecializationsList.skeleton';
+import WebApp from '@twa-dev/sdk';
 
 interface ProfileFormProps {
   onSuccess: (data: any) => void;
 }
 
+const isProfileAccountType = (
+  value?: string,
+): value is 'specialist' | 'company' =>
+  value === 'specialist' || value === 'company';
+
+const toApiAccountType = (value?: string): ApiAccountType =>
+  value === 'company' ? ApiAccountType.COMPANY : ApiAccountType.PERSON;
+
 export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
   const { authStore, userStore } = useStore();
+
+  const initialAccountType = isProfileAccountType(
+    authStore.tempData.accountType,
+  )
+    ? authStore.tempData.accountType
+    : 'specialist';
 
   const {
     values,
@@ -31,11 +46,11 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
     setErrors,
   } = useFormWithValidation({
     initialValues: {
-      accountType: 'specialist',
-      name: '',
-      lastName: '',
-      specialization: '',
-      city: '',
+      accountType: initialAccountType,
+      name: authStore.tempData.name ?? '',
+      lastName: authStore.tempData.lastName ?? '',
+      specialization: authStore.tempData.specialization ?? '',
+      city: authStore.tempData.city ?? '',
     },
     schema: profileSchema,
     onSubmit: async (values) => {
@@ -55,7 +70,6 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           accountType,
           verificationRequestId,
           verificationCode,
-          userId,
         } = authStore.tempData;
 
         if (
@@ -71,12 +85,10 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           return;
         }
 
-        const success = await authStore.telegramRegistrationAction({
+        const result = await authStore.telegramRegistrationAction({
           initData: WebApp.initData || '',
           account: {
-            type:
-              (accountType as unknown as ApiAccountType) ??
-              ('PERSON' as ApiAccountType),
+            type: toApiAccountType(accountType),
             username: login,
             phone,
             password,
@@ -90,15 +102,16 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
           cityIds: [cityId],
         });
 
-        if (success) {
-          await userStore.updateProfileAction(
-            {
-              firstName: values.name,
-              lastName: values.lastName,
-            },
-            userId,
-          );
+        if (result === true) {
+          await userStore.updateMyProfileAction({
+            name: values.name,
+            surname: values.lastName,
+          });
           onSuccess(values);
+        } else if (result === 'conflict') {
+          setErrors({
+            name: 'Аккаунт с такими данными уже существует. Проверьте логин и пароль и попробуйте снова.',
+          });
         } else {
           setErrors({ name: 'Ошибка регистрации. Попробуйте снова.' });
         }
@@ -108,6 +121,23 @@ export const ProfileForm = observer(({ onSuccess }: ProfileFormProps) => {
       }
     },
   });
+
+  useEffect(() => {
+    authStore.setTempData({
+      accountType: values.accountType,
+      name: values.name,
+      lastName: values.lastName,
+      specialization: values.specialization,
+      city: values.city,
+    });
+  }, [
+    authStore,
+    values.accountType,
+    values.name,
+    values.lastName,
+    values.specialization,
+    values.city,
+  ]);
 
   const isCompany = values.accountType === 'company';
 

@@ -5,12 +5,17 @@ import classes from './UserStats.module.scss';
 
 interface UserStatsProps {
   stats: UserStatsType;
+  onTeammatesClick?: () => void;
 }
 
-export const UserStats = ({ stats }: UserStatsProps) => {
+export const UserStats = ({ stats, onTeammatesClick }: UserStatsProps) => {
   const navigate = useNavigate();
 
   const handleCollaboratorsClick = () => {
+    if (onTeammatesClick) {
+      onTeammatesClick();
+      return;
+    }
     navigate(`${RoutePath.collaborators}?tab=collaborators`);
   };
 
@@ -21,12 +26,12 @@ export const UserStats = ({ stats }: UserStatsProps) => {
   return (
     <div className={classes.container}>
       <div className={classes.stat} onClick={handleCollaboratorsClick}>
-        <span className={classes.count}>{stats.collaborations}</span>
+        <span className={classes.count}>{stats.teammatesCount}</span>
         <span className={classes.label}>сокомандники</span>
       </div>
 
       <div className={classes.stat} onClick={handleOutgoingClick}>
-        <span className={classes.count}>{stats.wantsToWork}</span>
+        <span className={classes.count}>{stats.outgoingRequestsCount}</span>
         <span className={classes.label}>
           исходящие
           <br />
@@ -35,7 +40,7 @@ export const UserStats = ({ stats }: UserStatsProps) => {
       </div>
 
       <div className={classes.stat}>
-        <span className={classes.count}>{stats.projects}</span>
+        <span className={classes.count}>{stats.projectsCount}</span>
         <span className={classes.label}>проектов</span>
       </div>
     </div>

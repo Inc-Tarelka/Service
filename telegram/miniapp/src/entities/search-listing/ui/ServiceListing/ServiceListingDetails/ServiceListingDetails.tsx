@@ -17,15 +17,24 @@ import type {
 } from 'shared/api/service/PublicationServicesSearch';
 import CommentIcon from 'shared/assets/icons/comment';
 import EditIcon from 'shared/assets/icons/edit';
-import EyeOpenIcon from 'shared/assets/icons/EyeOpen';
+import EyeOffIcon from 'shared/assets/icons/EyeOff';
 import LikeIcon from 'shared/assets/icons/like';
 import MoreHorizontalIcon from 'shared/assets/icons/MoreHorizontalIcon';
 import ShareIcon from 'shared/assets/icons/share';
 import TrashIcon from 'shared/assets/icons/trash';
+import XIcon from 'shared/assets/icons/x';
 import { ImageCarousel } from 'shared/ui/ImageCarousel';
 import s from './ServiceListingDetails.module.scss';
 
 dayjs.locale('ru');
+
+interface TeamInviteBanner {
+  senderName: string;
+  notificationId: number;
+  isResponding?: boolean;
+  onAccept?: (notificationId: number) => void | Promise<void>;
+  onDecline?: (notificationId: number) => void | Promise<void>;
+}
 
 interface ServiceListingDetailsProps {
   service: SearchServiceItem;
@@ -36,6 +45,12 @@ interface ServiceListingDetailsProps {
   onCommentClick?: () => void;
   onLike?: (id: number) => void;
   onTeamMemberClick?: (id: number) => void;
+  isOwner?: boolean;
+  onEdit?: () => void;
+  onShare?: (id: number) => void;
+  onDeletePublication?: () => void;
+  isViewOnly?: boolean;
+  teamInviteBanner?: TeamInviteBanner | null;
 }
 
 const formatCount = (count: number): string | number => {
@@ -66,6 +81,12 @@ export const ServiceListingDetails = observer(
       onCommentClick,
       onLike,
       onTeamMemberClick,
+      isOwner,
+      onEdit,
+      onShare,
+      onDeletePublication,
+      isViewOnly = false,
+      teamInviteBanner,
     } = props;
 
     const [actionsDrawerOpened, { open: openActions, close: closeActions }] =
@@ -82,10 +103,25 @@ export const ServiceListingDetails = observer(
     }, [service.isLiked, service.likesCount]);
 
     const handleLikeClick = () => {
+      if (isViewOnly) {
+        return;
+      }
+
       const nextLiked = !isLiked;
       setIsLiked(nextLiked);
       setLikesCount((prev) => (nextLiked ? prev + 1 : prev - 1));
       onLike?.(service.id);
+    };
+
+    const handleCommentClick = () => {
+      if (isViewOnly) {
+        return;
+      }
+      onCommentClick?.();
+    };
+
+    const handleShareClick = () => {
+      onShare?.(service.id);
     };
 
     const displayNeeds: SearchNeedItem[] = (needs ?? service.needs ?? []).map(
@@ -118,16 +154,9 @@ export const ServiceListingDetails = observer(
         <div className={s.infoSection}>
           <div className={s.badgesContainer}>
             <div className={s.badgesLeft}>
-              <div className={s.badge}>
-                <EyeOpenIcon />
-                <span className={s.count}>
-                  {formatCount(service.viewsCount ?? 0)}
-                </span>
-              </div>
-
               <div
-                className={`${s.badge} ${isLiked ? s.likedBadge : ''}`}
-                onClick={handleLikeClick}
+                className={`${s.badge} ${isLiked ? s.likedBadge : ''} ${!isViewOnly ? s.badgeInteractive : s.badgeDisabled}`}
+                onClick={!isViewOnly ? handleLikeClick : undefined}
               >
                 <div
                   className={`${s.likeIconWrapper} ${isLiked ? s.isLiked : ''}`}
@@ -143,7 +172,10 @@ export const ServiceListingDetails = observer(
                 </div>
               </div>
 
-              <div className={s.badge} onClick={onCommentClick}>
+              <div
+                className={`${s.badge} ${!isViewOnly ? s.badgeInteractive : s.badgeDisabled}`}
+                onClick={!isViewOnly ? handleCommentClick : undefined}
+              >
                 <CommentIcon ClassNames={s.icon} />
                 <span className={s.count}>
                   {formatCount(service.commentsCount ?? 0)}
@@ -151,14 +183,26 @@ export const ServiceListingDetails = observer(
               </div>
             </div>
             <div className={s.badgesRight}>
-              <div className={s.iconBtn}>
+              <div
+                className={`${s.iconBtn} ${s.badgeInteractive}`}
+                onClick={handleShareClick}
+              >
                 <ShareIcon />
               </div>
-              <div className={s.iconBtn} onClick={openActions}>
-                <MoreHorizontalIcon />
-              </div>
+              {isOwner && !isViewOnly && (
+                <div className={s.iconBtn} onClick={openActions}>
+                  <MoreHorizontalIcon />
+                </div>
+              )}
             </div>
           </div>
+
+          {isViewOnly && (
+            <div className={s.viewOnlyHint}>
+              Режим просмотра: лайки, комментарии и переходы в профили
+              недоступны.
+            </div>
+          )}
 
           <div className={s.topRow}>
             <span className={s.date}>
@@ -194,16 +238,54 @@ export const ServiceListingDetails = observer(
             )}
           </div>
 
-          {coAuthors.length > 0 && (
+          {(teamInviteBanner || coAuthors.length > 0) && (
             <div className={s.section}>
               <h3 className={s.sectionTitle}>Команда</h3>
               <div className={s.teamList}>
+                {teamInviteBanner && (
+                  <div className={s.teamInviteCard}>
+                    <div className={s.teamInviteTitle}>
+                      {teamInviteBanner.senderName} хочет отметить вас в проекте
+                    </div>
+                    <p className={s.teamInviteHint}>
+                      Ваш аккаунт не будет отображаться в сокомандниках, пока вы
+                      не дадите подтверждение.
+                    </p>
+                    <div className={s.teamInviteButtons}>
+                      <button
+                        type="button"
+                        className={s.teamInviteDeclineButton}
+                        onClick={() =>
+                          void teamInviteBanner.onDecline?.(
+                            teamInviteBanner.notificationId,
+                          )
+                        }
+                        disabled={teamInviteBanner.isResponding}
+                        aria-label="Отклонить приглашение"
+                      >
+                        <XIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className={s.teamInviteAcceptButton}
+                        onClick={() =>
+                          void teamInviteBanner.onAccept?.(
+                            teamInviteBanner.notificationId,
+                          )
+                        }
+                        disabled={teamInviteBanner.isResponding}
+                      >
+                        Согласен
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {coAuthors.map((author) => (
                   <TeamMemberItem
                     key={author.userId}
                     member={author}
                     isAuthor={author.isAuthor}
-                    onClick={onTeamMemberClick}
+                    onClick={!isViewOnly ? onTeamMemberClick : undefined}
                   />
                 ))}
               </div>
@@ -218,7 +300,7 @@ export const ServiceListingDetails = observer(
                   <NeedListingItem
                     key={need.id}
                     need={need}
-                    onClick={onNeedClick}
+                    onClick={!isViewOnly ? onNeedClick : undefined}
                     hideProjectAndCity
                   />
                 ))}
@@ -231,22 +313,36 @@ export const ServiceListingDetails = observer(
           opened={actionsDrawerOpened}
           onClose={closeActions}
           noTitle
-          size={130}
+          size={isOwner ? 185 : 80}
           actions={[
-            {
-              label: 'Редактировать',
-              icon: <EditIcon />,
-              onClick: () => {},
-            },
-            {
-              label: 'Удалить',
-              icon: <TrashIcon color="var(--red)" />,
-              variant: 'danger',
-              onClick: () => {
-                closeActions();
-                openDelete();
-              },
-            },
+            ...(isOwner
+              ? [
+                  {
+                    label: 'Редактировать',
+                    icon: <EditIcon />,
+                    onClick: () => {
+                      closeActions();
+                      onEdit?.();
+                    },
+                  },
+                  {
+                    label: 'Скрыть из профиля',
+                    icon: <EyeOffIcon />,
+                    onClick: () => {
+                      closeActions();
+                    },
+                  },
+                  {
+                    label: 'Удалить',
+                    icon: <TrashIcon color="var(--red)" />,
+                    variant: 'danger' as const,
+                    onClick: () => {
+                      closeActions();
+                      openDelete();
+                    },
+                  },
+                ]
+              : []),
           ]}
         />
 
@@ -256,6 +352,7 @@ export const ServiceListingDetails = observer(
           title="Вы уверены, что хотите удалить проект?"
           onDelete={() => {
             closeDelete();
+            onDeletePublication?.();
           }}
         />
       </div>

@@ -59,8 +59,8 @@ export class PublicationCommentsStore {
     };
 
     this.commentsByPublication[publicationId] = [
-      ...this.commentsByPublication[publicationId],
       newComment,
+      ...this.commentsByPublication[publicationId],
     ];
     this.totalByPublication[publicationId] =
       (this.totalByPublication[publicationId] || 0) + 1;

@@ -118,7 +118,7 @@ export const MOCK_NOTIFICATIONS: NotificationMock[] = [
     date: '15 января',
     tab: 'mentions',
     isRead: false,
-    linkedServiceId: '1',
+    linkedServiceId: '67',
   },
   {
     id: 'm2',
@@ -129,7 +129,7 @@ export const MOCK_NOTIFICATIONS: NotificationMock[] = [
     date: '15 января',
     tab: 'mentions',
     isRead: false,
-    linkedServiceId: '1',
+    linkedServiceId: '67',
   },
   {
     id: 'm3',
@@ -140,7 +140,7 @@ export const MOCK_NOTIFICATIONS: NotificationMock[] = [
     date: '15 января',
     tab: 'mentions',
     isRead: true,
-    linkedServiceId: '1',
+    linkedServiceId: '67',
   },
 ];
 

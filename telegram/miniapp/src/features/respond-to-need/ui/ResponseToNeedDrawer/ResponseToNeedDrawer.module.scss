@@ -102,13 +102,101 @@
   flex-shrink: 0;
   gap: 8px;
   margin-top: auto;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-bottom: 30px;
   padding-top: 16px;
   width: 100%;
 }
 
 .submitButton {
   flex: 1;
+}
+
+.pickerInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pickerTitle {
+  color: var(--text-color);
+  flex-shrink: 0;
+  font: var(--font-h2);
+  margin: 0;
+  padding: 24px 24px 0;
+}
+
+.pickerList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+
+.pickerActions {
+  align-items: center;
+  border-top: 1px solid var(--card-bg);
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.pickerItem {
+  align-items: center;
+  border: 1px solid var(--card-bg);
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.pickerItemSelected {
+  border-color: var(--accent-color);
+}
+
+.pickerThumb {
+  border-radius: 8px;
+  flex-shrink: 0;
+  height: 48px;
+  overflow: hidden;
+  width: 48px;
+}
+
+.pickerThumbImg {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.pickerInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pickerName {
+  color: var(--text-color);
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+.pickerDesc {
+  color: var(--text-color);
+  font: var(--font-caption);
+  opacity: 0.6;
+}
+
+.selectedServiceCard {
+  border: 1px solid var(--accent-color);
+  border-radius: 16px;
+  cursor: pointer;
+  padding: 12px;
 }
 
 .textarea {
